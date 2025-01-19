@@ -1,1 +1,6 @@
 = scrubarr
+
+== Disclaimer
+
+I do not own the rights of any logos of 3rd party software used in this software.
+Please contact the owner of the repository if the icons should be removed.
