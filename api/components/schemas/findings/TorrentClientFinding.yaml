@@ -1,0 +1,25 @@
+type: "object"
+properties:
+  clientName:
+    type: "string"
+    description: "The name of the torrent client software."
+  torrentName:
+    type: "string"
+    description: "The name of the torrent."
+  downloadFilePath:
+    type: "string"
+    description: "The file path the download is located at."
+  downloadedAt:
+    type: "string"
+    format: "date-time"
+    description: "The date the torrent got downloaded at."
+  ratio:
+    type: "number"
+    format: "float"
+  size:
+    type: "integer"
+    format: "int64"
+    description: "The file size in bytes."
+  trackerHost:
+    type: "string"
+    description: "The hostname of the tracker used by the torrent."

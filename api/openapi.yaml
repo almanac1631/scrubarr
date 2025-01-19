@@ -1,0 +1,77 @@
+openapi: "3.0.0"
+info:
+  title: "scrubarr API"
+  version: "0.0.1"
+paths:
+  /entry-mappings:
+    get:
+      operationId: "getEntryMappings"
+      summary: "Get a list of entry mappings."
+      parameters:
+        - in: "query"
+          name: "page"
+          required: true
+          schema:
+            type: "integer"
+            minimum: 0
+          description: "The page number to display."
+        - in: "query"
+          name: "pageSize"
+          required: true
+          schema:
+            type: "integer"
+            minimum: 10
+            maximum: 100
+          description: "The amount of items to display per each page."
+        - in: "query"
+          name: "filter"
+          description: "The filter to apply before returning the entries."
+          schema:
+            type: string
+            enum:
+              - "incomplete_entries"
+              - "complete_entries"
+      responses:
+        "200":
+          description: "A successful response."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "entries"
+                  - "totalAmount"
+                properties:
+                  entries:
+                    type: "array"
+                    items:
+                      $ref: "./components/schemas/EntryMapping.yaml"
+                  totalAmount:
+                    type: "integer"
+                    description: "The total amount of entries that could be returned for the provided filter."
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
+  /retrievers:
+    get:
+      operationId: "getRetrievers"
+      summary: "Get a list of retrievers."
+      responses:
+        "200":
+          description: "A successful response."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "retrievers"
+                properties:
+                  retrievers:
+                    type: "array"
+                    items:
+                      $ref: "./components/schemas/Retriever.yaml"
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
