@@ -1,0 +1,38 @@
+[general]
+allowed_file_endings = [".mkv", ".avi", ".mp4"]
+
+[connections]
+
+[connections.sonarr.main]
+enabled = true
+hostname = "https://somedomain.com/sonarr/"
+api_key = ""
+
+
+[connections.radarr.main]
+enabled = true
+hostname = "https://somedomain.com/radarr/"
+api_key = ""
+
+[connections.deluge.main]
+enabled = true
+hostname = "some.host.na.me"
+port = 16156
+username = "admin"
+password = ""
+
+[connections.rtorrent.main]
+enabled = true
+hostname = "https://somedomain.com/rtorrent/RPC2/"
+username = "admin"
+password = ""
+
+[connections.folder.media]
+enabled = false
+name = "media"
+path = "./media"
+
+[connections.folder.torrent_downloads]
+enabled = false
+name = "torrent_downloads"
+path = "./download"

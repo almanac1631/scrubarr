@@ -1,0 +1,5 @@
+description: "A default error response providing more information about the error that occurred."
+content:
+  application/json:
+    schema:
+      $ref: "../components/schemas/ErrorResponseBody.yaml"
