@@ -1,25 +1,29 @@
 <script setup lang="ts">
-import {onMounted, Ref, ref, watch} from "vue";
+import {computed, onMounted, Ref, ref, watch} from "vue";
 import {Configuration, DefaultApiFactory, EntryMapping, GetEntryMappingsFilterEnum, Retriever} from "../api";
 import PreloaderTableEntry from "./entry-mapping-list/PreloaderTableEntry.vue";
 import Dropdown, {DropdownOption} from "./common/Dropdown.vue";
 import Pagination from "./common/Pagination.vue";
-import {sortRetrieverList} from "../utils/retriever-sorting.ts";
+import {getCategoriesFromRetrieverList, sortRetrieverList} from "../utils/retrievers.ts";
+import TableRetrieverStateHeader from "./entry-mapping-list/TableRetrieverStateHeader.vue";
+import TableRetrieverStateRowEntry from "./entry-mapping-list/TableRetrieverStateRowEntry.vue";
 
 const contentLoaded = ref(false);
 const entryMappingList: Ref<Array<EntryMapping> | null> = ref(null);
 const entryMappingTotalAmount: Ref<number | null> = ref(null);
 const retrieverList: Ref<Array<Retriever> | null> = ref(null);
 
-function getRetrieverFinding(entryMapping: EntryMapping, retrieverId: string) {
-  const result = entryMapping.retrieverFindings?.filter(finding => {
+function isEntryPresentInRetriever(entryMapping: EntryMapping, retrieverId: string): boolean {
+  return entryMapping.retrieverFindings?.filter(finding => {
     return finding.id == retrieverId;
-  })[0];
-  if (result) {
-    return "✅"
-  } else {
-    return "❌"
-  }
+  }).length > 0;
+}
+
+function isEntryPresentInRetrieverCategory(entryMapping: EntryMapping, retrieverCategoryName: String): boolean {
+  return entryMapping.retrieverFindings?.filter(finding => {
+    const matchedRetriever = retrieverList.value.filter((retriever) => retriever.id === finding.id)[0];
+    return matchedRetriever.category == retrieverCategoryName;
+  }).length > 0;
 }
 
 function toggleAll() {
@@ -60,6 +64,11 @@ async function fetchAndDisplayEntries() {
   }
 }
 
+const retrieverGroupingEnabled = ref(false);
+const retrieverCategoryList = computed(() => {
+  return getCategoriesFromRetrieverList(retrieverList.value);
+});
+
 onMounted(async () => {
   const retrieverListResp = (await apiClient.getRetrievers()).data.retrievers;
   sortRetrieverList(retrieverListResp);
@@ -92,9 +101,21 @@ watch([selectedFilter, selectedPageSize, selectedPage], () => {
 </script>
 
 <template>
-  <div class="my-2 flex justify-end gap-2">
-    <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>
-    <Dropdown :options="filterElemList" :default-option="filterElemList[0]" v-model="selectedFilter"/>
+  <div class="my-2 flex justify-between">
+    <div class="flex items-center">
+      <div>
+        <label class="inline-flex items-center cursor-pointer">
+          <span class="me-3 text-sm font-medium text-gray-900">Group by retriever category</span>
+          <input type="checkbox" value="" class="sr-only peer" v-model="retrieverGroupingEnabled">
+          <span
+              class="relative w-11 h-6 bg-gray-200 peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></span>
+        </label>
+      </div>
+    </div>
+    <div class="my-2 flex justify-end gap-2">
+      <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>
+      <Dropdown :options="filterElemList" :default-option="filterElemList[0]" v-model="selectedFilter"/>
+    </div>
   </div>
   <table class="table-fixed w-full">
     <thead>
@@ -119,20 +140,20 @@ watch([selectedFilter, selectedPageSize, selectedPage], () => {
       <th class="py-3 pr-3 font-medium">
         Name
       </th>
-      <th v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
-        <div class="h-6 flex justify-center" :title="retriever.softwareName">
+      <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList">
+        <div class="h-6 flex justify-center">
           <div class="relative">
-            <img :src="`/retriever-icons/${retriever.softwareName}-128x128.png`"
-                 :alt="`The logo of the ${retriever.softwareName} software project.`"
-                 class="max-h-full">
-            <div class="bg-white absolute rounded -bottom-2 -right-5 z-10">
-              <div
-                  class="bg-red-100 leading-5 h-5 uppercase text-[0.5rem] font-bold px-0.5 border-red-500 rounded">
-                {{ retriever.name }}
-              </div>
-            </div>
+            {{ retrieverCategory.displayName }}
           </div>
         </div>
+      </th>
+      <th v-else v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
+        <TableRetrieverStateHeader
+            :name="retriever.name"
+            :hover-text="retriever.softwareName"
+            :logo-filename="`${retriever.softwareName}-128x128.png`"
+            :logo-alt-text="`The logo of the ${retriever.softwareName} software project.`"
+        />
       </th>
     </tr>
     <PreloaderTableEntry class="border-b-2" v-else/>
@@ -159,9 +180,15 @@ watch([selectedFilter, selectedPageSize, selectedPage], () => {
       <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.name">
         {{ entryMapping.name }}
       </td>
-      <td v-for="retriever in retrieverList" class="p-3 text-center">
-        {{ getRetrieverFinding(entryMapping, retriever.id) }}
-      </td>
+
+      <TableRetrieverStateRowEntry
+          v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
+          :present="isEntryPresentInRetrieverCategory(entryMapping, retrieverCategory.name)"
+      />
+      <TableRetrieverStateRowEntry
+          v-else v-for="retriever in retrieverList"
+          :present="isEntryPresentInRetriever(entryMapping, retriever.id)"
+      />
     </tr>
     <PreloaderTableEntry v-for="_ in 10" v-else/>
     </tbody>
