@@ -117,7 +117,7 @@ watch([selectedFilter, selectedPageSize, selectedPage], () => {
         Name
       </th>
       <th v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
-        <div class="h-6 flex justify-center">
+        <div class="h-6 flex justify-center" :title="retriever.softwareName">
           <div class="relative">
             <img :src="`/retriever-icons/${retriever.softwareName}-128x128.png`"
                  :alt="`The logo of the ${retriever.softwareName} software project.`"
