@@ -140,7 +140,8 @@ watch([selectedFilter, selectedPageSize, selectedPage], () => {
       <th class="py-3 pr-3 font-medium">
         Name
       </th>
-      <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList">
+      <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
+          class="w-[120px] p-3 font-medium text-center truncate">
         <div class="h-6 flex justify-center">
           <div class="relative">
             {{ retrieverCategory.displayName }}
