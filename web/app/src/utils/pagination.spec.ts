@@ -1,4 +1,4 @@
-import {getPageList} from "./pagination.ts";
+import {getPageList} from "./pagination";
 import {describe, expect, test} from "vitest";
 
 describe("calculate pages", () => {
