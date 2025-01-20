@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed} from "vue";
-import {getPageList} from "../../util/pagination.ts";
+import {getPageList} from "../../utils/pagination.ts";
 
 const model = defineModel<number>({default: null});
 
