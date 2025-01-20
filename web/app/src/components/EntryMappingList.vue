@@ -4,6 +4,7 @@ import {Configuration, DefaultApiFactory, EntryMapping, GetEntryMappingsFilterEn
 import PreloaderTableEntry from "./entry-mapping-list/PreloaderTableEntry.vue";
 import Dropdown, {DropdownOption} from "./common/Dropdown.vue";
 import Pagination from "./common/Pagination.vue";
+import {sortRetrieverList} from "../utils/retriever-sorting.ts";
 
 const contentLoaded = ref(false);
 const entryMappingList: Ref<Array<EntryMapping> | null> = ref(null);
@@ -60,7 +61,9 @@ async function fetchAndDisplayEntries() {
 }
 
 onMounted(async () => {
-  retrieverList.value = (await apiClient.getRetrievers()).data.retrievers;
+  const retrieverListResp = (await apiClient.getRetrievers()).data.retrievers;
+  sortRetrieverList(retrieverListResp);
+  retrieverList.value = retrieverListResp;
   await fetchAndDisplayEntries();
 });
 
