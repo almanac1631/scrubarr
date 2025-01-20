@@ -78,7 +78,7 @@ const pageList = computed(() => getPageList(props.totalAmountOfItems, props.page
             </span>
             <a href="#" v-else-if="page.isSelected" v-on:click.prevent="updateSelectedPageNumber(page.pageNumber)"
                aria-current="page"
-               class="relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+               class="relative z-10 inline-flex items-center bg-red-500 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
               {{ page.pageNumber }}
             </a>
             <a href="#" v-else v-on:click.prevent="updateSelectedPageNumber(page.pageNumber)"
