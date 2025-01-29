@@ -81,8 +81,8 @@ func (a apiEndpointHandler) isEntryMappingComplete(entryMapping EntryMapping) bo
 		if _, ok := categoryFulfilledMap[retrieverInfo.Category]; !ok {
 			categoryFulfilledMap[retrieverInfo.Category] = false
 		}
-		for _, retrieverFinding := range *entryMapping.RetrieverFindings {
-			if common.RetrieverId(*retrieverFinding.Id) == retrieverInfo.Id() {
+		for _, retrieverFinding := range entryMapping.RetrieverFindings {
+			if common.RetrieverId(retrieverFinding.Id) == retrieverInfo.Id() {
 				categoryFulfilledMap[retrieverInfo.Category] = true
 			}
 		}
@@ -130,8 +130,8 @@ func getResponseEntryMappingFromPresencePairs(entryName retrieval.EntryName, pai
 			continue
 		}
 		finding := EntryMappingRetrieverFindingsInner{
-			Id: &retrieverId,
-			Detail: &EntryMappingRetrieverFindingsInnerDetail{
+			Id: retrieverId,
+			Detail: EntryMappingRetrieverFindingsInnerDetail{
 				union: marshalledFindingValue,
 			},
 		}
@@ -139,8 +139,8 @@ func getResponseEntryMappingFromPresencePairs(entryName retrieval.EntryName, pai
 	}
 	entryNameStr := string(entryName)
 	return EntryMapping{
-		Name:              &entryNameStr,
-		RetrieverFindings: &findings,
+		Name:              entryNameStr,
+		RetrieverFindings: findings,
 	}
 }
 
