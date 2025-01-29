@@ -20,12 +20,12 @@ func StartApp() {
 		Level: slog.LevelDebug,
 	}))
 	slog.SetDefault(logger)
-	err := LoadConfig("./configs/scrubarr.toml")
+	err := LoadConfig("./test/real_test_config.toml")
 	if err != nil {
 		panic(err)
 	}
 	err = registerRetrievers(k)
-	retrieverRegistry.RefreshCachedEntryMapping()
+	//retrieverRegistry.RefreshCachedEntryMapping()
 	if err != nil {
 		panic(err)
 	}

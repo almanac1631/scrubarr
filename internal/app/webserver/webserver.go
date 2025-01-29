@@ -2,14 +2,23 @@ package webserver
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/app/common"
 	"github.com/knadh/koanf/v2"
+	"io/fs"
 	"log/slog"
+	"mime"
 	"net/http"
+	"os"
+	"path"
+	"strings"
 )
+
+//go:embed all:dist
+var content embed.FS
 
 func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) error {
 	// Create a new router & API
@@ -53,10 +62,41 @@ func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry c
 			},
 		},
 	})
+	serveFrontendFiles(router)
 
-	router.Handle("/", http.FileServer(http.Dir("./web/")))
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", 8888), router); err != nil {
 		panic(err)
 	}
 	return nil
+}
+
+func serveFrontendFiles(router *http.ServeMux) {
+	fsys, err := fs.Sub(content, "dist")
+	if err != nil {
+		slog.Error("failed to load embedded embedded files", "err", err)
+		os.Exit(1)
+	}
+
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		filePath := strings.TrimPrefix(r.URL.Path, "/")
+		if filePath == "" {
+			filePath = "index.html"
+		}
+		data, err := fs.ReadFile(fsys, filePath)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		mimeType := mime.TypeByExtension(path.Ext(filePath))
+		if mimeType == "" {
+			mimeType = http.DetectContentType(data)
+		}
+		w.Header().Set("Content-Type", mimeType)
+
+		_, err = w.Write(data)
+		if err != nil {
+			slog.Error("failed to write response", "err", err)
+		}
+	})
 }
