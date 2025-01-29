@@ -73,13 +73,13 @@ export interface EntryMapping {
      * @type {string}
      * @memberof EntryMapping
      */
-    'name'?: string;
+    'name': string;
     /**
      * 
      * @type {Array<EntryMappingRetrieverFindingsInner>}
      * @memberof EntryMapping
      */
-    'retrieverFindings'?: Array<EntryMappingRetrieverFindingsInner>;
+    'retrieverFindings': Array<EntryMappingRetrieverFindingsInner>;
 }
 /**
  * 
@@ -92,13 +92,13 @@ export interface EntryMappingRetrieverFindingsInner {
      * @type {string}
      * @memberof EntryMappingRetrieverFindingsInner
      */
-    'id'?: string;
+    'id': string;
     /**
      * 
      * @type {EntryMappingRetrieverFindingsInnerDetail}
      * @memberof EntryMappingRetrieverFindingsInner
      */
-    'detail'?: EntryMappingRetrieverFindingsInnerDetail;
+    'detail': EntryMappingRetrieverFindingsInnerDetail;
 }
 /**
  * @type EntryMappingRetrieverFindingsInnerDetail
