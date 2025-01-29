@@ -65,16 +65,16 @@ type ArrAppFindingMediaType string
 // EntryMapping defines model for EntryMapping.
 type EntryMapping struct {
 	// Name The name of this entry.
-	Name              *string                               `json:"name,omitempty"`
-	RetrieverFindings *[]EntryMappingRetrieverFindingsInner `json:"retrieverFindings,omitempty"`
+	Name              string                               `json:"name"`
+	RetrieverFindings []EntryMappingRetrieverFindingsInner `json:"retrieverFindings"`
 }
 
 // EntryMappingRetrieverFindingsInner defines model for EntryMapping_retrieverFindings_inner.
 type EntryMappingRetrieverFindingsInner struct {
-	Detail *EntryMappingRetrieverFindingsInnerDetail `json:"detail,omitempty"`
+	Detail EntryMappingRetrieverFindingsInnerDetail `json:"detail"`
 
 	// Id Id used to identify retrievers.
-	Id *RetrieverId `json:"id,omitempty"`
+	Id RetrieverId `json:"id"`
 }
 
 // EntryMappingRetrieverFindingsInnerDetail defines model for EntryMapping_retrieverFindings_inner_detail.

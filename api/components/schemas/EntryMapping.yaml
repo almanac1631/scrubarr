@@ -1,12 +1,18 @@
 type: "object"
+required:
+  - "name"
+  - "retrieverFindings"
 properties:
   name:
     type: "string"
     description: "The name of this entry."
   retrieverFindings:
-    type: array
+    type: "array"
     items:
-      type: object
+      type: "object"
+      required:
+        - "id"
+        - "detail"
       properties:
         id:
           $ref: "./RetrieverId.yaml"

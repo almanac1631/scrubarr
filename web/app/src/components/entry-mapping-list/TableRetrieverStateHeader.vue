@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 const props = defineProps({
-  name: String | undefined,
+  name: String,
   hoverText: String,
   logoFilename: String,
   logoAltText: String,

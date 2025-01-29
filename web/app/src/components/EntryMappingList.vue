@@ -21,8 +21,8 @@ function isEntryPresentInRetriever(entryMapping: EntryMapping, retrieverId: stri
 
 function isEntryPresentInRetrieverCategory(entryMapping: EntryMapping, retrieverCategoryName: String): boolean {
   return entryMapping.retrieverFindings?.filter(finding => {
-    const matchedRetriever = retrieverList.value.filter((retriever) => retriever.id === finding.id)[0];
-    return matchedRetriever.category == retrieverCategoryName;
+    const matchedRetriever = retrieverList.value?.filter((retriever) => retriever.id === finding.id)[0];
+    return matchedRetriever?.category == retrieverCategoryName;
   }).length > 0;
 }
 
@@ -66,6 +66,9 @@ async function fetchAndDisplayEntries() {
 
 const retrieverGroupingEnabled = ref(false);
 const retrieverCategoryList = computed(() => {
+  if (retrieverList.value === null) {
+    return;
+  }
   return getCategoriesFromRetrieverList(retrieverList.value);
 });
 
