@@ -13,6 +13,10 @@ import (
 	"os"
 )
 
+var (
+	version, commit string
+)
+
 var k = koanf.New(".")
 
 func StartApp() {
@@ -24,6 +28,7 @@ func StartApp() {
 	if err != nil {
 		panic(err)
 	}
+	slog.Info("starting scrubarr...", "version", version, "commit", commit)
 	err = registerRetrievers(k)
 	//retrieverRegistry.RefreshCachedEntryMapping()
 	if err != nil {
