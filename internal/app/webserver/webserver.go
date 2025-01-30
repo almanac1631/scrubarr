@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-//go:embed all:dist
+//go:embed all:content
 var content embed.FS
 
 func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) error {

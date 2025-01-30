@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+tasks:
+  deps:
+    cmds:
+      - go mod download
+
+  test:
+    cmds:
+      - go test ./...
+
+  build-single-dev:
+    cmds:
+      - goreleaser build --snapshot --clean --single-target
+
+  build-single:
+    cmds:
+      - goreleaser build --clean --single-target
+
+  build-dev:
+    cmds:
+      - goreleaser build --snapshot --clean
+
+  build:
+    cmds:
+      - goreleaser build --clean --single-target
+
+  run:
+    cmds:
+      - go run cmd/scrubarr/main.go

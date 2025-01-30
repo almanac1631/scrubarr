@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: 3
+
+includes:
+  backend: ./build/taskfiles/backend.yaml
+  frontend:
+    taskfile: ./build/taskfiles/frontend.yaml
+    dir: ./web/app/
+
+tasks:
+  deps:
+    cmds:
+      - task: frontend:deps
+      - task: backend:deps
+
+  test:
+    cmds:
+      - task: frontend:test
+      - task: backend:test
+
+  build-single:
+    cmds:
+      - task: frontend:build
+      - task: embed-frontend-content
+      - task: backend:build-single
+
+  build-single-dev:
+    cmds:
+      - task: frontend:build
+      - task: embed-frontend-content
+      - task: backend:build-single-dev
+
+  build:
+    cmds:
+      - task: frontend:build
+      - task: embed-frontend-content
+      - task: backend:build
+
+  build-dev:
+    cmds:
+      - task: frontend:build
+      - task: embed-frontend-content
+      - task: backend:build-dev
+
+  embed-frontend-content:
+    env:
+      FRONTEND_CONTENT_SRC_DIR: web/app/dist
+      BACKEND_FRONTEND_CONTENT_DIR: internal/app/webserver/content
+    internal: true
+    cmds:
+      - rm -rf $BACKEND_FRONTEND_CONTENT_DIR
+      - mkdir $BACKEND_FRONTEND_CONTENT_DIR
+      - cp -R $FRONTEND_CONTENT_SRC_DIR/* $BACKEND_FRONTEND_CONTENT_DIR
+      - touch $BACKEND_FRONTEND_CONTENT_DIR/.gitkeep
