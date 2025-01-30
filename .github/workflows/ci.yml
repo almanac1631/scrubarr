@@ -30,9 +30,9 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ${{ env.FRONTENT_DIR }}/.nvmrc
+          node-version-file: ${{ env.FRONTEND_DIR }}/.nvmrc
           cache: 'pnpm'
-          cache-dependency-path: ${{ env.FRONTENT_DIR }}/pnpm-lock.yaml
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/pnpm-lock.yaml
 
       - name: Install dependencies
         run: |
