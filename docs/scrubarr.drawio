@@ -1,0 +1,81 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36" version="24.7.16">
+  <diagram name="Page-1" id="fcjqp1MQjeCqzHu_yaQM">
+    <mxGraphModel dx="984" dy="658" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-3" value="SQLite" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="330" y="70" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-17" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=classic;segment=10;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;startFill=0;curved=0;endFill=1;" edge="1" parent="1" source="1T8aYPOVH5wJZIf6NI9C-16" target="1T8aYPOVH5wJZIf6NI9C-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-18" value="pull torrent entries" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1T8aYPOVH5wJZIf6NI9C-17">
+          <mxGeometry x="-0.0887" y="1" relative="1" as="geometry">
+            <mxPoint x="29" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-23" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=classic;segment=10;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;endFill=1;" edge="1" parent="1" source="1T8aYPOVH5wJZIf6NI9C-16" target="1T8aYPOVH5wJZIf6NI9C-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-24" value="pull information about&lt;br&gt;films/series" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1T8aYPOVH5wJZIf6NI9C-23">
+          <mxGeometry x="0.0968" relative="1" as="geometry">
+            <mxPoint x="-68" y="-28" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-16" value="scrubarr" style="ellipse;whiteSpace=wrap;html=1;align=center;newEdgeStyle={&quot;edgeStyle&quot;:&quot;entityRelationEdgeStyle&quot;,&quot;startArrow&quot;:&quot;none&quot;,&quot;endArrow&quot;:&quot;none&quot;,&quot;segment&quot;:10,&quot;curved&quot;:1,&quot;sourcePerimeterSpacing&quot;:0,&quot;targetPerimeterSpacing&quot;:0};treeFolding=1;treeMoving=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="205" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-19" value="put gathered information" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=classic;segment=10;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;endFill=1;" edge="1" parent="1" source="1T8aYPOVH5wJZIf6NI9C-16" target="1T8aYPOVH5wJZIf6NI9C-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-38" value="Frontend App" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.computer;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="321.11" y="440" width="77.78" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-39" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=classic;segment=10;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;endFill=1;" edge="1" parent="1" source="1T8aYPOVH5wJZIf6NI9C-16" target="1T8aYPOVH5wJZIf6NI9C-38">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-40" value="show information about:&lt;br&gt;- files present in both dirs (media vs. torrent downloads)&lt;div&gt;- age of torrents (upload statistics)&lt;/div&gt;&lt;div&gt;- file size&lt;/div&gt;&lt;div&gt;- (optional) last played&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1T8aYPOVH5wJZIf6NI9C-39">
+          <mxGeometry x="-0.392" y="1" relative="1" as="geometry">
+            <mxPoint x="-1" y="46" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-48" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="590" y="15" width="110" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-15" value="Torrent Download Clients" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;verticalAlign=top;horizontal=1;labelPosition=center;verticalLabelPosition=bottom;align=center;strokeColor=#82b366;opacity=20;" vertex="1" parent="1T8aYPOVH5wJZIf6NI9C-48">
+          <mxGeometry width="110" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-13" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://hostingby.design/wp-content/uploads/2022/08/rtorrent-450x450-150x150-1.png;" vertex="1" parent="1T8aYPOVH5wJZIf6NI9C-48">
+          <mxGeometry x="22.5" y="20" width="65" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-22" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://www.cyberciti.biz/tips/wp-content/uploads/2008/01/deluge-logo.png;" vertex="1" parent="1T8aYPOVH5wJZIf6NI9C-48">
+          <mxGeometry x="20" y="105" width="70" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-49" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="600" y="270" width="110" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-4" value="*arr Applications" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;verticalAlign=top;horizontal=1;labelPosition=center;verticalLabelPosition=bottom;align=center;strokeColor=#82b366;opacity=20;" vertex="1" parent="1T8aYPOVH5wJZIf6NI9C-49">
+          <mxGeometry width="110" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-1" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://static-00.iconduck.com/assets.00/sonarr-icon-1024x1024-wkay604k.png;" vertex="1" parent="1T8aYPOVH5wJZIf6NI9C-49">
+          <mxGeometry x="25" y="20" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-5" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://static-00.iconduck.com/assets.00/radarr-icon-1845x2048-97le6lim.png;" vertex="1" parent="1T8aYPOVH5wJZIf6NI9C-49">
+          <mxGeometry x="27.97" y="100" width="54.05" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-52" value="media/download folders" style="sketch=0;html=1;aspect=fixed;strokeColor=none;shadow=0;fillColor=#3B8DF1;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;shape=mxgraph.gcp2.folders" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="100" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-53" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=classic;segment=10;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;endFill=1;startFill=0;" edge="1" parent="1" source="1T8aYPOVH5wJZIf6NI9C-16" target="1T8aYPOVH5wJZIf6NI9C-52">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1T8aYPOVH5wJZIf6NI9C-54" value="scan folders for &lt;br&gt;existing files" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1T8aYPOVH5wJZIf6NI9C-53">
+          <mxGeometry x="0.1039" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
