@@ -6,6 +6,10 @@ tasks:
     cmds:
       - go mod download
 
+  tidy:
+    cmds:
+      - go mod tidy
+
   test:
     cmds:
       - go test ./...
