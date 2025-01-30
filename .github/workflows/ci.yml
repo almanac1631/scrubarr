@@ -8,7 +8,6 @@ on:
 
 env:
   FRONTEND_DIR: ./web/app
-  NODE_VERSION: 22
 
 jobs:
   test-and-build-frontend:
@@ -31,7 +30,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ${{ env.FRONTENT_DIR }}/.nvmrc
           cache: 'pnpm'
           cache-dependency-path: ${{ env.FRONTENT_DIR }}/pnpm-lock.yaml
 
