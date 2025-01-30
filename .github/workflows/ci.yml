@@ -7,7 +7,7 @@ on:
       - main
 
 env:
-  FRONTEND_DIR: ./web
+  FRONTEND_DIR: ./web/app
   NODE_VERSION: 22
 
 jobs:
@@ -24,7 +24,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-
+        with:
+          package_json_file: $FRONTEND_DIR/package.json
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -47,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: $FRONTEND_DIR/app/dist/
+          path: $FRONTEND_DIR/dist/
 
   test-and-build-backend:
     name: Test Backend
