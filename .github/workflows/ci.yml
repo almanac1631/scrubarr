@@ -1,0 +1,102 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+env:
+  FRONTEND_DIR: ./web
+  NODE_VERSION: 22
+
+jobs:
+  test-and-build-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: $NODE_VERSION
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          task frontend:deps
+
+      - name: Test
+        run: |
+          task frontend:test
+
+      - name: Build
+        run: |
+          task frontend:build
+
+      - name: Save Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: $FRONTEND_DIR/app/dist/
+
+  test-and-build-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23
+
+      - name: Install dependencies
+        run: |
+          task backend:deps
+
+      - name: Test
+        run: |
+          task backend:test
+
+      - name: Build
+        run: |
+          task backend:build-single-dev
+
+
+
+  package:
+    name: Package Application
+    needs:
+      - test-and-build-frontend
+      - test-and-build-backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+
+      - name: Download Backend Build
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+
+      - name: Build bundled backend application
+        run: |
+          task embed-frontend-content backend:build-dev

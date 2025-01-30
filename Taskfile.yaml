@@ -1,6 +1,11 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: 3
 
+output:
+  group:
+    begin: '::group::{{.TASK}}'
+    end: '::endgroup::'
+
 includes:
   backend: ./build/taskfiles/backend.yaml
   frontend:
@@ -46,7 +51,6 @@ tasks:
     env:
       FRONTEND_CONTENT_SRC_DIR: web/app/dist
       BACKEND_FRONTEND_CONTENT_DIR: internal/app/webserver/content
-    internal: true
     cmds:
       - rm -rf $BACKEND_FRONTEND_CONTENT_DIR
       - mkdir $BACKEND_FRONTEND_CONTENT_DIR
