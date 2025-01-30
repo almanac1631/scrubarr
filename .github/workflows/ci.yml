@@ -31,7 +31,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: $NODE_VERSION
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: $FRONTEND_DIR/dist/
+          path: ${{ env.FRONTEND_DIR }}/dist/
 
   test-and-build-backend:
     name: Test Backend
