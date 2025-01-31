@@ -116,11 +116,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
+          path: ${{ env.FRONTEND_DIR }}/dist
 
       - name: Download Backend Build
         uses: actions/download-artifact@v4
         with:
           name: backend-build
+          path: ${{ env.BACKEND_DIST_DIR }}
 
       - name: Build bundled backend application
         run: |
