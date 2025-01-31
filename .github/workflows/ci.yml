@@ -8,6 +8,7 @@ on:
 
 env:
   FRONTEND_DIR: ./web/app
+  BACKEND_DIST_DIR: ./dist
 
 jobs:
   test-and-build-frontend:
@@ -86,6 +87,12 @@ jobs:
       - name: Build
         run: |
           task backend:build-single-dev
+
+      - name: Save Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: ${{ env.BACKEND_DIST_DIR }}
 
 
 
