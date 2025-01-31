@@ -126,5 +126,4 @@ jobs:
 
       - name: Build bundled backend application
         run: |
-          ls web/app/dist/ && exit 1
           task embed-frontend-content backend:build-dev
