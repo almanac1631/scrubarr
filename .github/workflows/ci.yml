@@ -12,7 +12,7 @@ env:
 
 jobs:
   test-and-build-frontend:
-    name: Test Frontend
+    name: Test and build Frontend
     runs-on: ubuntu-latest
 
     steps:
@@ -47,14 +47,14 @@ jobs:
         run: |
           task frontend:build
 
-      - name: Save Build Artifacts
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: ${{ env.FRONTEND_DIR }}/dist/
 
   test-and-build-backend:
-    name: Test Backend
+    name: Test and build Backend
     runs-on: ubuntu-latest
 
     steps:
@@ -88,7 +88,7 @@ jobs:
         run: |
           task backend:build-single-dev
 
-      - name: Save Build Artifacts
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
@@ -112,15 +112,27 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23
+
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
+
       - name: Download Frontend Build
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
+          path: ${{ env.FRONTEND_DIR }}/dist
 
       - name: Download Backend Build
         uses: actions/download-artifact@v4
         with:
           name: backend-build
+          path: ${{ env.BACKEND_DIST_DIR }}
 
       - name: Build bundled backend application
         run: |
