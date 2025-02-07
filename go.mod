@@ -3,7 +3,7 @@ module github.com/almanac1631/scrubarr
 go 1.23.2
 
 require (
-	github.com/autobrr/go-rtorrent v1.11.0
+	github.com/autobrr/go-rtorrent v1.12.0
 	github.com/gdm85/go-libdeluge v0.6.0
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v1.1.2
