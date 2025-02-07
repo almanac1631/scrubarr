@@ -12,8 +12,8 @@ importers:
         specifier: 1.7.23
         version: 1.7.23(vue@3.5.12(typescript@5.6.3))
       '@heroicons/vue':
-        specifier: 2.1.5
-        version: 2.1.5(vue@3.5.12(typescript@5.6.3))
+        specifier: 2.2.0
+        version: 2.2.0(vue@3.5.12(typescript@5.6.3))
       axios:
         specifier: 1.7.9
         version: 1.7.9
@@ -216,8 +216,8 @@ packages:
     peerDependencies:
       vue: ^3.2.0
 
-  '@heroicons/vue@2.1.5':
-    resolution: {integrity: sha512-IpqR72sFqFs55kyKfFS7tN+Ww6odFNeH/7UxycIOrlVYfj4WUGAdzQtLBnJspucSeqWFQsKM0g0YrgU655BEfA==}
+  '@heroicons/vue@2.2.0':
+    resolution: {integrity: sha512-G3dbSxoeEKqbi/DFalhRxJU4mTXJn7GwZ7ae8NuEQzd1bqdd0jAbdaBZlHPcvPD2xI1iGzNVB4k20Un2AguYPw==}
     peerDependencies:
       vue: '>= 3'
 
@@ -1209,7 +1209,7 @@ snapshots:
       '@tanstack/vue-virtual': 3.10.8(vue@3.5.12(typescript@5.6.3))
       vue: 3.5.12(typescript@5.6.3)
 
-  '@heroicons/vue@2.1.5(vue@3.5.12(typescript@5.6.3))':
+  '@heroicons/vue@2.2.0(vue@3.5.12(typescript@5.6.3))':
     dependencies:
       vue: 3.5.12(typescript@5.6.3)
 
