@@ -17,16 +17,18 @@ import (
 
 type instantiateFuncType func(koanf *koanf.Koanf, allowedFileEndings []string) (retrieval.EntryRetriever, error)
 
+var instantiateFunctions = map[common.RetrieverInfo]instantiateFuncType{
+	{Category: "folder", SoftwareName: "folder"}:           instantiateFolderScanner,
+	{Category: "arr_app", SoftwareName: "sonarr"}:          instantiateSonarrRetriever,
+	{Category: "arr_app", SoftwareName: "radarr"}:          instantiateRadarrRetriever,
+	{Category: "torrent_client", SoftwareName: "deluge"}:   instantiateDelugeRetriever,
+	{Category: "torrent_client", SoftwareName: "rtorrent"}: instantiateRtorrentRetriever,
+}
+
 var retrieverRegistry = &cachedRetrieverRegistry{retrieverRegistry: common.MapBasedRetrieverRegistry{}}
 
 func registerRetrievers(koanf *koanf.Koanf) error {
-	for retrieverInfo, instantiateFunc := range map[common.RetrieverInfo]instantiateFuncType{
-		{Category: "folder", SoftwareName: "folder"}:           instantiateFolderScanner,
-		{Category: "arr_app", SoftwareName: "sonarr"}:          instantiateSonarrRetriever,
-		{Category: "arr_app", SoftwareName: "radarr"}:          instantiateRadarrRetriever,
-		{Category: "torrent_client", SoftwareName: "deluge"}:   instantiateDelugeRetriever,
-		{Category: "torrent_client", SoftwareName: "rtorrent"}: instantiateRtorrentRetriever,
-	} {
+	for retrieverInfo, instantiateFunc := range instantiateFunctions {
 		slog.Info("loading retrievers", "retrieverCategory", retrieverInfo.Category, "retrieverSoftwareName", retrieverInfo.SoftwareName)
 		err := checkAndRegisterRetriever(koanf, retrieverInfo, instantiateFunc)
 		if err != nil {
