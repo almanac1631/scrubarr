@@ -30,7 +30,7 @@ func StartApp() {
 	}
 	slog.Info("starting scrubarr...", "version", version, "commit", commit)
 	err = registerRetrievers(k)
-	//retrieverRegistry.RefreshCachedEntryMapping()
+	retrieverRegistry.RefreshCachedEntryMapping()
 	if err != nil {
 		panic(err)
 	}
