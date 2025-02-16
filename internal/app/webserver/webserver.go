@@ -25,29 +25,36 @@ func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry c
 	router := http.NewServeMux()
 	apiServer := &apiEndpointHandler{retrieverRegistry}
 
-	errorHandler := func(w http.ResponseWriter, r *http.Request, err error) {
-		var errorStr string
-		var detail string
-		var formatErr *InvalidParamFormatError
-		if errors.As(err, &formatErr) {
-			errorStr = "request error"
-			detail = err.Error()
-		} else {
-			errorStr = "unknown error"
-			detail = "no description provided"
-			slog.Error("an unkown error occurred", "err", err)
+	errorHandlerFunc := func(isRequest bool) func(http.ResponseWriter, *http.Request, error) {
+		handler := func(w http.ResponseWriter, r *http.Request, err error) {
+			var errorStr string
+			var detail string
+			var formatErr *InvalidParamFormatError
+			if errors.As(err, &formatErr) {
+				errorStr = "request error"
+				detail = err.Error()
+			} else {
+				errorStr = "unknown error"
+				detail = "no description provided"
+				slog.Error("an unkown error occurred", "err", err)
+			}
+			respBody, _ := json.Marshal(ErrorResponseBody{
+				Error:  errorStr,
+				Detail: detail,
+			})
+			header := http.StatusInternalServerError
+			if isRequest {
+				header = http.StatusBadRequest
+			}
+			w.WriteHeader(header)
+			_, _ = w.Write(respBody)
 		}
-		respBody, _ := json.Marshal(ErrorResponseBody{
-			Error:  errorStr,
-			Detail: detail,
-		})
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write(respBody)
+		return handler
 	}
 
 	serverInterface := NewStrictHandlerWithOptions(apiServer, []StrictMiddlewareFunc{}, StrictHTTPServerOptions{
-		RequestErrorHandlerFunc:  errorHandler,
-		ResponseErrorHandlerFunc: errorHandler,
+		RequestErrorHandlerFunc:  errorHandlerFunc(true),
+		ResponseErrorHandlerFunc: errorHandlerFunc(false),
 	})
 
 	HandlerWithOptions(serverInterface, StdHTTPServerOptions{
