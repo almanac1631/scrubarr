@@ -53,6 +53,8 @@ paths:
           $ref: "./responses/ErrorResponse.yaml"
         "5XX":
           $ref: "./responses/ErrorResponse.yaml"
+      security:
+        - BearerAuth: [ ]
   /retrievers:
     get:
       operationId: "getRetrievers"
@@ -75,3 +77,52 @@ paths:
           $ref: "./responses/ErrorResponse.yaml"
         "5XX":
           $ref: "./responses/ErrorResponse.yaml"
+      security:
+        - BearerAuth: [ ]
+  /login:
+    post:
+      operationId: "login"
+      summary: "Login to the application using the provided credentials."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./components/schemas/LoginRequestBody.yaml"
+      responses:
+        "200":
+          description: "A successful response indicating that the login was successful."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "message"
+                  - "token"
+                properties:
+                  message:
+                    type: string
+                    example: "Ok"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" #gitleaks:allow
+        "401":
+          description: "The login attempt has failed."
+          content:
+            application/json:
+              schema:
+                $ref: "./components/schemas/ErrorResponseBody.yaml"
+              example:
+                error: "login failed"
+                detail: "username and password combination does not match"
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

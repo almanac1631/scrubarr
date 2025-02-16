@@ -23,7 +23,10 @@ var content embed.FS
 func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) error {
 	// Create a new router & API
 	router := http.NewServeMux()
-	apiServer := &apiEndpointHandler{retrieverRegistry}
+	apiServer, err := NewApiEndpointHandler(retrieverRegistry, koanf)
+	if err != nil {
+		return fmt.Errorf("could not create api endpoint handler: %w", err)
+	}
 
 	errorHandlerFunc := func(isRequest bool) func(http.ResponseWriter, *http.Request, error) {
 		handler := func(w http.ResponseWriter, r *http.Request, err error) {
@@ -36,7 +39,7 @@ func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry c
 			} else {
 				errorStr = "unknown error"
 				detail = "no description provided"
-				slog.Error("an unkown error occurred", "err", err)
+				slog.Error("an unknown error occurred", "err", err, "errType", fmt.Sprintf("%T", err))
 			}
 			respBody, _ := json.Marshal(ErrorResponseBody{
 				Error:  errorStr,

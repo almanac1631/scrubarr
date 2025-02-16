@@ -1,6 +1,15 @@
 [general]
 allowed_file_endings = [".mkv", ".avi", ".mp4"]
 
+[general.auth]
+username = "blinks"
+password_salt = ""
+password_hash = ""
+
+[general.auth.jwt]
+private_key_path = ""
+public_key_path = ""
+
 [connections]
 
 [connections.sonarr.main]

@@ -16,6 +16,10 @@ import (
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
+const (
+	BearerAuthScopes = "BearerAuth.Scopes"
+)
+
 // Defines values for ArrAppFindingMediaType.
 const (
 	Film   ArrAppFindingMediaType = "film"
@@ -97,6 +101,15 @@ type FolderFinding struct {
 	Size *int64 `json:"size,omitempty"`
 }
 
+// LoginRequestBody defines model for LoginRequestBody.
+type LoginRequestBody struct {
+	// Password The password to login with.
+	Password string `json:"password"`
+
+	// Username The username to login with.
+	Username string `json:"username"`
+}
+
 // Retriever defines model for Retriever.
 type Retriever struct {
 	// Category The category this retriever belongs to.
@@ -156,6 +169,12 @@ type GetRetrievers200Response struct {
 	Retrievers []Retriever `json:"retrievers"`
 }
 
+// Login200Response defines model for login_200_response.
+type Login200Response struct {
+	Message string `json:"message"`
+	Token   string `json:"token"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = ErrorResponseBody
 
@@ -173,6 +192,9 @@ type GetEntryMappingsParams struct {
 
 // GetEntryMappingsParamsFilter defines parameters for GetEntryMappings.
 type GetEntryMappingsParamsFilter string
+
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody = LoginRequestBody
 
 // AsTorrentClientFinding returns the union data inside the EntryMappingRetrieverFindingsInnerDetail as a TorrentClientFinding
 func (t EntryMappingRetrieverFindingsInnerDetail) AsTorrentClientFinding() (TorrentClientFinding, error) {
@@ -267,6 +289,9 @@ type ServerInterface interface {
 	// Get a list of entry mappings.
 	// (GET /entry-mappings)
 	GetEntryMappings(w http.ResponseWriter, r *http.Request, params GetEntryMappingsParams)
+	// Login to the application using the provided credentials.
+	// (POST /login)
+	Login(w http.ResponseWriter, r *http.Request)
 	// Get a list of retrievers.
 	// (GET /retrievers)
 	GetRetrievers(w http.ResponseWriter, r *http.Request)
@@ -285,6 +310,12 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) GetEntryMappings(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetEntryMappingsParams
@@ -338,8 +369,28 @@ func (siw *ServerInterfaceWrapper) GetEntryMappings(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// Login operation middleware
+func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Login(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetRetrievers operation middleware
 func (siw *ServerInterfaceWrapper) GetRetrievers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetRetrievers(w, r)
@@ -473,6 +524,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/entry-mappings", wrapper.GetEntryMappings)
+	m.HandleFunc("POST "+options.BaseURL+"/login", wrapper.Login)
 	m.HandleFunc("GET "+options.BaseURL+"/retrievers", wrapper.GetRetrievers)
 
 	return m
@@ -515,6 +567,56 @@ type GetEntryMappings5XXJSONResponse struct {
 }
 
 func (response GetEntryMappings5XXJSONResponse) VisitGetEntryMappingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type LoginRequestObject struct {
+	Body *LoginJSONRequestBody
+}
+
+type LoginResponseObject interface {
+	VisitLoginResponse(w http.ResponseWriter) error
+}
+
+type Login200JSONResponse Login200Response
+
+func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type Login401JSONResponse ErrorResponseBody
+
+func (response Login401JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type Login4XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response Login4XXJSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type Login5XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response Login5XXJSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -566,6 +668,9 @@ type StrictServerInterface interface {
 	// Get a list of entry mappings.
 	// (GET /entry-mappings)
 	GetEntryMappings(ctx context.Context, request GetEntryMappingsRequestObject) (GetEntryMappingsResponseObject, error)
+	// Login to the application using the provided credentials.
+	// (POST /login)
+	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
 	// Get a list of retrievers.
 	// (GET /retrievers)
 	GetRetrievers(ctx context.Context, request GetRetrieversRequestObject) (GetRetrieversResponseObject, error)
@@ -619,6 +724,37 @@ func (sh *strictHandler) GetEntryMappings(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetEntryMappingsResponseObject); ok {
 		if err := validResponse.VisitGetEntryMappingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Login operation middleware
+func (sh *strictHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var request LoginRequestObject
+
+	var body LoginJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Login(ctx, request.(LoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Login")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LoginResponseObject); ok {
+		if err := validResponse.VisitLoginResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

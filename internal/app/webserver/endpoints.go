@@ -17,11 +17,7 @@ import (
 	"strings"
 )
 
-type apiEndpointHandler struct {
-	retrieverRegistry common.RetrieverRegistry
-}
-
-func (a apiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEntryMappingsRequestObject) (resp GetEntryMappingsResponseObject, err error) {
+func (a ApiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEntryMappingsRequestObject) (resp GetEntryMappingsResponseObject, err error) {
 	page := request.Params.Page
 	pageSize := request.Params.PageSize
 	if err = validatePage(request.Params.Page); err != nil {
@@ -60,7 +56,7 @@ func (a apiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEnt
 	}, nil
 }
 
-func (a apiEndpointHandler) applyFilter(responseEntryMappingList []EntryMapping, filter *GetEntryMappingsParamsFilter) []EntryMapping {
+func (a ApiEndpointHandler) applyFilter(responseEntryMappingList []EntryMapping, filter *GetEntryMappingsParamsFilter) []EntryMapping {
 	if filter == nil {
 		return responseEntryMappingList
 	}
@@ -75,7 +71,7 @@ func (a apiEndpointHandler) applyFilter(responseEntryMappingList []EntryMapping,
 	return filteredEntries
 }
 
-func (a apiEndpointHandler) isEntryMappingComplete(entryMapping EntryMapping) bool {
+func (a ApiEndpointHandler) isEntryMappingComplete(entryMapping EntryMapping) bool {
 	categoryFulfilledMap := make(map[string]bool)
 	for _, retrieverInfo := range a.retrieverRegistry.GetRetrievers() {
 		if _, ok := categoryFulfilledMap[retrieverInfo.Category]; !ok {
@@ -174,7 +170,7 @@ func getFindingValueFromEntry(entry *retrieval.Entry) (any, error) {
 	}
 }
 
-func (a apiEndpointHandler) GetRetrievers(ctx context.Context, request GetRetrieversRequestObject) (GetRetrieversResponseObject, error) {
+func (a ApiEndpointHandler) GetRetrievers(ctx context.Context, request GetRetrieversRequestObject) (GetRetrieversResponseObject, error) {
 	var retrieverList []Retriever
 	for _, retrieverInfo := range a.retrieverRegistry.GetRetrievers() {
 		id := RetrieverId(retrieverInfo.Id())
@@ -191,5 +187,3 @@ func (a apiEndpointHandler) GetRetrievers(ctx context.Context, request GetRetrie
 	}
 	return GetRetrievers200JSONResponse{retrieverList}, nil
 }
-
-var _ StrictServerInterface = (*apiEndpointHandler)(nil)
