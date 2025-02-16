@@ -1,0 +1,15 @@
+type: "object"
+required:
+  - "username"
+  - "password"
+properties:
+  username:
+    description: "The username to login with."
+    type: string
+    example: "admin"
+    minLength: 1
+  password:
+    description: "The password to login with."
+    type: string
+    example: "SuperStrongPassword"
+    minLength: 1
