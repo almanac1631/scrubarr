@@ -87,7 +87,7 @@ const filterElemList = [
 const selectedFilter: Ref<DropdownOption | null> = ref(null);
 
 const pageSizeElemList = [
-  {displayName: "Page size", value: "5"},
+  {displayName: "Page size", value: "25"},
   {displayName: "10", value: "10"},
   {displayName: "25", value: "25"},
   {displayName: "50", value: "50"},
