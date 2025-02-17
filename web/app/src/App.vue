@@ -22,7 +22,7 @@ import {notificationList} from "./utils/notificationList.ts";
           </div>
           <div class="hidden sm:ml-6 sm:block">
             <div class="flex space-x-4">
-              <RouterLink :to="item.path" v-for="item in routes" :key="item.name"
+              <RouterLink :to="item.path" v-for="item in routes.filter(route => route.meta?.displayedInNavigation)"
                           activeClass='bg-gray-900 text-white'
                           class='text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium'
                           :aria-current="$route.path == item.path">
