@@ -1,0 +1,8 @@
+{
+    auto_https off
+}
+
+http://localhost:8080 {
+    reverse_proxy /api/* http://host.docker.internal:8888
+    reverse_proxy /* http://host.docker.internal:5173
+}

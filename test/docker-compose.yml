@@ -1,0 +1,11 @@
+services:
+  caddy:
+    image: caddy:2.9.1-alpine
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    network_mode: host
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
