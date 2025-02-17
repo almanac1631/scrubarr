@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"mime"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -69,7 +70,13 @@ func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry c
 	})
 	serveFrontendFiles(router)
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", 8888), router); err != nil {
+	network := koanf.MustString("general.listen_network")
+	addr := koanf.MustString("general.listen_addr")
+	listener, err := net.Listen(network, addr)
+	if err != nil {
+		return fmt.Errorf("could not listen on %s/%s: %w", network, addr, err)
+	}
+	if err := http.Serve(listener, router); err != nil {
 		panic(err)
 	}
 	return nil

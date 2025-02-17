@@ -1,5 +1,7 @@
 [general]
 allowed_file_endings = [".mkv", ".avi", ".mp4"]
+listen_network = "tcp"
+listen_addr = ":8888"
 
 [general.auth]
 username = "blinks"
