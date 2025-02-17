@@ -8,6 +8,7 @@ import (
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
+	flag "github.com/spf13/pflag"
 	"log/slog"
 	"net/http"
 	"os"
@@ -20,11 +21,28 @@ var (
 var k = koanf.New(".")
 
 func StartApp() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
+	f := flag.NewFlagSet("scrubarr", flag.ContinueOnError)
+	f.Usage = func() {
+		fmt.Println("Usage: scrubarr [options...]")
+		fmt.Println(f.FlagUsages())
+		os.Exit(0)
+	}
+	configPath := f.String("config", "./config.toml", "path to config file")
+	logLevel := f.String("level", "info", "log level to use")
+	err := f.Parse(os.Args[1:])
+	if err != nil {
+		panic(err)
+	}
+
+	var level slog.Level
+	err = level.UnmarshalText([]byte(*logLevel))
+	if err != nil {
+		panic(err)
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
 	slog.SetDefault(logger)
-	err := LoadConfig("./test/real_test_config.toml")
+
+	err = LoadConfig(*configPath)
 	if err != nil {
 		panic(err)
 	}
@@ -48,3 +66,6 @@ func LoadConfig(configPath string) error {
 	}
 	return nil
 }
+
+// webserver in background, catch ctrl+c
+// specify config file as param
