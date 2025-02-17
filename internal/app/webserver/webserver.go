@@ -63,14 +63,6 @@ func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry c
 	HandlerWithOptions(serverInterface, StdHTTPServerOptions{
 		BaseURL:    "/api",
 		BaseRouter: router,
-		Middlewares: []MiddlewareFunc{
-			func(next http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-					w.Header().Set("Access-Control-Allow-Origin", "*")
-					next.ServeHTTP(w, req)
-				})
-			},
-		},
 	})
 	serveFrontendFiles(router)
 
