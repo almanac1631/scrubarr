@@ -2,12 +2,16 @@ import {initializeApiClient} from "../utils/api.ts";
 
 const localStorageKey = "authToken";
 
-export function isAuthenticated(): boolean {
+export function checkAndInitAuthentication(): boolean {
     const jwtStr = localStorage.getItem(localStorageKey);
     if (!jwtStr) {
         return false;
     }
-    return isTokenStillValidClaimsBased(jwtStr);
+    if (isTokenStillValidClaimsBased(jwtStr)) {
+        initializeApiClient(jwtStr);
+        return true;
+    }
+    return false;
 }
 
 export function initializeAuthToken(jwtStr: string): void {

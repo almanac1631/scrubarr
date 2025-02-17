@@ -4,7 +4,7 @@ let apiClient: DefaultApi | null = null;
 
 export function initializeApiClient(jwt: string) {
     apiClient = new DefaultApi(new Configuration({
-        apiKey: jwt,
+        accessToken: jwt,
     }), "/api");
 }
 
