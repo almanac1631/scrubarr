@@ -63,6 +63,9 @@ func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry c
 	HandlerWithOptions(serverInterface, StdHTTPServerOptions{
 		BaseURL:    "/api",
 		BaseRouter: router,
+		Middlewares: []MiddlewareFunc{apiServer.AuthenticationMiddleware([]string{
+			"/api/login",
+		})},
 	})
 	serveFrontendFiles(router)
 
