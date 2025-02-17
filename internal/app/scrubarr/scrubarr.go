@@ -1,7 +1,6 @@
 package scrubarr
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
@@ -10,8 +9,10 @@ import (
 	"github.com/knadh/koanf/v2"
 	flag "github.com/spf13/pflag"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
+	"os/signal"
 )
 
 var (
@@ -46,17 +47,43 @@ func StartApp() {
 	if err != nil {
 		panic(err)
 	}
+
 	slog.Info("starting scrubarr...", "version", version, "commit", commit)
+
 	err = registerRetrievers(k)
-	retrieverRegistry.RefreshCachedEntryMapping()
 	if err != nil {
 		panic(err)
 	}
+	go retrieverRegistry.RefreshCachedEntryMapping()
 
-	ctx := context.Background()
-	err = webserver.StartWebserver(ctx, k, retrieverRegistry)
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		panic(err)
+	listener, err := webserver.SetupListener(k)
+	if err != nil {
+		slog.Error("could not setup web server listener", "error", err)
+		os.Exit(1)
+	}
+	router, err := webserver.SetupWebserver(k, retrieverRegistry)
+	if err != nil {
+		slog.Error("could not setup web server router", "error", err)
+		os.Exit(1)
+	}
+
+	go func() {
+		exitChan := make(chan os.Signal, 1)
+		signal.Notify(exitChan, os.Interrupt)
+		<-exitChan
+		slog.Info("received exit signal. shutting down...")
+		if err := listener.Close(); err != nil {
+			slog.Error("could not close listener", "error", err)
+		}
+		slog.Info("bye!")
+	}()
+
+	err = http.Serve(listener, router)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) && err.Error() != "" {
+		var opErr *net.OpError
+		if errors.As(err, &opErr) && opErr.Err.Error() != "use of closed network connection" {
+			slog.Error("could not serve webserver", "error", err, "errType", fmt.Sprintf("%T", err))
+		}
 	}
 }
 
@@ -66,6 +93,3 @@ func LoadConfig(configPath string) error {
 	}
 	return nil
 }
-
-// webserver in background, catch ctrl+c
-// specify config file as param

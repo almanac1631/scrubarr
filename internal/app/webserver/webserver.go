@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"context"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -21,12 +20,12 @@ import (
 //go:embed all:content
 var content embed.FS
 
-func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) error {
+func SetupWebserver(config *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) (*http.ServeMux, error) {
 	// Create a new router & API
 	router := http.NewServeMux()
-	apiServer, err := NewApiEndpointHandler(retrieverRegistry, koanf)
+	apiServer, err := NewApiEndpointHandler(retrieverRegistry, config)
 	if err != nil {
-		return fmt.Errorf("could not create api endpoint handler: %w", err)
+		return nil, fmt.Errorf("could not create api endpoint handler: %w", err)
 	}
 
 	errorHandlerFunc := func(isRequest bool) func(http.ResponseWriter, *http.Request, error) {
@@ -69,17 +68,17 @@ func StartWebserver(ctx context.Context, koanf *koanf.Koanf, retrieverRegistry c
 		})},
 	})
 	serveFrontendFiles(router)
+	return router, nil
+}
 
-	network := koanf.MustString("general.listen_network")
-	addr := koanf.MustString("general.listen_addr")
+func SetupListener(config *koanf.Koanf) (net.Listener, error) {
+	network := config.MustString("general.listen_network")
+	addr := config.MustString("general.listen_addr")
 	listener, err := net.Listen(network, addr)
 	if err != nil {
-		return fmt.Errorf("could not listen on %s/%s: %w", network, addr, err)
+		return nil, fmt.Errorf("could not listen on %s/%s: %w", network, addr, err)
 	}
-	if err := http.Serve(listener, router); err != nil {
-		panic(err)
-	}
-	return nil
+	return listener, nil
 }
 
 func serveFrontendFiles(router *http.ServeMux) {
