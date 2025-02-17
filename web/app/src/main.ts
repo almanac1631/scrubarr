@@ -11,10 +11,11 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-    if (to.path === "/login") {
-        return;
-    }
-    if (!checkAndInitAuthentication()) {
+    const alreadyAuthenticated = checkAndInitAuthentication();
+    const isLoginPath = to.path === "/login"
+    if (isLoginPath && alreadyAuthenticated) {
+        return {path: "/"};
+    } else if (!isLoginPath && !alreadyAuthenticated) {
         return {path: "/login"};
     }
 })
