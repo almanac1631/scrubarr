@@ -75,7 +75,6 @@ onMounted(async () => {
   const retrieverListResp = (await apiClient.getRetrievers()).data.retrievers;
   sortRetrieverList(retrieverListResp);
   retrieverList.value = retrieverListResp;
-  await fetchAndDisplayEntries();
 });
 
 const filterElemList = [
