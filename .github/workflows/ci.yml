@@ -98,14 +98,6 @@ jobs:
         run: |
           task backend:build-single-dev
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-build
-          path: ${{ env.BACKEND_DIST_DIR }}
-
-
-
   package:
     name: Package Application
     needs:
@@ -137,12 +129,6 @@ jobs:
         with:
           name: frontend-build
           path: ${{ env.FRONTEND_DIR }}/dist
-
-      - name: Download Backend Build
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-build
-          path: ${{ env.BACKEND_DIST_DIR }}
 
       - name: Build bundled backend application
         run: |
