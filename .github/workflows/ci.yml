@@ -8,6 +8,19 @@ env:
   BACKEND_DIST_DIR: ./dist
 
 jobs:
+  test-goreleaser-config:
+    name: Test goreleaser config
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check GoReleaser config
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: check
+
   test-and-build-frontend:
     name: Test and build Frontend
     runs-on: ubuntu-latest
