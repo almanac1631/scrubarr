@@ -30,6 +30,10 @@ tasks:
     cmds:
       - goreleaser build --clean
 
+  release:
+    cmds:
+      - goreleaser release --clean
+
   run:
     cmds:
       - go run cmd/scrubarr/main.go

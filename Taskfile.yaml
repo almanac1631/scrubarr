@@ -41,6 +41,12 @@ tasks:
       - task: embed-frontend-content
       - task: backend:build
 
+  release:
+    cmds:
+      - task: frontend:build
+      - task: embed-frontend-content
+      - task: backend:release
+
   build-dev:
     cmds:
       - task: frontend:build
