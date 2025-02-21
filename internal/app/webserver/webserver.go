@@ -82,7 +82,7 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 }
 
 func serveFrontendFiles(router *http.ServeMux) {
-	fsys, err := fs.Sub(content, "dist")
+	fsys, err := fs.Sub(content, "content")
 	if err != nil {
 		slog.Error("failed to load embedded embedded files", "err", err)
 		os.Exit(1)
