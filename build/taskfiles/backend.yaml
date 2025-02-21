@@ -28,7 +28,7 @@ tasks:
 
   build:
     cmds:
-      - goreleaser build --clean --single-target
+      - goreleaser build --clean
 
   run:
     cmds:
