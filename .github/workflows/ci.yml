@@ -4,7 +4,6 @@ on: [ push ]
 
 env:
   FRONTEND_DIR: ./web/app
-  BACKEND_DIST_DIR: ./dist
 
 permissions:
   contents: write
