@@ -1,7 +1,6 @@
 name: CI/CD Pipeline
 
-on:
-  push:
+on: [ push ]
 
 env:
   FRONTEND_DIR: ./web/app
