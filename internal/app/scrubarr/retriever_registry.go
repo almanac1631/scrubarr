@@ -29,7 +29,6 @@ var retrieverRegistry = &cachedRetrieverRegistry{retrieverRegistry: common.MapBa
 
 func registerRetrievers(koanf *koanf.Koanf) error {
 	for retrieverInfo, instantiateFunc := range instantiateFunctions {
-		slog.Info("loading retrievers", "retrieverCategory", retrieverInfo.Category, "retrieverSoftwareName", retrieverInfo.SoftwareName)
 		err := checkAndRegisterRetriever(koanf, retrieverInfo, instantiateFunc)
 		if err != nil {
 			return fmt.Errorf("could not register retriever type %q: %w", retrieverInfo, err)
@@ -46,13 +45,14 @@ func checkAndRegisterRetriever(koanf *koanf.Koanf, retrieverInfoGeneral common.R
 	}
 	allowedFileEndings := koanf.MustStrings("general.allowed_file_endings")
 	for retrieverName, _ := range retrieverConfigs {
+		logger := slog.With("retriever", retrieverInfoGeneral, "path", path)
 		retrieverPath := fmt.Sprintf("%s.%s", path, retrieverName)
 		folderEntryEnabled, err := config.GetEntry[bool](koanf.Get, fmt.Sprintf("%s.enabled", retrieverPath))
 		if err != nil {
 			return err
 		}
 		if !folderEntryEnabled {
-			slog.Info("retriever disabled", "retrieverType", retrieverInfoGeneral, "path", retrieverPath)
+			logger.Info("retriever disabled")
 			continue
 		}
 		entryConfig := koanf.Cut(retrieverPath)
@@ -63,6 +63,7 @@ func checkAndRegisterRetriever(koanf *koanf.Koanf, retrieverInfoGeneral common.R
 		retrieverInfo := retrieverInfoGeneral
 		retrieverInfo.Name = retrieverName
 		retrieverRegistry.retrieverRegistry[retrieverInfo] = retriever
+		logger.Info("registered retriever")
 	}
 	return nil
 }

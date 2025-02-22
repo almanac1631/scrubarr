@@ -78,6 +78,7 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on %s/%s: %w", network, addr, err)
 	}
+	slog.Info("listen on webserver interface", "network", network, "addr", addr)
 	return listener, nil
 }
 
