@@ -16,7 +16,8 @@ import (
 )
 
 var (
-	version, commit string
+	version = "<no version>"
+	commit  = "<no commit>"
 )
 
 var k = koanf.New(".")

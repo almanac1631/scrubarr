@@ -8,7 +8,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - '-s -w -X internal/app/scrubarr.version={{.Version}} -X internal/app/scrubarr.commit={{.Commit}}'
+      - '-s -w -X github.com/almanac1631/scrubarr/internal/app/scrubarr.version={{.Version}} -X github.com/almanac1631/scrubarr/internal/app/scrubarr.commit={{.Commit}}'
     goos:
       - 'freebsd'
       - 'windows'
