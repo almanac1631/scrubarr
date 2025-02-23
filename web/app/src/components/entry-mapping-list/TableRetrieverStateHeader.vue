@@ -7,7 +7,7 @@ const props = defineProps({
   logoAltText: String,
 });
 
-const logoFilepath = `/retriever/${props.logoFilename}`
+const logoFilepath = `retriever/${props.logoFilename}`
 </script>
 
 <template>

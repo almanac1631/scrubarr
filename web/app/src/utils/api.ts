@@ -2,10 +2,12 @@ import {Configuration, DefaultApi} from "../api";
 
 let apiClient: DefaultApi | null = null;
 
+export const basePath = "api";
+
 export function initializeApiClient(jwt: string) {
     apiClient = new DefaultApi(new Configuration({
         accessToken: jwt,
-    }), "/api");
+    }), basePath);
 }
 
 export function getApiClient(): DefaultApi {

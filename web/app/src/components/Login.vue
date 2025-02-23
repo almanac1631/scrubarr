@@ -5,6 +5,7 @@ import {AxiosError} from "axios";
 import {notify} from "../utils/notificationList.ts";
 import {initializeAuthToken} from "../auth/auth.ts";
 import {useRouter} from "vue-router";
+import {basePath} from "../utils/api.ts";
 
 const username = ref("");
 const password = ref("");
@@ -13,9 +14,7 @@ const router = useRouter();
 
 async function submitLoginForm(e: any) {
   e.preventDefault();
-  const unauthenticatedApiClient = DefaultApiFactory(new Configuration({
-    basePath: "/api"
-  }));
+  const unauthenticatedApiClient = DefaultApiFactory(new Configuration({basePath}));
   try {
     const loginResp = await unauthenticatedApiClient.login({
       username: username.value,
