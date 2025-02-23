@@ -31,3 +31,9 @@ export function isTokenStillValidClaimsBased(jwtStr: string): boolean {
         return false;
     }
 }
+
+export function logout(event: any) {
+    event.preventDefault();
+    localStorage.removeItem(localStorageKey);
+    window.location.reload();
+}
