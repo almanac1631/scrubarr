@@ -20,7 +20,7 @@ import (
 //go:embed all:content
 var content embed.FS
 
-func SetupWebserver(config *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) (*http.ServeMux, error) {
+func SetupWebserver(config *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) (http.Handler, error) {
 	// Create a new router & API
 	router := http.NewServeMux()
 	apiServer, err := NewApiEndpointHandler(retrieverRegistry, config)
@@ -68,6 +68,11 @@ func SetupWebserver(config *koanf.Koanf, retrieverRegistry common.RetrieverRegis
 		})},
 	})
 	serveFrontendFiles(router)
+	pathPrefix := config.String("general.path_prefix")
+	if pathPrefix != "" {
+		slog.Info("stripping path prefix", "path_prefix", pathPrefix)
+		return http.StripPrefix(pathPrefix, router), nil
+	}
 	return router, nil
 }
 
