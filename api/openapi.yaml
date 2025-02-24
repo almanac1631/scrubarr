@@ -55,6 +55,28 @@ paths:
           $ref: "./responses/ErrorResponse.yaml"
       security:
         - BearerAuth: [ ]
+    post:
+      operationId: "refreshEntryMappings"
+      summary: "Trigger a refresh of the entry mappings."
+      responses:
+        "200":
+          description: "A successful response."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "message"
+                properties:
+                  message:
+                    type: "string"
+                    description: "The status message to display."
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
+      security:
+        - BearerAuth: [ ]
   /retrievers:
     get:
       operationId: "getRetrievers"
