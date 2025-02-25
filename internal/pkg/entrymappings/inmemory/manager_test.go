@@ -22,6 +22,11 @@ var (
 		&common.RetrieverInfo{Category: "c1", Name: "r2"}: nil,
 		&common.RetrieverInfo{Category: "c2", Name: "r3"}: nil,
 	}
+	instance = &EntryMappingManager{entryRetrievers: map[common.RetrieverInfo]common.EntryRetriever{
+		common.RetrieverInfo{Category: "c1", Name: "r1"}: nil,
+		common.RetrieverInfo{Category: "c1", Name: "r2"}: nil,
+		common.RetrieverInfo{Category: "c2", Name: "r3"}: nil,
+	}}
 )
 
 func Test_applyFilter(t *testing.T) {
@@ -54,7 +59,7 @@ func Test_applyFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := applyFilter(tt.args.entryMappings, tt.args.filter); !reflect.DeepEqual(got, tt.want) {
+			if got := instance.applyFilter(tt.args.entryMappings, tt.args.filter); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("applyFilter() = %v, want %v", got, tt.want)
 			}
 		})
@@ -65,15 +70,22 @@ func Test_areEntryPresencePairsComplete(t *testing.T) {
 	type args struct {
 		pairs common.EntryPresencePairs
 	}
+	instance := &EntryMappingManager{entryRetrievers: map[common.RetrieverInfo]common.EntryRetriever{
+		common.RetrieverInfo{Category: "c1", Name: "r1"}: nil,
+		common.RetrieverInfo{Category: "c1", Name: "r2"}: nil,
+		common.RetrieverInfo{Category: "c2", Name: "r3"}: nil,
+	}}
 	tests := []struct {
 		name string
 		args args
 		want bool
 	}{
 		{
-			"test complete presence pairs with only one retriever",
+			"test complete presence pairs",
 			args{common.EntryPresencePairs{
 				&common.RetrieverInfo{Category: "c1", Name: "r1"}: &common.Entry{},
+				&common.RetrieverInfo{Category: "c1", Name: "r2"}: &common.Entry{},
+				&common.RetrieverInfo{Category: "c2", Name: "r3"}: &common.Entry{},
 			}},
 			true,
 		},
@@ -81,7 +93,6 @@ func Test_areEntryPresencePairsComplete(t *testing.T) {
 			"test incomplete presence pairs",
 			args{common.EntryPresencePairs{
 				&common.RetrieverInfo{Category: "c1", Name: "r1"}: &common.Entry{},
-				&common.RetrieverInfo{Category: "c2", Name: "r2"}: nil,
 			}},
 			false,
 		},
@@ -89,7 +100,6 @@ func Test_areEntryPresencePairsComplete(t *testing.T) {
 			"test complete presence pairs based on categories",
 			args{common.EntryPresencePairs{
 				&common.RetrieverInfo{Category: "c1", Name: "r1"}: &common.Entry{},
-				&common.RetrieverInfo{Category: "c1", Name: "r1"}: nil,
 				&common.RetrieverInfo{Category: "c2", Name: "r2"}: &common.Entry{},
 			}},
 			true,
@@ -97,7 +107,7 @@ func Test_areEntryPresencePairsComplete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := areEntryPresencePairsComplete(tt.args.pairs); got != tt.want {
+			if got := instance.areEntryPresencePairsComplete(tt.args.pairs); got != tt.want {
 				t.Errorf("areEntryPresencePairsComplete() = %v, want %v", got, tt.want)
 			}
 		})

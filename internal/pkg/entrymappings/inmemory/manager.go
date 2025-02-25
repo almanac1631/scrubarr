@@ -68,7 +68,7 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
 		entryMappings[i] = common.EntryMapping{Name: entryName, Pairs: pairs}
 		i++
 	}
-	filteredEntryMappings := applyFilter(entryMappings, filter)
+	filteredEntryMappings := e.applyFilter(entryMappings, filter)
 	totalAmount := len(filteredEntryMappings)
 	return getPageExcerpt(filteredEntryMappings, page, pageSize), totalAmount, nil
 }
@@ -88,13 +88,13 @@ func getPageExcerpt(entryMappings []common.EntryMapping, page int, pageSize int)
 	return entryMappings[offset:end]
 }
 
-func applyFilter(entryMappings []common.EntryMapping, filter common.EntryMappingFilter) []common.EntryMapping {
+func (e *EntryMappingManager) applyFilter(entryMappings []common.EntryMapping, filter common.EntryMappingFilter) []common.EntryMapping {
 	if filter == common.EntryMappingFilterNoFilter {
 		return entryMappings
 	}
 	var filteredEntryMappings []common.EntryMapping
 	for _, entryMapping := range entryMappings {
-		entryPresencePairsComplete := areEntryPresencePairsComplete(entryMapping.Pairs)
+		entryPresencePairsComplete := e.areEntryPresencePairsComplete(entryMapping.Pairs)
 		if (entryPresencePairsComplete && filter == common.EntryMappingFilterCompleteEntry) ||
 			(!entryPresencePairsComplete && filter == common.EntryMappingFilterIncompleteEntry) {
 			filteredEntryMappings = append(filteredEntryMappings, entryMapping)
@@ -103,9 +103,9 @@ func applyFilter(entryMappings []common.EntryMapping, filter common.EntryMapping
 	return filteredEntryMappings
 }
 
-func areEntryPresencePairsComplete(pairs common.EntryPresencePairs) bool {
-	categories := make(map[string]bool, len(pairs))
-	for retrieverInfo := range pairs {
+func (e *EntryMappingManager) areEntryPresencePairsComplete(pairs common.EntryPresencePairs) bool {
+	categories := make(map[string]bool, len(e.entryRetrievers))
+	for retrieverInfo := range e.entryRetrievers {
 		categories[retrieverInfo.Category] = false
 	}
 	expectedCategoryCount := len(categories)

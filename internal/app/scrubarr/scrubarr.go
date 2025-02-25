@@ -73,6 +73,7 @@ func StartApp() {
 	}
 
 	go func() {
+		slog.Info("refreshing entry mappings...")
 		err := entryMappingManager.RefreshEntryMappings()
 		if err != nil {
 			slog.Error("could not refresh entry mappings", "error", err)
