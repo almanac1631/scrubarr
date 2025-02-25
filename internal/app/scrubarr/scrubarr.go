@@ -58,7 +58,8 @@ func StartApp() {
 		panic(err)
 	}
 
-	entryMappingManager := inmemory.NewEntryMappingManager(entryRetrievers, simple.BundledEntryRetriever)
+	bundledEntryRetriever := simple.BundledEntryRetriever(k.MustStrings("general.allowed_file_endings"))
+	entryMappingManager := inmemory.NewEntryMappingManager(entryRetrievers, bundledEntryRetriever)
 
 	listener, err := webserver.SetupListener(k)
 	if err != nil {
@@ -70,6 +71,15 @@ func StartApp() {
 		slog.Error("could not setup web server router", "error", err)
 		os.Exit(1)
 	}
+
+	go func() {
+		err := entryMappingManager.RefreshEntryMappings()
+		if err != nil {
+			slog.Error("could not refresh entry mappings", "error", err)
+		} else {
+			slog.Info("refreshed entry mappings")
+		}
+	}()
 
 	go func() {
 		exitChan := make(chan os.Signal, 1)
