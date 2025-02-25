@@ -12,7 +12,12 @@ import {getApiClient} from "../utils/api.ts";
 const contentLoaded = ref(false);
 const entryMappingList: Ref<Array<EntryMapping> | null> = ref(null);
 const entryMappingTotalAmount: Ref<number | null> = ref(null);
-const retrieverList: Ref<Array<Retriever> | null> = ref(null);
+
+interface RetrieverWrapper extends Retriever {
+  hasMultipleInstances: boolean;
+}
+
+const retrieverList: Ref<Array<RetrieverWrapper> | null> = ref(null);
 
 function isEntryPresentInRetriever(entryMapping: EntryMapping, retrieverId: string): boolean {
   return entryMapping.retrieverFindings?.filter(finding => {
@@ -73,7 +78,16 @@ const retrieverCategoryList = computed(() => {
 onMounted(async () => {
   const retrieverListResp = (await apiClient.getRetrievers()).data.retrievers;
   sortRetrieverList(retrieverListResp);
-  retrieverList.value = retrieverListResp;
+  const wrappedRetrieverList = new Array<RetrieverWrapper>();
+  for (const retriever of retrieverListResp) {
+    const hasMultipleInstances = retrieverListResp.filter((filterRetriever) => filterRetriever.id !== retriever.id &&
+        filterRetriever.category === retriever.category && filterRetriever.softwareName === retriever.softwareName).length > 0;
+    wrappedRetrieverList.push({
+      ...retriever,
+      hasMultipleInstances: hasMultipleInstances
+    });
+  }
+  retrieverList.value = wrappedRetrieverList;
 });
 
 const filterElemList = [
@@ -182,7 +196,7 @@ async function refreshEntryMapping() {
           </th>
           <th v-else v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
             <TableRetrieverStateHeader
-                :name="retriever.name"
+                :name="retriever.hasMultipleInstances ? retriever.name : null"
                 :hover-text="retriever.softwareName"
                 :logo-filename="`${retriever.softwareName}-128x128.png`"
                 :logo-alt-text="`The logo of the ${retriever.softwareName} software project.`"
