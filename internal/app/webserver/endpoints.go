@@ -26,13 +26,13 @@ func (a ApiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEnt
 		return nil, err
 	}
 
-	entryMappingList, totalAmount, err := a.entryMappingManager.GetEntryMappings(page, pageSize, filter)
+	entryMappings, totalAmount, err := a.entryMappingManager.GetEntryMappings(page, pageSize, filter)
 	if err != nil {
 		return nil, err
 	}
 	var entryMappingRespList []EntryMapping
-	for entryName, pairs := range entryMappingList {
-		entryMappingRespList = append(entryMappingRespList, getResponseEntryMappingFromPresencePairs(entryName, pairs))
+	for _, entryMapping := range entryMappings {
+		entryMappingRespList = append(entryMappingRespList, getResponseEntryMappingFromPresencePairs(entryMapping))
 	}
 
 	return &GetEntryMappings200JSONResponse{
@@ -78,9 +78,9 @@ func validatePageSize(pageSize int) error {
 	return nil
 }
 
-func getResponseEntryMappingFromPresencePairs(entryName common.EntryName, pairs common.EntryPresencePairs) EntryMapping {
+func getResponseEntryMappingFromPresencePairs(entryMapping common.EntryMapping) EntryMapping {
 	findings := make([]EntryMappingRetrieverFindingsInner, 0)
-	for retrieverInfo, entry := range pairs {
+	for retrieverInfo, entry := range entryMapping.Pairs {
 		retrieverId := RetrieverId(retrieverInfo.Id())
 		mappedFindingValue, err := getFindingValueFromEntry(entry)
 		if err != nil {
@@ -100,9 +100,8 @@ func getResponseEntryMappingFromPresencePairs(entryName common.EntryName, pairs 
 		}
 		findings = append(findings, finding)
 	}
-	entryNameStr := string(entryName)
 	return EntryMapping{
-		Name:              entryNameStr,
+		Name:              string(entryMapping.Name),
 		RetrieverFindings: findings,
 	}
 }

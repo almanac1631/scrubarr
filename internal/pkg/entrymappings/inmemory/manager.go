@@ -15,23 +15,23 @@ type EntryMappingManager struct {
 	bundledEntryRetriever common.BundledEntryRetriever
 
 	entryMappingsLock *sync.Mutex
-	entryMappings     map[common.EntryName]common.EntryPresencePairs
+	rawEntryMappings  map[common.EntryName]common.EntryPresencePairs
 }
 
-func NewEntryMappingManager(entryRetrievers map[common.RetrieverInfo]common.EntryRetriever, bundledEntryRetriever common.BundledEntryRetriever) *EntryMappingManager {
+func NewEntryMappingManager(entryRetrievers map[common.RetrieverInfo]common.EntryRetriever, bundledEntryRetriever common.BundledEntryRetriever) common.EntryMappingManager {
 	return &EntryMappingManager{
 		entryRetrievers:       entryRetrievers,
 		bundledEntryRetriever: bundledEntryRetriever,
 
 		entryMappingsLock: &sync.Mutex{},
-		entryMappings:     make(map[common.EntryName]common.EntryPresencePairs),
+		rawEntryMappings:  make(map[common.EntryName]common.EntryPresencePairs),
 	}
 }
 
 func (e *EntryMappingManager) RefreshEntryMappings() error {
 	e.entryMappingsLock.Lock()
 	defer e.entryMappingsLock.Unlock()
-	e.entryMappings = make(map[common.EntryName]common.EntryPresencePairs)
+	e.rawEntryMappings = make(map[common.EntryName]common.EntryPresencePairs)
 	rawEntries, err := e.bundledEntryRetriever(e.entryRetrievers)
 	if err != nil {
 		return fmt.Errorf("could not query entries using given entry retriever: %w", err)
@@ -46,7 +46,7 @@ func (e *EntryMappingManager) RefreshEntryMappings() error {
 			}
 			presencePair[&retrieverInfo] = &entry
 		}
-		e.entryMappings[name] = presencePair
+		e.rawEntryMappings[name] = presencePair
 	}
 	return nil
 }
@@ -61,44 +61,43 @@ func getSetOfNames(retrieverEntries map[common.RetrieverInfo]common.RetrieverEnt
 	return setOfNames
 }
 
-func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter) (map[common.EntryName]common.EntryPresencePairs, int, error) {
-	filteredEntryMappings := applyFilter(e.entryMappings, filter)
+func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter) ([]common.EntryMapping, int, error) {
+	entryMappings := make([]common.EntryMapping, len(e.rawEntryMappings))
+	i := 0
+	for entryName, pairs := range e.rawEntryMappings {
+		entryMappings[i] = common.EntryMapping{Name: entryName, Pairs: pairs}
+		i++
+	}
+	filteredEntryMappings := applyFilter(entryMappings, filter)
 	totalAmount := len(filteredEntryMappings)
 	return getPageExcerpt(filteredEntryMappings, page, pageSize), totalAmount, nil
 }
 
-func getPageExcerpt(entryMappings map[common.EntryName]common.EntryPresencePairs, page int, pageSize int) map[common.EntryName]common.EntryPresencePairs {
+func getPageExcerpt(entryMappings []common.EntryMapping, page int, pageSize int) []common.EntryMapping {
 	offset := (page - 1) * pageSize
 	if offset > len(entryMappings) {
-		return map[common.EntryName]common.EntryPresencePairs{}
+		return []common.EntryMapping{}
 	}
-	entryNames := slices.Collect(maps.Keys(entryMappings))
-	sort.SliceStable(entryNames, func(i, j int) bool {
-		return strings.Compare(string(entryNames[i]), string(entryNames[j])) == -1
+	sort.SliceStable(entryMappings, func(i, j int) bool {
+		return strings.Compare(string(entryMappings[i].Name), string(entryMappings[j].Name)) == -1
 	})
 	end := offset + pageSize
-	if end > len(entryNames) {
-		end = len(entryNames)
+	if end > len(entryMappings) {
+		end = len(entryMappings)
 	}
-	selectedEntryNames := entryNames[offset:end]
-	entryMappingsExcerpt := map[common.EntryName]common.EntryPresencePairs{}
-	for _, entryName := range selectedEntryNames {
-		entryMappingsExcerpt[entryName] = entryMappings[entryName]
-	}
-	return entryMappingsExcerpt
+	return entryMappings[offset:end]
 }
 
-func applyFilter(entryMappings map[common.EntryName]common.EntryPresencePairs, filter common.EntryMappingFilter) map[common.EntryName]common.EntryPresencePairs {
+func applyFilter(entryMappings []common.EntryMapping, filter common.EntryMappingFilter) []common.EntryMapping {
 	if filter == common.EntryMappingFilterNoFilter {
 		return entryMappings
 	}
-	filteredEntryMappings := map[common.EntryName]common.EntryPresencePairs{}
-	for entryName, entry := range entryMappings {
-		entryPresencePairsComplete := areEntryPresencePairsComplete(entry)
-		if entryPresencePairsComplete && filter == common.EntryMappingFilterCompleteEntry {
-			filteredEntryMappings[entryName] = entry
-		} else if !entryPresencePairsComplete && filter == common.EntryMappingFilterIncompleteEntry {
-			filteredEntryMappings[entryName] = entry
+	var filteredEntryMappings []common.EntryMapping
+	for _, entryMapping := range entryMappings {
+		entryPresencePairsComplete := areEntryPresencePairsComplete(entryMapping.Pairs)
+		if (entryPresencePairsComplete && filter == common.EntryMappingFilterCompleteEntry) ||
+			(!entryPresencePairsComplete && filter == common.EntryMappingFilterIncompleteEntry) {
+			filteredEntryMappings = append(filteredEntryMappings, entryMapping)
 		}
 	}
 	return filteredEntryMappings

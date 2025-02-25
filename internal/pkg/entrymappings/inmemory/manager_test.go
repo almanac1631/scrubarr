@@ -25,19 +25,19 @@ var (
 )
 
 func Test_applyFilter(t *testing.T) {
-	entryMappings := map[common.EntryName]common.EntryPresencePairs{
-		"first":  firstEntry,
-		"second": secondEntry,
-		"third":  thirdEntry,
+	entryMappings := []common.EntryMapping{
+		{"first", firstEntry},
+		{"second", secondEntry},
+		{"third", thirdEntry},
 	}
 	type args struct {
-		entryMappings map[common.EntryName]common.EntryPresencePairs
+		entryMappings []common.EntryMapping
 		filter        common.EntryMappingFilter
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[common.EntryName]common.EntryPresencePairs
+		want []common.EntryMapping
 	}{
 		{
 			"test no filter", args{entryMappings, common.EntryMappingFilterNoFilter},
@@ -45,11 +45,11 @@ func Test_applyFilter(t *testing.T) {
 		},
 		{
 			"test filter complete", args{entryMappings, common.EntryMappingFilterCompleteEntry},
-			map[common.EntryName]common.EntryPresencePairs{"first": firstEntry},
+			[]common.EntryMapping{{"first", firstEntry}},
 		},
 		{
 			"test filter incomplete", args{entryMappings, common.EntryMappingFilterIncompleteEntry},
-			map[common.EntryName]common.EntryPresencePairs{"second": secondEntry, "third": thirdEntry},
+			[]common.EntryMapping{{"second", secondEntry}, {"third", thirdEntry}},
 		},
 	}
 	for _, tt := range tests {
@@ -106,65 +106,65 @@ func Test_areEntryPresencePairsComplete(t *testing.T) {
 
 func Test_getPageExcerpt(t *testing.T) {
 	type args struct {
-		entryMappings map[common.EntryName]common.EntryPresencePairs
+		entryMappings []common.EntryMapping
 		page          int
 		pageSize      int
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[common.EntryName]common.EntryPresencePairs
+		want []common.EntryMapping
 	}{
 		{
 			"test page excerpt full response",
-			args{map[common.EntryName]common.EntryPresencePairs{
-				"first": firstEntry,
+			args{[]common.EntryMapping{
+				{"first", firstEntry},
 			}, 1, 10},
-			map[common.EntryName]common.EntryPresencePairs{
-				"first": firstEntry,
+			[]common.EntryMapping{
+				{"first", firstEntry},
 			},
 		},
 		{
 			"test valid partial page excerpt and respect order",
-			args{map[common.EntryName]common.EntryPresencePairs{
-				"a": firstEntry,
-				"b": firstEntry,
-				"c": firstEntry,
-				"d": firstEntry,
-				"e": firstEntry,
-				"f": firstEntry,
-				"g": firstEntry,
-				"h": firstEntry,
+			args{[]common.EntryMapping{
+				{"a", firstEntry},
+				{"b", firstEntry},
+				{"c", firstEntry},
+				{"d", firstEntry},
+				{"e", firstEntry},
+				{"f", firstEntry},
+				{"g", firstEntry},
+				{"h", firstEntry},
 			}, 2, 2},
-			map[common.EntryName]common.EntryPresencePairs{
-				"c": firstEntry,
-				"d": firstEntry,
+			[]common.EntryMapping{
+				{"c", firstEntry},
+				{"d", firstEntry},
 			},
 		},
 		{
 			"test partial page excerpt end out of bounds",
-			args{map[common.EntryName]common.EntryPresencePairs{
-				"a": firstEntry,
-				"b": firstEntry,
-				"c": firstEntry,
+			args{[]common.EntryMapping{
+				{"a", firstEntry},
+				{"b", firstEntry},
+				{"c", firstEntry},
 			}, 2, 2},
-			map[common.EntryName]common.EntryPresencePairs{
-				"c": firstEntry,
+			[]common.EntryMapping{
+				{"c", firstEntry},
 			},
 		},
 		{
 			"test partial page excerpt offset out of bounds",
-			args{map[common.EntryName]common.EntryPresencePairs{
-				"a": firstEntry,
-				"b": firstEntry,
-				"c": firstEntry,
+			args{[]common.EntryMapping{
+				{"a", firstEntry},
+				{"b", firstEntry},
+				{"c", firstEntry},
 			}, 4, 1},
-			map[common.EntryName]common.EntryPresencePairs{},
+			[]common.EntryMapping{},
 		},
 		{
 			"test page excerpt empty entry mapping",
-			args{map[common.EntryName]common.EntryPresencePairs{}, 2, 2},
-			map[common.EntryName]common.EntryPresencePairs{},
+			args{[]common.EntryMapping{}, 2, 2},
+			[]common.EntryMapping{},
 		},
 	}
 	for _, tt := range tests {

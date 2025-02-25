@@ -5,13 +5,18 @@ import (
 	"strings"
 )
 
+type EntryMapping struct {
+	Name  EntryName
+	Pairs EntryPresencePairs
+}
+
 // EntryMappingManager is used to aggregate the results of single EntryRetriever instances and return the combined results.
 type EntryMappingManager interface {
 	// RefreshEntryMappings refreshes the entry mappings by querying every registered EntryRetriever and aggregating the results.
 	RefreshEntryMappings() error
 
 	// GetEntryMappings returns the filtered entry mapping by applying the given filters.
-	GetEntryMappings(page int, pageSize int, filter EntryMappingFilter) (map[EntryName]EntryPresencePairs, int, error)
+	GetEntryMappings(page int, pageSize int, filter EntryMappingFilter) ([]EntryMapping, int, error)
 
 	// GetRetrievers returns the information on all registered retrievers.
 	GetRetrievers() ([]RetrieverInfo, error)
