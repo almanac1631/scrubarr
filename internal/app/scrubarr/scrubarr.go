@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
+	"github.com/almanac1631/scrubarr/internal/pkg/entrymappings/inmemory"
+	"github.com/almanac1631/scrubarr/internal/pkg/retriever_bundled/simple"
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
@@ -51,18 +53,19 @@ func StartApp() {
 
 	slog.Info("starting scrubarr...", "version", version, "commit", commit)
 
-	err = registerRetrievers(k)
+	entryRetrievers, err := initializeEntryRetrievers(k)
 	if err != nil {
 		panic(err)
 	}
-	go retrieverRegistry.RefreshCachedEntryMapping()
+
+	entryMappingManager := inmemory.NewEntryMappingManager(entryRetrievers, simple.BundledEntryRetriever)
 
 	listener, err := webserver.SetupListener(k)
 	if err != nil {
 		slog.Error("could not setup web server listener", "error", err)
 		os.Exit(1)
 	}
-	router, err := webserver.SetupWebserver(k, retrieverRegistry)
+	router, err := webserver.SetupWebserver(k, entryMappingManager)
 	if err != nil {
 		slog.Error("could not setup web server router", "error", err)
 		os.Exit(1)

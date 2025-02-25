@@ -1,7 +1,7 @@
 package arr_apps
 
 import (
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr/radarr"
 	"reflect"
 	"testing"
@@ -19,7 +19,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   map[retrieval.EntryName]retrieval.Entry
+		want   map[common.EntryName]common.Entry
 	}{
 		{
 			"can parse a single movie file",
@@ -36,7 +36,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 						Path: "some/film/dir/Some Cool Film Name.mkv",
 					},
 				}},
-			map[retrieval.EntryName]retrieval.Entry{
+			map[common.EntryName]common.Entry{
 				"Some Cool Film Name.mkv": {
 					Name: "Some Cool Film Name.mkv",
 					AdditionalData: ArrAppEntry{
@@ -63,7 +63,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 						Path: "some/film/dir/Some Cool Film Name.mkv",
 					},
 				}},
-			map[retrieval.EntryName]retrieval.Entry{},
+			map[common.EntryName]common.Entry{},
 		},
 	}
 	for _, tt := range tests {

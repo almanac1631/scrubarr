@@ -1,7 +1,7 @@
 package torrent_clients
 
 import (
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/autobrr/go-rtorrent"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -20,7 +20,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   map[retrieval.EntryName]retrieval.Entry
+		want   map[common.EntryName]common.Entry
 	}{
 		{
 			"can parse a single torrent file",
@@ -33,7 +33,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			}, []rtorrent.File{
 				{"Movie1.mkv", 10921},
 			}},
-			map[retrieval.EntryName]retrieval.Entry{
+			map[common.EntryName]common.Entry{
 				"Movie1.mkv": {
 					Name: "Movie1.mkv",
 					AdditionalData: TorrentClientEntry{
@@ -60,7 +60,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				{"Movie1.mkv", 10921},
 				{"Movie2.mp4", 89428920},
 			}},
-			map[retrieval.EntryName]retrieval.Entry{
+			map[common.EntryName]common.Entry{
 				"Movie1.mkv": {
 					Name: "Movie1.mkv",
 					AdditionalData: TorrentClientEntry{

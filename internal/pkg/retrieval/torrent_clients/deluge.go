@@ -2,7 +2,7 @@ package torrent_clients
 
 import (
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	delugeclient "github.com/gdm85/go-libdeluge"
 	"path"
 	"slices"
@@ -28,13 +28,13 @@ func NewDelugeFilePathMappingRetriever(allowedFileEndings []string, hostname str
 	return &DelugeEntryRetriever{client, allowedFileEndings}, nil
 }
 
-func (d *DelugeEntryRetriever) RetrieveEntries() (map[retrieval.EntryName]retrieval.Entry, error) {
+func (d *DelugeEntryRetriever) RetrieveEntries() (common.RetrieverEntries, error) {
 	torrentsStatusList, err := d.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get torrents status: %w", err)
 	}
 
-	torrentEntryMap := map[retrieval.EntryName]retrieval.Entry{}
+	torrentEntryMap := common.RetrieverEntries{}
 	for _, torrentStatus := range torrentsStatusList {
 		iterTorrentStatusList := d.parseDelugeTorrentStatus(torrentStatus)
 		for _, torrentStatusEntry := range iterTorrentStatusList {
@@ -44,8 +44,8 @@ func (d *DelugeEntryRetriever) RetrieveEntries() (map[retrieval.EntryName]retrie
 	return torrentEntryMap, nil
 }
 
-func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(torrentStatus *delugeclient.TorrentStatus) []retrieval.Entry {
-	entryList := make([]retrieval.Entry, 0)
+func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(torrentStatus *delugeclient.TorrentStatus) []common.Entry {
+	entryList := make([]common.Entry, 0)
 	for _, file := range torrentStatus.Files {
 		if !slices.Contains(d.allowedFileEndings, path.Ext(file.Path)) {
 			continue
@@ -53,8 +53,8 @@ func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(torrentStatus *delugecli
 		filePath := path.Join(torrentStatus.DownloadLocation, file.Path)
 		downloadedAt := time.Unix(torrentStatus.CompletedTime, 0).In(time.UTC)
 		name := path.Base(filePath)
-		entry := retrieval.Entry{
-			Name: retrieval.EntryName(name),
+		entry := common.Entry{
+			Name: common.EntryName(name),
 			AdditionalData: TorrentClientEntry{
 				TorrentClientName: "deluge",
 				TorrentName:       torrentStatus.Name,

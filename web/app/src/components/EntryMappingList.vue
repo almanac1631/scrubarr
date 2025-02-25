@@ -54,8 +54,7 @@ async function fetchAndDisplayEntries() {
     return;
   }
   try {
-    const requestPage = selectedPage.value - 1;
-    const entryMappingResponse = (await apiClient.getEntryMappings(requestPage, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum)).data;
+    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum)).data;
     entryMappingList.value = entryMappingResponse.entries;
     entryMappingTotalAmount.value = entryMappingResponse.totalAmount;
   } finally {
@@ -104,6 +103,7 @@ const refreshInProgress = ref(false);
 
 async function refreshEntryMapping() {
   refreshInProgress.value = true;
+  contentLoaded.value = false;
   try {
     await getApiClient().refreshEntryMappings();
     await fetchAndDisplayEntries();

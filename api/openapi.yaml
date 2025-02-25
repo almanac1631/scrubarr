@@ -13,7 +13,7 @@ paths:
           required: true
           schema:
             type: "integer"
-            minimum: 0
+            minimum: 1
           description: "The page number to display."
         - in: "query"
           name: "pageSize"

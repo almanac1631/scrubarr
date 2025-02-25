@@ -1,7 +1,7 @@
 package arr_apps
 
 import (
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr/sonarr"
 	"reflect"
 	"testing"
@@ -19,7 +19,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   retrieval.Entry
+		want   common.Entry
 	}{
 		{
 			"can parse a monitored episode file", fields{nil}, args{
@@ -36,7 +36,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					RelativePath: "Season 1/Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
 				},
-			}, retrieval.Entry{
+			}, common.Entry{
 				Name: "Some Episode.mkv",
 				AdditionalData: ArrAppEntry{
 					Type:          MediaTypeSeries,
@@ -61,7 +61,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					RelativePath: "Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
 				},
-			}, retrieval.Entry{
+			}, common.Entry{
 				Name: "Some Episode.mkv",
 				AdditionalData: ArrAppEntry{
 					Type:          MediaTypeSeries,

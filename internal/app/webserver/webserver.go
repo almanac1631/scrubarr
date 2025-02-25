@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/app/common"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/knadh/koanf/v2"
 	"io/fs"
 	"log/slog"
@@ -20,10 +20,10 @@ import (
 //go:embed all:content
 var content embed.FS
 
-func SetupWebserver(config *koanf.Koanf, retrieverRegistry common.RetrieverRegistry) (http.Handler, error) {
+func SetupWebserver(config *koanf.Koanf, entryMappingManager common.EntryMappingManager) (http.Handler, error) {
 	// Create a new router & API
 	router := http.NewServeMux()
-	apiServer, err := NewApiEndpointHandler(retrieverRegistry, config)
+	apiServer, err := NewApiEndpointHandler(entryMappingManager, config)
 	if err != nil {
 		return nil, fmt.Errorf("could not create api endpoint handler: %w", err)
 	}

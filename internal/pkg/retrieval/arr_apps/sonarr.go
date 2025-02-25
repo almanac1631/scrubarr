@@ -2,7 +2,7 @@ package arr_apps
 
 import (
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr"
 	"golift.io/starr/sonarr"
 	"path"
@@ -24,12 +24,12 @@ func NewSonarrMediaRetriever(allowedFileEndings []string, hostname string, apiKe
 	return &SonarrMediaRetriever{client, allowedFileEndings}, nil
 }
 
-func (s *SonarrMediaRetriever) RetrieveEntries() (map[retrieval.EntryName]retrieval.Entry, error) {
+func (s *SonarrMediaRetriever) RetrieveEntries() (common.RetrieverEntries, error) {
 	seriesList, err := s.client.GetAllSeries()
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve sonarr series list: %w", err)
 	}
-	mediaEntryList := map[retrieval.EntryName]retrieval.Entry{}
+	mediaEntryList := common.RetrieverEntries{}
 	for _, series := range seriesList {
 		fileList, err := s.client.GetSeriesEpisodeFiles(series.ID)
 		if err != nil {
@@ -46,11 +46,11 @@ func (s *SonarrMediaRetriever) RetrieveEntries() (map[retrieval.EntryName]retrie
 	return mediaEntryList, nil
 }
 
-func (s *SonarrMediaRetriever) parseSeriesEpisodeFile(series *sonarr.Series, episodeFile *sonarr.EpisodeFile) retrieval.Entry {
+func (s *SonarrMediaRetriever) parseSeriesEpisodeFile(series *sonarr.Series, episodeFile *sonarr.EpisodeFile) common.Entry {
 	monitored := s.isSeasonMonitored(series, episodeFile.SeasonNumber)
 	name := path.Base(episodeFile.Path)
-	return retrieval.Entry{
-		Name: retrieval.EntryName(name),
+	return common.Entry{
+		Name: common.EntryName(name),
 		AdditionalData: ArrAppEntry{
 			Type:          MediaTypeSeries,
 			ParentName:    series.Title,
