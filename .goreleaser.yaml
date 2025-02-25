@@ -9,6 +9,10 @@ builds:
       - -trimpath
     ldflags:
       - '-s -w -X github.com/almanac1631/scrubarr/internal/app/scrubarr.version={{.Version}} -X github.com/almanac1631/scrubarr/internal/app/scrubarr.commit={{.Commit}}'
+    tags:
+      - no_postgres
+      - no_mysql
+      - no_ydb
     goos:
       - 'freebsd'
       - 'windows'
@@ -22,6 +26,8 @@ builds:
     ignore:
       - goos: 'darwin'
         goarch: '386'
+      - goos: 'windows'
+        goarch: 'arm'
     main: ./cmd/scrubarr/main.go
     binary: '{{ .ProjectName }}_v{{ .Version }}'
 
