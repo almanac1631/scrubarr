@@ -2,9 +2,7 @@ package scrubarr
 
 import (
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/app/common"
-	"github.com/almanac1631/scrubarr/internal/pkg/config"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	_ "github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
@@ -15,42 +13,44 @@ import (
 	"log/slog"
 )
 
-type instantiateFuncType func(koanf *koanf.Koanf, allowedFileEndings []string) (retrieval.EntryRetriever, error)
+type instantiateFuncType func(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error)
 
-var instantiateFunctions = map[common.RetrieverInfo]instantiateFuncType{
-	{Category: "folder", SoftwareName: "folder"}:           instantiateFolderScanner,
-	{Category: "arr_app", SoftwareName: "sonarr"}:          instantiateSonarrRetriever,
-	{Category: "arr_app", SoftwareName: "radarr"}:          instantiateRadarrRetriever,
-	{Category: "torrent_client", SoftwareName: "deluge"}:   instantiateDelugeRetriever,
-	{Category: "torrent_client", SoftwareName: "rtorrent"}: instantiateRtorrentRetriever,
+type instantiateRetrieverInfo struct {
+	category     string
+	softwareName string
 }
 
-var retrieverRegistry = &cachedRetrieverRegistry{retrieverRegistry: common.MapBasedRetrieverRegistry{}}
+var instantiateFunctions = map[instantiateRetrieverInfo]instantiateFuncType{
+	{category: "folder", softwareName: "folder"}:           instantiateFolderScanner,
+	{category: "arr_app", softwareName: "sonarr"}:          instantiateSonarrRetriever,
+	{category: "arr_app", softwareName: "radarr"}:          instantiateRadarrRetriever,
+	{category: "torrent_client", softwareName: "deluge"}:   instantiateDelugeRetriever,
+	{category: "torrent_client", softwareName: "rtorrent"}: instantiateRtorrentRetriever,
+}
 
-func registerRetrievers(koanf *koanf.Koanf) error {
-	for retrieverInfo, instantiateFunc := range instantiateFunctions {
-		err := checkAndRegisterRetriever(koanf, retrieverInfo, instantiateFunc)
+func initializeEntryRetrievers(koanf *koanf.Koanf) (map[common.RetrieverInfo]common.EntryRetriever, error) {
+	entryRetrievers := map[common.RetrieverInfo]common.EntryRetriever{}
+	for keyRetrieverInfo, instantiateFunc := range instantiateFunctions {
+		err := checkAndRegisterRetriever(koanf, keyRetrieverInfo.category, keyRetrieverInfo.softwareName, entryRetrievers, instantiateFunc)
 		if err != nil {
-			return fmt.Errorf("could not register retriever type %q: %w", retrieverInfo, err)
+			return nil, fmt.Errorf("could not register retriever type %q: %w", keyRetrieverInfo, err)
 		}
 	}
-	return nil
+	return entryRetrievers, nil
 }
 
-func checkAndRegisterRetriever(koanf *koanf.Koanf, retrieverInfoGeneral common.RetrieverInfo, instantiateMethod instantiateFuncType) error {
-	path := fmt.Sprintf("connections.%s", retrieverInfoGeneral.SoftwareName)
-	retrieverConfigs, err := config.GetEntry[map[string]interface{}](koanf.Get, path)
-	if err != nil {
-		return err
+func checkAndRegisterRetriever(koanf *koanf.Koanf, category, softwareName string, retrieverRegistry map[common.RetrieverInfo]common.EntryRetriever, instantiateMethod instantiateFuncType) error {
+	path := fmt.Sprintf("connections.%s", softwareName)
+	retrieverConfigs, ok := koanf.Get(path).(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("could not find and parse retriever config at %q", path)
 	}
 	allowedFileEndings := koanf.MustStrings("general.allowed_file_endings")
 	for retrieverName, _ := range retrieverConfigs {
-		logger := slog.With("retriever", retrieverInfoGeneral, "path", path)
+		logger := slog.With("category", category, "softwareName", softwareName, "path", path)
 		retrieverPath := fmt.Sprintf("%s.%s", path, retrieverName)
-		folderEntryEnabled, err := config.GetEntry[bool](koanf.Get, fmt.Sprintf("%s.enabled", retrieverPath))
-		if err != nil {
-			return err
-		}
+
+		folderEntryEnabled := koanf.Bool(fmt.Sprintf("%s.enabled", retrieverPath))
 		if !folderEntryEnabled {
 			logger.Info("retriever disabled")
 			continue
@@ -60,15 +60,17 @@ func checkAndRegisterRetriever(koanf *koanf.Koanf, retrieverInfoGeneral common.R
 		if err != nil {
 			return fmt.Errorf("failed to register retriever %q: %w", retrieverName, err)
 		}
-		retrieverInfo := retrieverInfoGeneral
-		retrieverInfo.Name = retrieverName
-		retrieverRegistry.retrieverRegistry[retrieverInfo] = retriever
-		logger.Info("registered retriever")
+		retrieverInfo := common.RetrieverInfo{
+			Category:     category,
+			SoftwareName: softwareName,
+			Name:         retrieverName,
+		}
+		retrieverRegistry[retrieverInfo] = retriever
 	}
 	return nil
 }
 
-func instantiateFolderScanner(koanf *koanf.Koanf, allowedFileEndings []string) (retrieval.EntryRetriever, error) {
+func instantiateFolderScanner(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error) {
 	folderPath := koanf.MustString("path")
 	retriever, err := folder_scanning.NewFolderScanner(allowedFileEndings, folderPath)
 	if err != nil {
@@ -77,7 +79,7 @@ func instantiateFolderScanner(koanf *koanf.Koanf, allowedFileEndings []string) (
 	return retriever, nil
 }
 
-func instantiateSonarrRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (retrieval.EntryRetriever, error) {
+func instantiateSonarrRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error) {
 	hostname := koanf.MustString("hostname")
 	apiKey := koanf.MustString("api_key")
 	retriever, err := arr_apps.NewSonarrMediaRetriever(allowedFileEndings, hostname, apiKey)
@@ -87,7 +89,7 @@ func instantiateSonarrRetriever(koanf *koanf.Koanf, allowedFileEndings []string)
 	return retriever, nil
 }
 
-func instantiateDelugeRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (retrieval.EntryRetriever, error) {
+func instantiateDelugeRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error) {
 	hostname := koanf.MustString("hostname")
 	port := uint(koanf.MustInt("port"))
 	username := koanf.MustString("username")
@@ -99,7 +101,7 @@ func instantiateDelugeRetriever(koanf *koanf.Koanf, allowedFileEndings []string)
 	return retriever, nil
 }
 
-func instantiateRadarrRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (retrieval.EntryRetriever, error) {
+func instantiateRadarrRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error) {
 	hostname := koanf.MustString("hostname")
 	apiKey := koanf.MustString("api_key")
 	retriever, err := arr_apps.NewRadarrMediaRetriever(allowedFileEndings, hostname, apiKey)
@@ -109,7 +111,7 @@ func instantiateRadarrRetriever(koanf *koanf.Koanf, allowedFileEndings []string)
 	return retriever, nil
 }
 
-func instantiateRtorrentRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (retrieval.EntryRetriever, error) {
+func instantiateRtorrentRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error) {
 	hostname := koanf.MustString("hostname")
 	username := koanf.MustString("username")
 	password := koanf.MustString("password")

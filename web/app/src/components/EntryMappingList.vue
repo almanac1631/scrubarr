@@ -54,8 +54,7 @@ async function fetchAndDisplayEntries() {
     return;
   }
   try {
-    const requestPage = selectedPage.value - 1;
-    const entryMappingResponse = (await apiClient.getEntryMappings(requestPage, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum)).data;
+    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum)).data;
     entryMappingList.value = entryMappingResponse.entries;
     entryMappingTotalAmount.value = entryMappingResponse.totalAmount;
   } finally {
@@ -99,6 +98,22 @@ const selectedPageSize: Ref<DropdownOption | null> = ref(null);
 watch([selectedFilter, selectedPageSize, selectedPage], () => {
   fetchAndDisplayEntries();
 });
+
+const refreshInProgress = ref(false);
+
+async function refreshEntryMapping() {
+  refreshInProgress.value = true;
+  contentLoaded.value = false;
+  try {
+    await getApiClient().refreshEntryMappings();
+    await fetchAndDisplayEntries();
+  } catch (e) {
+    console.error("unknown error occurred while requesting a refresh in");
+    console.error(e);
+  } finally {
+    refreshInProgress.value = false;
+  }
+}
 </script>
 
 <template>
@@ -121,6 +136,17 @@ watch([selectedFilter, selectedPageSize, selectedPage], () => {
         <div class="my-2 flex justify-end gap-2">
           <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>
           <Dropdown :options="filterElemList" :default-option="filterElemList[0]" v-model="selectedFilter"/>
+          <button v-on:click="refreshEntryMapping" :disabled="refreshInProgress"
+                  class="flex w-24 justify-center items-center rounded-md bg-red-500 px-3 py-1.5 text-medium font-semibold text-gray-100 hover:text-white shadow-xs hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:bg-red-300 disabled:hover:text-gray-100">
+            <span v-if="!refreshInProgress">Refresh</span>
+            <svg v-if="refreshInProgress" class="size-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg"
+                 fill="none"
+                 viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
         </div>
       </div>
       <table class="table-fixed w-full">

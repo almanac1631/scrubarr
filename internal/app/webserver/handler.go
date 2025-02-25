@@ -4,7 +4,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/app/common"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/knadh/koanf/v2"
 	"os"
@@ -18,14 +18,14 @@ type JwtConfig struct {
 }
 
 type ApiEndpointHandler struct {
-	retrieverRegistry common.RetrieverRegistry
-	jwtConfig         *JwtConfig
-	username          string
-	passwordRetriever func() []byte
-	passwordSalt      []byte
+	entryMappingManager common.EntryMappingManager
+	jwtConfig           *JwtConfig
+	username            string
+	passwordRetriever   func() []byte
+	passwordSalt        []byte
 }
 
-func NewApiEndpointHandler(retrieverRegistry common.RetrieverRegistry, config *koanf.Koanf) (*ApiEndpointHandler, error) {
+func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, config *koanf.Koanf) (*ApiEndpointHandler, error) {
 	username := strings.ToLower(config.MustString("general.auth.username"))
 	loadByteValue := func(path string) ([]byte, error) {
 		value, err := hex.DecodeString(config.MustString(path))
@@ -55,7 +55,7 @@ func NewApiEndpointHandler(retrieverRegistry common.RetrieverRegistry, config *k
 		return nil, err
 	}
 	jwtConfig := &JwtConfig{privateKey, publicKey}
-	return &ApiEndpointHandler{retrieverRegistry, jwtConfig, username, passwordRetriever, passwordSalt}, nil
+	return &ApiEndpointHandler{entryMappingManager, jwtConfig, username, passwordRetriever, passwordSalt}, nil
 }
 
 func loadJwtPrivateKey(config *koanf.Koanf) (*ecdsa.PrivateKey, error) {

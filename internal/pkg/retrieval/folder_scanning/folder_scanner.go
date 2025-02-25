@@ -2,7 +2,7 @@ package folder_scanning
 
 import (
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"os"
 	pathLib "path"
 	"path/filepath"
@@ -32,8 +32,8 @@ func NewFolderScanner(allowedFileEndings []string, folderPath string) (*FolderSc
 	return folderScanner, nil
 }
 
-func (folderScanner *FolderScanner) RetrieveEntries() (map[retrieval.EntryName]retrieval.Entry, error) {
-	entries := map[retrieval.EntryName]retrieval.Entry{}
+func (folderScanner *FolderScanner) RetrieveEntries() (common.RetrieverEntries, error) {
+	entries := common.RetrieverEntries{}
 	err := filepath.Walk(folderScanner.folderPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -44,14 +44,14 @@ func (folderScanner *FolderScanner) RetrieveEntries() (map[retrieval.EntryName]r
 		}
 		name := pathLib.Base(path)
 		nameLower := strings.ToLower(name)
-		entry := retrieval.Entry{
-			Name: retrieval.EntryName(name),
+		entry := common.Entry{
+			Name: common.EntryName(name),
 			AdditionalData: FileEntry{
 				Path:        path,
 				SizeInBytes: info.Size(),
 			},
 		}
-		entries[retrieval.EntryName(nameLower)] = entry
+		entries[common.EntryName(nameLower)] = entry
 		return nil
 	})
 	if err != nil {

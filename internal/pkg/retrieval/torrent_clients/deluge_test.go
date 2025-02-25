@@ -1,7 +1,7 @@
 package torrent_clients
 
 import (
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	delugeclient "github.com/gdm85/go-libdeluge"
 	"github.com/stretchr/testify/assert"
 	"reflect"
@@ -20,7 +20,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   []retrieval.Entry
+		want   []common.Entry
 	}{
 		{
 			"can parse standard torrent status",
@@ -41,7 +41,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					},
 				},
 			}},
-			[]retrieval.Entry{
+			[]common.Entry{
 				{
 					Name: "Episode1.mkv",
 					AdditionalData: TorrentClientEntry{
@@ -79,7 +79,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					},
 				},
 			}},
-			[]retrieval.Entry{
+			[]common.Entry{
 				{
 					Name: "Episode2.mkv",
 					AdditionalData: TorrentClientEntry{
@@ -108,7 +108,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 				TrackerHost:      "sometrakkr.co.uk",
 				Files:            []delugeclient.File{},
 			}},
-			[]retrieval.Entry{},
+			[]common.Entry{},
 		},
 	}
 	for _, tt := range tests {

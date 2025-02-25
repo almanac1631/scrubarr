@@ -51,6 +51,7 @@ import {logout} from "./auth/auth.ts";
 </template>
 
 <style>
+/*noinspection CssUnusedSymbol*/
 html, body, #app {
   height: 100%;
 }

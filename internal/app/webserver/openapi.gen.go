@@ -175,6 +175,12 @@ type Login200Response struct {
 	Token   string `json:"token"`
 }
 
+// RefreshEntryMappings200Response defines model for refreshEntryMappings_200_response.
+type RefreshEntryMappings200Response struct {
+	// Message The status message to display.
+	Message string `json:"message"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = ErrorResponseBody
 
@@ -289,6 +295,9 @@ type ServerInterface interface {
 	// Get a list of entry mappings.
 	// (GET /entry-mappings)
 	GetEntryMappings(w http.ResponseWriter, r *http.Request, params GetEntryMappingsParams)
+	// Trigger a refresh of the entry mappings.
+	// (POST /entry-mappings)
+	RefreshEntryMappings(w http.ResponseWriter, r *http.Request)
 	// Login to the application using the provided credentials.
 	// (POST /login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -360,6 +369,26 @@ func (siw *ServerInterfaceWrapper) GetEntryMappings(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetEntryMappings(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RefreshEntryMappings operation middleware
+func (siw *ServerInterfaceWrapper) RefreshEntryMappings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RefreshEntryMappings(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -524,6 +553,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/entry-mappings", wrapper.GetEntryMappings)
+	m.HandleFunc("POST "+options.BaseURL+"/entry-mappings", wrapper.RefreshEntryMappings)
 	m.HandleFunc("POST "+options.BaseURL+"/login", wrapper.Login)
 	m.HandleFunc("GET "+options.BaseURL+"/retrievers", wrapper.GetRetrievers)
 
@@ -567,6 +597,46 @@ type GetEntryMappings5XXJSONResponse struct {
 }
 
 func (response GetEntryMappings5XXJSONResponse) VisitGetEntryMappingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type RefreshEntryMappingsRequestObject struct {
+}
+
+type RefreshEntryMappingsResponseObject interface {
+	VisitRefreshEntryMappingsResponse(w http.ResponseWriter) error
+}
+
+type RefreshEntryMappings200JSONResponse RefreshEntryMappings200Response
+
+func (response RefreshEntryMappings200JSONResponse) VisitRefreshEntryMappingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RefreshEntryMappings4XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response RefreshEntryMappings4XXJSONResponse) VisitRefreshEntryMappingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type RefreshEntryMappings5XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response RefreshEntryMappings5XXJSONResponse) VisitRefreshEntryMappingsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -668,6 +738,9 @@ type StrictServerInterface interface {
 	// Get a list of entry mappings.
 	// (GET /entry-mappings)
 	GetEntryMappings(ctx context.Context, request GetEntryMappingsRequestObject) (GetEntryMappingsResponseObject, error)
+	// Trigger a refresh of the entry mappings.
+	// (POST /entry-mappings)
+	RefreshEntryMappings(ctx context.Context, request RefreshEntryMappingsRequestObject) (RefreshEntryMappingsResponseObject, error)
 	// Login to the application using the provided credentials.
 	// (POST /login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
@@ -724,6 +797,30 @@ func (sh *strictHandler) GetEntryMappings(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetEntryMappingsResponseObject); ok {
 		if err := validResponse.VisitGetEntryMappingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RefreshEntryMappings operation middleware
+func (sh *strictHandler) RefreshEntryMappings(w http.ResponseWriter, r *http.Request) {
+	var request RefreshEntryMappingsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RefreshEntryMappings(ctx, request.(RefreshEntryMappingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RefreshEntryMappings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RefreshEntryMappingsResponseObject); ok {
+		if err := validResponse.VisitRefreshEntryMappingsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

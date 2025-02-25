@@ -2,7 +2,7 @@ package arr_apps
 
 import (
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr"
 	"golift.io/starr/radarr"
 	"maps"
@@ -25,12 +25,12 @@ func NewRadarrMediaRetriever(allowedFileEndings []string, hostname string, apiKe
 	return &RadarrMediaRetriever{client, allowedFileEndings}, nil
 }
 
-func (r RadarrMediaRetriever) RetrieveEntries() (map[retrieval.EntryName]retrieval.Entry, error) {
+func (r RadarrMediaRetriever) RetrieveEntries() (common.RetrieverEntries, error) {
 	movieList, err := r.client.GetMovie(0)
 	if err != nil {
 		return nil, fmt.Errorf("could not get movie list: %w", err)
 	}
-	mediaEntryList := map[retrieval.EntryName]retrieval.Entry{}
+	mediaEntryList := common.RetrieverEntries{}
 	for _, movie := range movieList {
 		movieFileList, err := r.client.GetMovieFile(movie.ID)
 		if err != nil {
@@ -41,15 +41,15 @@ func (r RadarrMediaRetriever) RetrieveEntries() (map[retrieval.EntryName]retriev
 	return mediaEntryList, nil
 }
 
-func (r RadarrMediaRetriever) getEntriesFromMovieFileList(movie *radarr.Movie, movieList []*radarr.MovieFile) map[retrieval.EntryName]retrieval.Entry {
-	mediaEntryList := map[retrieval.EntryName]retrieval.Entry{}
+func (r RadarrMediaRetriever) getEntriesFromMovieFileList(movie *radarr.Movie, movieList []*radarr.MovieFile) map[common.EntryName]common.Entry {
+	mediaEntryList := map[common.EntryName]common.Entry{}
 	for _, movieFile := range movieList {
 		fileExtensions := path.Ext(movieFile.Path)
 		if !slices.Contains(r.allowedFileEndings, fileExtensions) {
 			continue
 		}
-		name := retrieval.EntryName(path.Base(movieFile.Path))
-		mediaEntryList[name] = retrieval.Entry{
+		name := common.EntryName(path.Base(movieFile.Path))
+		mediaEntryList[name] = common.Entry{
 			Name: name,
 			AdditionalData: ArrAppEntry{
 				Type:          MediaTypeMovie,
