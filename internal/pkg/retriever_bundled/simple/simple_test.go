@@ -17,29 +17,45 @@ func (t testEntryRetriever) RetrieveEntries() (common.RetrieverEntries, error) {
 
 func TestBundledEntryRetriever(t *testing.T) {
 	retrieverInfo1 := common.RetrieverInfo{
-		Category:     "somecategory",
-		SoftwareName: "somesoftware",
-		Name:         "retr1",
+		Category:     "c1",
+		SoftwareName: "s1",
+		Name:         "r1",
 	}
 	retrieverEntries1 := common.RetrieverEntries{
-		common.EntryName("some name"): common.Entry{},
+		common.EntryName("n1"): common.Entry{},
 	}
 	retriever1 := testEntryRetriever{
 		entries: retrieverEntries1,
 		err:     nil,
 	}
 	retrieverInfo2 := common.RetrieverInfo{
-		Category:     "anothercategory",
-		SoftwareName: "someothersoftware",
-		Name:         "retr2",
+		Category:     "c2",
+		SoftwareName: "s2",
+		Name:         "r2",
 	}
 	retrieverEntries2 := common.RetrieverEntries{
-		common.EntryName("another name"): common.Entry{},
+		common.EntryName("n2"): common.Entry{},
 	}
 	retriever2 := testEntryRetriever{
 		entries: retrieverEntries2,
 		err:     nil,
 	}
+	retrieverInfo3 := common.RetrieverInfo{
+		Category:     "c3",
+		SoftwareName: "s3",
+		Name:         "r3",
+	}
+	retrieverEntries3 := common.RetrieverEntries{
+		common.EntryName("AName.mkv"):          common.Entry{},
+		common.EntryName("yetanothername.MKV"): common.Entry{},
+		common.EntryName("and anothER name"):   common.Entry{},
+	}
+	retriever3 := testEntryRetriever{
+		entries: retrieverEntries3,
+		err:     nil,
+	}
+
+	fn := BundledEntryRetriever([]string{".mkv"})
 
 	type args struct {
 		entryRetrievers map[common.RetrieverInfo]common.EntryRetriever
@@ -73,10 +89,22 @@ func TestBundledEntryRetriever(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"parses entry names correctly",
+			args{map[common.RetrieverInfo]common.EntryRetriever{retrieverInfo3: retriever3}},
+			map[common.RetrieverInfo]common.RetrieverEntries{
+				retrieverInfo3: map[common.EntryName]common.Entry{
+					common.EntryName("AName"):            {},
+					common.EntryName("yetanothername"):   {},
+					common.EntryName("and anothER name"): {},
+				},
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BundledEntryRetriever(tt.args.entryRetrievers)
+			got, err := fn(tt.args.entryRetrievers)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("BundledEntryRetriever() error = %v, wantErr %v", err, tt.wantErr)
 				return
