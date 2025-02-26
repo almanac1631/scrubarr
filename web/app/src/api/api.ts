@@ -26,45 +26,6 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 /**
  * 
  * @export
- * @interface ArrAppFinding
- */
-export interface ArrAppFinding {
-    /**
-     * The media type of this entry.
-     * @type {string}
-     * @memberof ArrAppFinding
-     */
-    'mediaType'?: ArrAppFindingMediaTypeEnum;
-    /**
-     * The name of the parent.
-     * @type {string}
-     * @memberof ArrAppFinding
-     */
-    'parentName'?: string;
-    /**
-     * Indicates whether the entry is monitored.
-     * @type {boolean}
-     * @memberof ArrAppFinding
-     */
-    'monitored'?: boolean;
-    /**
-     * The file path the media entry is located at.
-     * @type {string}
-     * @memberof ArrAppFinding
-     */
-    'mediaFilePath'?: string;
-}
-
-export const ArrAppFindingMediaTypeEnum = {
-    Film: 'film',
-    Series: 'series'
-} as const;
-
-export type ArrAppFindingMediaTypeEnum = typeof ArrAppFindingMediaTypeEnum[keyof typeof ArrAppFindingMediaTypeEnum];
-
-/**
- * 
- * @export
  * @interface EntryMapping
  */
 export interface EntryMapping {
@@ -93,19 +54,7 @@ export interface EntryMappingRetrieverFindingsInner {
      * @memberof EntryMappingRetrieverFindingsInner
      */
     'id': string;
-    /**
-     * 
-     * @type {EntryMappingRetrieverFindingsInnerDetail}
-     * @memberof EntryMappingRetrieverFindingsInner
-     */
-    'detail': EntryMappingRetrieverFindingsInnerDetail;
 }
-/**
- * @type EntryMappingRetrieverFindingsInnerDetail
- * @export
- */
-export type EntryMappingRetrieverFindingsInnerDetail = ArrAppFinding | FolderFinding | TorrentClientFinding;
-
 /**
  * 
  * @export
@@ -124,25 +73,6 @@ export interface ErrorResponseBody {
      * @memberof ErrorResponseBody
      */
     'detail': string;
-}
-/**
- * 
- * @export
- * @interface FolderFinding
- */
-export interface FolderFinding {
-    /**
-     * The path of the file.
-     * @type {string}
-     * @memberof FolderFinding
-     */
-    'filePath'?: string;
-    /**
-     * The file size in bytes.
-     * @type {number}
-     * @memberof FolderFinding
-     */
-    'size'?: number;
 }
 /**
  * 
@@ -276,55 +206,6 @@ export const RetrieverSoftwareNameEnum = {
 
 export type RetrieverSoftwareNameEnum = typeof RetrieverSoftwareNameEnum[keyof typeof RetrieverSoftwareNameEnum];
 
-/**
- * 
- * @export
- * @interface TorrentClientFinding
- */
-export interface TorrentClientFinding {
-    /**
-     * The name of the torrent client software.
-     * @type {string}
-     * @memberof TorrentClientFinding
-     */
-    'clientName'?: string;
-    /**
-     * The name of the torrent.
-     * @type {string}
-     * @memberof TorrentClientFinding
-     */
-    'torrentName'?: string;
-    /**
-     * The file path the download is located at.
-     * @type {string}
-     * @memberof TorrentClientFinding
-     */
-    'downloadFilePath'?: string;
-    /**
-     * The date the torrent got downloaded at.
-     * @type {string}
-     * @memberof TorrentClientFinding
-     */
-    'downloadedAt'?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof TorrentClientFinding
-     */
-    'ratio'?: number;
-    /**
-     * The file size in bytes.
-     * @type {number}
-     * @memberof TorrentClientFinding
-     */
-    'size'?: number;
-    /**
-     * The hostname of the tracker used by the torrent.
-     * @type {string}
-     * @memberof TorrentClientFinding
-     */
-    'trackerHost'?: string;
-}
 
 /**
  * DefaultApi - axios parameter creator

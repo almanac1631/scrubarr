@@ -16,8 +16,3 @@ properties:
       properties:
         id:
           $ref: "./RetrieverId.yaml"
-        detail:
-          oneOf:
-            - $ref: "./findings/TorrentClientFinding.yaml"
-            - $ref: "./findings/ArrAppFinding.yaml"
-            - $ref: "./findings/FolderFinding.yaml"

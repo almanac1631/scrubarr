@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
@@ -18,12 +17,6 @@ import (
 
 const (
 	BearerAuthScopes = "BearerAuth.Scopes"
-)
-
-// Defines values for ArrAppFindingMediaType.
-const (
-	Film   ArrAppFindingMediaType = "film"
-	Series ArrAppFindingMediaType = "series"
 )
 
 // Defines values for RetrieverCategory.
@@ -48,24 +41,6 @@ const (
 	IncompleteEntries GetEntryMappingsParamsFilter = "incomplete_entries"
 )
 
-// ArrAppFinding defines model for ArrAppFinding.
-type ArrAppFinding struct {
-	// MediaFilePath The file path the media entry is located at.
-	MediaFilePath *string `json:"mediaFilePath,omitempty"`
-
-	// MediaType The media type of this entry.
-	MediaType *ArrAppFindingMediaType `json:"mediaType,omitempty"`
-
-	// Monitored Indicates whether the entry is monitored.
-	Monitored *bool `json:"monitored,omitempty"`
-
-	// ParentName The name of the parent.
-	ParentName *string `json:"parentName,omitempty"`
-}
-
-// ArrAppFindingMediaType The media type of this entry.
-type ArrAppFindingMediaType string
-
 // EntryMapping defines model for EntryMapping.
 type EntryMapping struct {
 	// Name The name of this entry.
@@ -75,30 +50,14 @@ type EntryMapping struct {
 
 // EntryMappingRetrieverFindingsInner defines model for EntryMapping_retrieverFindings_inner.
 type EntryMappingRetrieverFindingsInner struct {
-	Detail EntryMappingRetrieverFindingsInnerDetail `json:"detail"`
-
 	// Id Id used to identify retrievers.
 	Id RetrieverId `json:"id"`
-}
-
-// EntryMappingRetrieverFindingsInnerDetail defines model for EntryMapping_retrieverFindings_inner_detail.
-type EntryMappingRetrieverFindingsInnerDetail struct {
-	union json.RawMessage
 }
 
 // ErrorResponseBody defines model for ErrorResponseBody.
 type ErrorResponseBody struct {
 	Detail string `json:"detail"`
 	Error  string `json:"error"`
-}
-
-// FolderFinding defines model for FolderFinding.
-type FolderFinding struct {
-	// FilePath The path of the file.
-	FilePath *string `json:"filePath,omitempty"`
-
-	// Size The file size in bytes.
-	Size *int64 `json:"size,omitempty"`
 }
 
 // LoginRequestBody defines model for LoginRequestBody.
@@ -133,28 +92,6 @@ type RetrieverSoftwareName string
 
 // RetrieverId Id used to identify retrievers.
 type RetrieverId = string
-
-// TorrentClientFinding defines model for TorrentClientFinding.
-type TorrentClientFinding struct {
-	// ClientName The name of the torrent client software.
-	ClientName *string `json:"clientName,omitempty"`
-
-	// DownloadFilePath The file path the download is located at.
-	DownloadFilePath *string `json:"downloadFilePath,omitempty"`
-
-	// DownloadedAt The date the torrent got downloaded at.
-	DownloadedAt *time.Time `json:"downloadedAt,omitempty"`
-	Ratio        *float32   `json:"ratio,omitempty"`
-
-	// Size The file size in bytes.
-	Size *int64 `json:"size,omitempty"`
-
-	// TorrentName The name of the torrent.
-	TorrentName *string `json:"torrentName,omitempty"`
-
-	// TrackerHost The hostname of the tracker used by the torrent.
-	TrackerHost *string `json:"trackerHost,omitempty"`
-}
 
 // GetEntryMappings200Response defines model for getEntryMappings_200_response.
 type GetEntryMappings200Response struct {
@@ -201,94 +138,6 @@ type GetEntryMappingsParamsFilter string
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequestBody
-
-// AsTorrentClientFinding returns the union data inside the EntryMappingRetrieverFindingsInnerDetail as a TorrentClientFinding
-func (t EntryMappingRetrieverFindingsInnerDetail) AsTorrentClientFinding() (TorrentClientFinding, error) {
-	var body TorrentClientFinding
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromTorrentClientFinding overwrites any union data inside the EntryMappingRetrieverFindingsInnerDetail as the provided TorrentClientFinding
-func (t *EntryMappingRetrieverFindingsInnerDetail) FromTorrentClientFinding(v TorrentClientFinding) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeTorrentClientFinding performs a merge with any union data inside the EntryMappingRetrieverFindingsInnerDetail, using the provided TorrentClientFinding
-func (t *EntryMappingRetrieverFindingsInnerDetail) MergeTorrentClientFinding(v TorrentClientFinding) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsArrAppFinding returns the union data inside the EntryMappingRetrieverFindingsInnerDetail as a ArrAppFinding
-func (t EntryMappingRetrieverFindingsInnerDetail) AsArrAppFinding() (ArrAppFinding, error) {
-	var body ArrAppFinding
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromArrAppFinding overwrites any union data inside the EntryMappingRetrieverFindingsInnerDetail as the provided ArrAppFinding
-func (t *EntryMappingRetrieverFindingsInnerDetail) FromArrAppFinding(v ArrAppFinding) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeArrAppFinding performs a merge with any union data inside the EntryMappingRetrieverFindingsInnerDetail, using the provided ArrAppFinding
-func (t *EntryMappingRetrieverFindingsInnerDetail) MergeArrAppFinding(v ArrAppFinding) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsFolderFinding returns the union data inside the EntryMappingRetrieverFindingsInnerDetail as a FolderFinding
-func (t EntryMappingRetrieverFindingsInnerDetail) AsFolderFinding() (FolderFinding, error) {
-	var body FolderFinding
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromFolderFinding overwrites any union data inside the EntryMappingRetrieverFindingsInnerDetail as the provided FolderFinding
-func (t *EntryMappingRetrieverFindingsInnerDetail) FromFolderFinding(v FolderFinding) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeFolderFinding performs a merge with any union data inside the EntryMappingRetrieverFindingsInnerDetail, using the provided FolderFinding
-func (t *EntryMappingRetrieverFindingsInnerDetail) MergeFolderFinding(v FolderFinding) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-func (t EntryMappingRetrieverFindingsInnerDetail) MarshalJSON() ([]byte, error) {
-	b, err := t.union.MarshalJSON()
-	return b, err
-}
-
-func (t *EntryMappingRetrieverFindingsInnerDetail) UnmarshalJSON(b []byte) error {
-	err := t.union.UnmarshalJSON(b)
-	return err
-}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
