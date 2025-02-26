@@ -2,14 +2,9 @@ package webserver
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
-	"log/slog"
 )
 
 func (a ApiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEntryMappingsRequestObject) (GetEntryMappingsResponseObject, error) {
@@ -80,59 +75,16 @@ func validatePageSize(pageSize int) error {
 
 func getResponseEntryMappingFromPresencePairs(entryMapping common.EntryMapping) EntryMapping {
 	findings := make([]EntryMappingRetrieverFindingsInner, 0)
-	for retrieverInfo, entry := range entryMapping.Pairs {
+	for _, retrieverInfo := range entryMapping.Pairs.RetrieversFound {
 		retrieverId := RetrieverId(retrieverInfo.Id())
-		mappedFindingValue, err := getFindingValueFromEntry(entry)
-		if err != nil {
-			slog.Error("failed automatic finding value mapping", "err", err)
-			continue
-		}
-		marshalledFindingValue, err := json.Marshal(mappedFindingValue)
-		if err != nil {
-			slog.Error("could not marshal finding value", "err", err)
-			continue
-		}
 		finding := EntryMappingRetrieverFindingsInner{
 			Id: retrieverId,
-			Detail: EntryMappingRetrieverFindingsInnerDetail{
-				union: marshalledFindingValue,
-			},
 		}
 		findings = append(findings, finding)
 	}
 	return EntryMapping{
 		Name:              string(entryMapping.Name),
 		RetrieverFindings: findings,
-	}
-}
-
-func getFindingValueFromEntry(entry *common.Entry) (any, error) {
-	switch entryMapped := entry.AdditionalData.(type) {
-	case arr_apps.ArrAppEntry:
-		mediaType := ArrAppFindingMediaType(entryMapped.Type)
-		return ArrAppFinding{
-			MediaFilePath: &entryMapped.MediaFilePath,
-			MediaType:     &mediaType,
-			Monitored:     &entryMapped.Monitored,
-			ParentName:    &entryMapped.ParentName,
-		}, nil
-	case folder_scanning.FileEntry:
-		return FolderFinding{
-			FilePath: &entryMapped.Path,
-			Size:     &entryMapped.SizeInBytes,
-		}, nil
-	case torrent_clients.TorrentClientEntry:
-		return TorrentClientFinding{
-			ClientName:       &entryMapped.TorrentClientName,
-			DownloadFilePath: &entryMapped.DownloadFilePath,
-			DownloadedAt:     &entryMapped.DownloadedAt,
-			Ratio:            &entryMapped.Ratio,
-			Size:             &entryMapped.FileSizeBytes,
-			TorrentName:      &entryMapped.TorrentName,
-			TrackerHost:      &entryMapped.TrackerHost,
-		}, nil
-	default:
-		return nil, fmt.Errorf("could not map unknown entry info type: %T", entry.AdditionalData)
 	}
 }
 

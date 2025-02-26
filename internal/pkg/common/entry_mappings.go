@@ -30,34 +30,23 @@ const (
 	EntryMappingFilterCompleteEntry
 )
 
-// EntryPresencePairs is a map that	holds the findings within the retrievers of a given entry.
-type EntryPresencePairs map[*RetrieverInfo]*Entry
+// EntryPresencePairs is a struct that holds the findings within the retrievers of a given entry.
+type EntryPresencePairs struct {
+	// Name is the normalized name of the entry.
+	Name EntryName
+	// RetrieversFound holds a list of retrievers where this entry could be found.
+	RetrieversFound []RetrieverInfo
+}
 
 func (mapping EntryPresencePairs) String() string {
 	stringBuilder := &strings.Builder{}
-	stringBuilder.WriteString("[")
-	for retrieverId, entry := range mapping {
-		stateString := "/"
-		if entry != nil {
-			stateString = "+"
+	stringBuilder.WriteString(fmt.Sprintf("EntryPresencePairs{Name: %q, RetrieversFound: [", mapping.Name))
+	for i, retriever := range mapping.RetrieversFound {
+		if i > 0 {
+			stringBuilder.WriteString(", ")
 		}
-		stringBuilder.WriteString(fmt.Sprintf("%s=%s", retrieverId, stateString))
+		stringBuilder.WriteString(retriever.String())
 	}
-	stringBuilder.WriteString("]")
+	stringBuilder.WriteString("]}")
 	return stringBuilder.String()
-}
-
-func (mapping EntryPresencePairs) Name() EntryName {
-	var entryPresent *Entry
-	for _, entry := range mapping {
-		if entry == nil {
-			continue
-		}
-		entryPresent = entry
-		break
-	}
-	if entryPresent == nil {
-		panic("entry presence mapping has to contain at least one non-nil entry")
-	}
-	return entryPresent.Name
 }
