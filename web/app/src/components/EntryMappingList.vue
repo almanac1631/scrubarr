@@ -186,6 +186,9 @@ async function refreshEntryMapping() {
           <th class="py-3 pr-3 font-medium">
             Name
           </th>
+          <th class="w-52 pr-3 font-medium">
+            Added
+          </th>
           <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
               class="w-[120px] p-3 font-medium text-center truncate">
             <div class="h-6 flex justify-center">
@@ -226,6 +229,10 @@ async function refreshEntryMapping() {
           </td>
           <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.name">
             {{ entryMapping.name }}
+          </td>
+
+          <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.dateAdded">
+            {{ new Date(entryMapping.dateAdded).toISOString().replace(".000", "") }}
           </td>
 
           <TableRetrieverStateRowEntry
