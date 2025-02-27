@@ -85,6 +85,7 @@ func getResponseEntryMappingFromPresencePairs(entryMapping *common.EntryMapping)
 	return EntryMapping{
 		Name:              string(entryMapping.Name),
 		DateAdded:         entryMapping.DateAdded,
+		Size:              entryMapping.Size,
 		RetrieverFindings: findings,
 	}
 }
