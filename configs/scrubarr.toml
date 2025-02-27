@@ -3,6 +3,7 @@ allowed_file_endings = [".mkv", ".avi", ".mp4"]
 listen_network = "tcp"
 listen_addr = ":8888"
 path_prefix = "/scrubarr"
+db_file = "./scrubarr.db"
 
 [general.auth]
 username = "blinks"
