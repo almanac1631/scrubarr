@@ -49,7 +49,7 @@ func TestEntryMappingManager_parseEntryMapping(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, []*common.EntryMapping{
 			{"Some Film", utils.ParseTime("2025-02-17T19:00:00Z"), []common.RetrieverInfo{retriever1, retriever2, retriever3}},
-			{"Another film", utils.ParseTime("2025-03-18T09:32:01"), []common.RetrieverInfo{retriever2}},
+			{"Another film", utils.ParseTime("2025-03-18T09:32:01Z"), []common.RetrieverInfo{retriever2}},
 		}, entryMappings)
 	})
 }
