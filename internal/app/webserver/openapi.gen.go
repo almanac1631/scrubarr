@@ -44,6 +44,9 @@ const (
 
 // EntryMapping defines model for EntryMapping.
 type EntryMapping struct {
+	// DateAdded The date and time this entry was added.
+	DateAdded time.Time `json:"dateAdded"`
+
 	// Name The name of this entry.
 	Name              string                               `json:"name"`
 	RetrieverFindings []EntryMappingRetrieverFindingsInner `json:"retrieverFindings"`
@@ -51,9 +54,6 @@ type EntryMapping struct {
 
 // EntryMappingRetrieverFindingsInner defines model for EntryMapping_retrieverFindings_inner.
 type EntryMappingRetrieverFindingsInner struct {
-	// DateAdded The date and time this entry was added.
-	DateAdded time.Time `json:"dateAdded"`
-
 	// Id Id used to identify retrievers.
 	Id RetrieverId `json:"id"`
 }

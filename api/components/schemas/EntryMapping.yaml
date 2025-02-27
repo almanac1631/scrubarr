@@ -2,21 +2,21 @@ type: "object"
 required:
   - "name"
   - "retrieverFindings"
+  - "dateAdded"
 properties:
   name:
     type: "string"
     description: "The name of this entry."
+  dateAdded:
+    type: "string"
+    format: "date-time"
+    description: "The date and time this entry was added."
   retrieverFindings:
     type: "array"
     items:
       type: "object"
       required:
         - "id"
-        - "dateAdded"
       properties:
         id:
           $ref: "./RetrieverId.yaml"
-        dateAdded:
-          type: "string"
-          format: "date-time"
-          description: "The date and time this entry was added."
