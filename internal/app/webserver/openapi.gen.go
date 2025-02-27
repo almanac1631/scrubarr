@@ -50,6 +50,9 @@ type EntryMapping struct {
 	// Name The name of this entry.
 	Name              string                               `json:"name"`
 	RetrieverFindings []EntryMappingRetrieverFindingsInner `json:"retrieverFindings"`
+
+	// Size The size of this entry in bytes.
+	Size int64 `json:"size"`
 }
 
 // EntryMappingRetrieverFindingsInner defines model for EntryMapping_retrieverFindings_inner.

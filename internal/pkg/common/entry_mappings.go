@@ -10,6 +10,8 @@ type EntryMapping struct {
 	Name EntryName
 	// DateAdded is the date when the entry was added.
 	DateAdded time.Time
+	// Size is the size of the entry in bytes.
+	Size int64
 	// RetrieversFound holds a list of retrievers where this entry could be found.
 	RetrieversFound []RetrieverInfo
 }

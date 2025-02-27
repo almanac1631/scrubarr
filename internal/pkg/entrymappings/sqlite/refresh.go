@@ -51,19 +51,26 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	if _, err := tx.Exec("delete from main.entry_mappings;"); err != nil {
 		return fmt.Errorf("could not truncate entry_mappings table: %w", err)
 	}
-	statement, err := tx.Prepare("insert into main.entry_mappings (retriever_id, date_added, name, api_resp) values (?, ?, ?, ?)")
+	statement, err := tx.Prepare("insert into main.entry_mappings (retriever_id, date_added, size, name, api_resp) values (?, ?, ?, ?, ?)")
 	if err != nil {
 		return fmt.Errorf("could not prepare entry mappings insert statement: %w", err)
 	}
 	for retrieverInfo, entries := range rawEntries {
 		for name, entry := range entries {
 			dateAdded, err := getDateAddedFromEntry(entry)
+			if err != nil {
+				return fmt.Errorf("could not get date added from entry for retriever (%+v): %w", retrieverInfo, err)
+			}
+			size, err := getSizeFromEntry(entry)
+			if err != nil {
+				return fmt.Errorf("could not get size from entry for retriever (%+v): %w", retrieverInfo, err)
+			}
 			var apiResp any
 			apiResp, err = json.Marshal(entry.AdditionalData)
 			if err != nil {
 				return fmt.Errorf("could not marshal entry for retriever (%+v): %w", retrieverInfo, err)
 			}
-			if _, err = statement.Exec(retrieverInfo.Id(), dateAdded, name, apiResp); err != nil {
+			if _, err = statement.Exec(retrieverInfo.Id(), dateAdded, size, name, apiResp); err != nil {
 				return fmt.Errorf("could not insert entry for retriever (%+v): %w", retrieverInfo, err)
 			}
 		}
@@ -89,6 +96,21 @@ func getDateAddedFromEntry(entry common.Entry) (*time.Time, error) {
 		return nil, nil
 	}
 	return &dateAdded, nil
+}
+
+func getSizeFromEntry(entry common.Entry) (int64, error) {
+	var size int64
+	switch entry.AdditionalData.(type) {
+	case arr_apps.ArrAppEntry:
+		size = entry.AdditionalData.(arr_apps.ArrAppEntry).Size
+	case folder_scanning.FileEntry:
+		size = entry.AdditionalData.(folder_scanning.FileEntry).SizeInBytes
+	case torrent_clients.TorrentClientEntry:
+		size = entry.AdditionalData.(torrent_clients.TorrentClientEntry).FileSizeBytes
+	default:
+		return 0, fmt.Errorf("could not get size from entry: unknown entry type %T", entry.AdditionalData)
+	}
+	return size, nil
 }
 
 func (e *EntryMappingManager) updateRetrievers(tx *sql.Tx) error {
