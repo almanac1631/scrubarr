@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
@@ -50,6 +51,9 @@ type EntryMapping struct {
 
 // EntryMappingRetrieverFindingsInner defines model for EntryMapping_retrieverFindings_inner.
 type EntryMappingRetrieverFindingsInner struct {
+	// DateAdded The date and time this entry was added.
+	DateAdded time.Time `json:"dateAdded"`
+
 	// Id Id used to identify retrievers.
 	Id RetrieverId `json:"id"`
 }
