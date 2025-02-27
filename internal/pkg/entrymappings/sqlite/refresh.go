@@ -58,6 +58,9 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	for retrieverInfo, entries := range rawEntries {
 		for name, entry := range entries {
 			dateAdded, err := getDateAddedFromEntry(entry)
+			if err != nil {
+				return fmt.Errorf("could not get date added from entry for retriever (%+v): %w", retrieverInfo, err)
+			}
 			var apiResp any
 			apiResp, err = json.Marshal(entry.AdditionalData)
 			if err != nil {
