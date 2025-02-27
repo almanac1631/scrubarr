@@ -78,13 +78,13 @@ func getResponseEntryMappingFromPresencePairs(entryMapping *common.EntryMapping)
 	for _, retrieverInfo := range entryMapping.RetrieversFound {
 		retrieverId := RetrieverId(retrieverInfo.Id())
 		finding := EntryMappingRetrieverFindingsInner{
-			Id:        retrieverId,
-			DateAdded: entryMapping.DateAdded,
+			Id: retrieverId,
 		}
 		findings = append(findings, finding)
 	}
 	return EntryMapping{
 		Name:              string(entryMapping.Name),
+		DateAdded:         entryMapping.DateAdded,
 		RetrieverFindings: findings,
 	}
 }
