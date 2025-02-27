@@ -33,7 +33,7 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
                                    join category_counts cc on em.name = cc.name
                                    join (select name from filtered_names limit ? offset ?) limited_filtered_names
                                         on em.name = limited_filtered_names.name)
-select fe.name, fe.retriever_id, fe.date_added, tc.total
+select fe.name, fe.retriever_id, fe.date_added, fe.size, tc.total
 from filtered_entries fe
          join total_count tc order by fe.name;`, categoriesFilter)
 	rows, err = e.db.Query(query, pageSize, offset)
@@ -53,12 +53,13 @@ from filtered_entries fe
 	for rows.Next() {
 		var name, retrieverId string
 		var dateAdded time.Time
-		if err = rows.Scan(&name, &retrieverId, &dateAdded, &totalCount); err != nil {
+		var size int64
+		if err = rows.Scan(&name, &retrieverId, &dateAdded, &size, &totalCount); err != nil {
 			entryMappings = nil
 			err = fmt.Errorf("could not scan entry mappings: %w", err)
 			return
 		}
-		entryMappings, err = e.parseEntryMapping(name, retrieverId, dateAdded, entryMappings)
+		entryMappings, err = e.parseEntryMapping(name, retrieverId, dateAdded, size, entryMappings)
 		if err != nil {
 			entryMappings = nil
 			err = fmt.Errorf("could not parse entry mappings: %w", err)
@@ -72,7 +73,7 @@ from filtered_entries fe
 	return
 }
 
-func (e *EntryMappingManager) parseEntryMapping(entryName string, retrieverId string, dateAdded time.Time, entryMappings []*common.EntryMapping) ([]*common.EntryMapping, error) {
+func (e *EntryMappingManager) parseEntryMapping(entryName string, retrieverId string, dateAdded time.Time, size int64, entryMappings []*common.EntryMapping) ([]*common.EntryMapping, error) {
 	entryNameMapped := common.EntryName(entryName)
 	retrieverIdMapped := common.RetrieverId(retrieverId)
 
@@ -97,6 +98,9 @@ func (e *EntryMappingManager) parseEntryMapping(entryName string, retrieverId st
 	entryMapping.RetrieversFound = append(entryMapping.RetrieversFound, retrieverInfo)
 	if entryMapping.DateAdded.IsZero() || dateAdded.Before(entryMapping.DateAdded) {
 		entryMapping.DateAdded = dateAdded
+	}
+	if entryMapping.Size == 0 || size > entryMapping.Size {
+		entryMapping.Size = size
 	}
 	return entryMappings, nil
 }
