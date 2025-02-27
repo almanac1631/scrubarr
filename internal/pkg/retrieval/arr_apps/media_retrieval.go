@@ -1,5 +1,7 @@
 package arr_apps
 
+import "time"
+
 type MediaType string
 
 const (
@@ -12,4 +14,5 @@ type ArrAppEntry struct {
 	ParentName    string
 	Monitored     bool
 	MediaFilePath string
+	DateAdded     time.Time
 }

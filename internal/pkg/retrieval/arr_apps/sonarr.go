@@ -56,6 +56,7 @@ func (s *SonarrMediaRetriever) parseSeriesEpisodeFile(series *sonarr.Series, epi
 			ParentName:    series.Title,
 			Monitored:     monitored,
 			MediaFilePath: episodeFile.Path,
+			DateAdded:     episodeFile.DateAdded,
 		},
 	}
 }

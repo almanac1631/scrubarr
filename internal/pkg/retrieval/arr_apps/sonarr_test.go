@@ -2,6 +2,7 @@ package arr_apps
 
 import (
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"github.com/almanac1631/scrubarr/internal/pkg/utils"
 	"golift.io/starr/sonarr"
 	"reflect"
 	"testing"
@@ -35,6 +36,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					SeasonNumber: 2,
 					RelativePath: "Season 1/Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
+					DateAdded:    utils.ParseTime("2025-02-18T13:29:48Z"),
 				},
 			}, common.Entry{
 				Name: "Some Episode.mkv",
@@ -43,6 +45,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					ParentName:    "Some series!",
 					Monitored:     true,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
+					DateAdded:     utils.ParseTime("2025-02-18T13:29:48Z"),
 				},
 			},
 		},
@@ -60,6 +63,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					SeasonNumber: 3,
 					RelativePath: "Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
+					DateAdded:    utils.ParseTime("2025-02-09T08:19:04Z"),
 				},
 			}, common.Entry{
 				Name: "Some Episode.mkv",
@@ -68,6 +72,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					ParentName:    "Some series!",
 					Monitored:     false,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
+					DateAdded:     utils.ParseTime("2025-02-09T08:19:04Z"),
 				},
 			},
 		},

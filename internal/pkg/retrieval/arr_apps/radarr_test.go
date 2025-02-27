@@ -2,6 +2,7 @@ package arr_apps
 
 import (
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"github.com/almanac1631/scrubarr/internal/pkg/utils"
 	"golift.io/starr/radarr"
 	"reflect"
 	"testing"
@@ -32,8 +33,9 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 				},
 				[]*radarr.MovieFile{
 					{
-						ID:   13371,
-						Path: "some/film/dir/Some Cool Film Name.mkv",
+						ID:        13371,
+						Path:      "some/film/dir/Some Cool Film Name.mkv",
+						DateAdded: utils.ParseTime("2025-02-18T13:29:48Z"),
 					},
 				}},
 			map[common.EntryName]common.Entry{
@@ -44,6 +46,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 						ParentName:    "Some Cool Film yo",
 						Monitored:     true,
 						MediaFilePath: "some/film/dir/Some Cool Film Name.mkv",
+						DateAdded:     utils.ParseTime("2025-02-18T13:29:48Z"),
 					},
 				},
 			},
