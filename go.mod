@@ -14,7 +14,7 @@ require (
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.35.0
 	golift.io/starr v1.0.0
 )
 
