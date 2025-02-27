@@ -2,11 +2,14 @@ package common
 
 import (
 	"fmt"
+	"time"
 )
 
 type EntryMapping struct {
 	// Name is the normalized name of the entry.
 	Name EntryName
+	// DateAdded is the date when the entry was added.
+	DateAdded time.Time
 	// RetrieversFound holds a list of retrievers where this entry could be found.
 	RetrieversFound []RetrieverInfo
 }

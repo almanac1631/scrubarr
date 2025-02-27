@@ -54,6 +54,12 @@ export interface EntryMappingRetrieverFindingsInner {
      * @memberof EntryMappingRetrieverFindingsInner
      */
     'id': string;
+    /**
+     * The date and time this entry was added.
+     * @type {string}
+     * @memberof EntryMappingRetrieverFindingsInner
+     */
+    'dateAdded': string;
 }
 /**
  * 

@@ -12,7 +12,11 @@ properties:
       type: "object"
       required:
         - "id"
-        - "detail"
+        - "dateAdded"
       properties:
         id:
           $ref: "./RetrieverId.yaml"
+        dateAdded:
+          type: "string"
+          format: "date-time"
+          description: "The date and time this entry was added."
