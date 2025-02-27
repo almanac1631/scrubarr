@@ -8,6 +8,7 @@ import {getCategoriesFromRetrieverList, sortRetrieverList} from "../utils/retrie
 import TableRetrieverStateHeader from "./entry-mapping-list/TableRetrieverStateHeader.vue";
 import TableRetrieverStateRowEntry from "./entry-mapping-list/TableRetrieverStateRowEntry.vue";
 import {getApiClient} from "../utils/api.ts";
+import {formatFileSize} from "../utils/fileSize.ts";
 
 const contentLoaded = ref(false);
 const entryMappingList: Ref<Array<EntryMapping> | null> = ref(null);
@@ -187,6 +188,9 @@ async function refreshEntryMapping() {
             Name
           </th>
           <th class="w-52 pr-3 font-medium">
+            Size
+          </th>
+          <th class="w-52 pr-3 font-medium">
             Added
           </th>
           <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
@@ -229,6 +233,10 @@ async function refreshEntryMapping() {
           </td>
           <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.name">
             {{ entryMapping.name }}
+          </td>
+
+          <td class="py-3 pr-3 font-medium truncate" :title="formatFileSize(entryMapping.size)">
+            {{ formatFileSize(entryMapping.size) }}
           </td>
 
           <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.dateAdded">
