@@ -1,9 +1,0 @@
-type: "object"
-properties:
-  filePath:
-    type: "string"
-    description: "The path of the file."
-  size:
-    type: "integer"
-    format: "int64"
-    description: "The file size in bytes."

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
-	"github.com/almanac1631/scrubarr/internal/pkg/entrymappings/inmemory"
+	"github.com/almanac1631/scrubarr/internal/pkg/entrymappings/sqlite"
 	"github.com/almanac1631/scrubarr/internal/pkg/retriever_bundled/simple"
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
@@ -58,8 +58,12 @@ func StartApp() {
 		panic(err)
 	}
 
+	dbFile := k.MustString("general.db_file")
 	bundledEntryRetriever := simple.BundledEntryRetriever(k.MustStrings("general.allowed_file_endings"))
-	entryMappingManager := inmemory.NewEntryMappingManager(entryRetrievers, bundledEntryRetriever)
+	entryMappingManager, err := sqlite.NewEntryMappingManager(entryRetrievers, bundledEntryRetriever, dbFile)
+	if err != nil {
+		panic(err)
+	}
 
 	listener, err := webserver.SetupListener(k)
 	if err != nil {
