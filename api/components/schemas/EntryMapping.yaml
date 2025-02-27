@@ -3,6 +3,7 @@ required:
   - "name"
   - "retrieverFindings"
   - "dateAdded"
+  - "size"
 properties:
   name:
     type: "string"
@@ -11,6 +12,10 @@ properties:
     type: "string"
     format: "date-time"
     description: "The date and time this entry was added."
+  size:
+    type: "integer"
+    format: "int64"
+    description: "The size of this entry in bytes."
   retrieverFindings:
     type: "array"
     items:

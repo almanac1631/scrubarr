@@ -42,6 +42,12 @@ export interface EntryMapping {
      */
     'dateAdded': string;
     /**
+     * The size of this entry in bytes.
+     * @type {number}
+     * @memberof EntryMapping
+     */
+    'size': number;
+    /**
      * 
      * @type {Array<EntryMappingRetrieverFindingsInner>}
      * @memberof EntryMapping
