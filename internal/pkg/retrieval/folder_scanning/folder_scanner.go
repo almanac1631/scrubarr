@@ -12,9 +12,9 @@ import (
 )
 
 type FileEntry struct {
-	Path        string
-	SizeInBytes int64
-	DateAdded   time.Time
+	Path         string
+	SizeInBytes  int64
+	DateModified time.Time
 }
 
 type FolderScanner struct {
@@ -49,9 +49,9 @@ func (folderScanner *FolderScanner) RetrieveEntries() (common.RetrieverEntries, 
 		entry := common.Entry{
 			Name: common.EntryName(name),
 			AdditionalData: FileEntry{
-				Path:        path,
-				SizeInBytes: info.Size(),
-				DateAdded:   info.ModTime(),
+				Path:         path,
+				SizeInBytes:  info.Size(),
+				DateModified: info.ModTime(),
 			},
 		}
 		entries[common.EntryName(nameLower)] = entry
