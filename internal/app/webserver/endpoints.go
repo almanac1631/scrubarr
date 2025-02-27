@@ -73,7 +73,7 @@ func validatePageSize(pageSize int) error {
 	return nil
 }
 
-func getResponseEntryMappingFromPresencePairs(entryMapping common.EntryMapping) EntryMapping {
+func getResponseEntryMappingFromPresencePairs(entryMapping *common.EntryMapping) EntryMapping {
 	findings := make([]EntryMappingRetrieverFindingsInner, 0)
 	for _, retrieverInfo := range entryMapping.RetrieversFound {
 		retrieverId := RetrieverId(retrieverInfo.Id())

@@ -21,7 +21,7 @@ type EntryMappingManager interface {
 	RefreshEntryMappings() error
 
 	// GetEntryMappings returns the filtered entry mapping by applying the given filters.
-	GetEntryMappings(page int, pageSize int, filter EntryMappingFilter) ([]EntryMapping, int, error)
+	GetEntryMappings(page int, pageSize int, filter EntryMappingFilter) ([]*EntryMapping, int, error)
 
 	// GetRetrievers returns the information on all registered retrievers.
 	GetRetrievers() ([]RetrieverInfo, error)
