@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
@@ -54,6 +55,50 @@ func Test_getAddedDateFromEntry(t *testing.T) {
 			value, err := getDateAddedFromEntry(tt.args.entry)
 			assert.Equal(t, tt.want.err, err)
 			assert.Equalf(t, tt.want.value, value, "getDateAddedFromEntry(%v)", tt.args.entry)
+		})
+	}
+}
+
+func Test_getSizeFromEntry(t *testing.T) {
+	type args struct {
+		entry common.Entry
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    int64
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{"test get size from ArrAppEntry", args{common.Entry{
+			Name: "test",
+			AdditionalData: arr_apps.ArrAppEntry{
+				Size: 123456,
+			},
+		}}, 123456, assert.NoError},
+		{"test get size from FileEntry", args{common.Entry{
+			Name: "test",
+			AdditionalData: folder_scanning.FileEntry{
+				SizeInBytes: 987654,
+			},
+		}}, 987654, assert.NoError},
+		{"test get size from TorrentClientEntry", args{common.Entry{
+			Name: "test",
+			AdditionalData: torrent_clients.TorrentClientEntry{
+				FileSizeBytes: 987654,
+			},
+		}}, 987654, assert.NoError},
+		{"test get size from unknown entry", args{common.Entry{
+			Name:           "test",
+			AdditionalData: 42,
+		}}, 0, assert.Error},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSizeFromEntry(tt.args.entry)
+			if !tt.wantErr(t, err, fmt.Sprintf("getSizeFromEntry(%v)", tt.args.entry)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "getSizeFromEntry(%v)", tt.args.entry)
 		})
 	}
 }
