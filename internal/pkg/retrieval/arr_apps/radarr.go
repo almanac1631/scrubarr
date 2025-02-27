@@ -57,6 +57,7 @@ func (r RadarrMediaRetriever) getEntriesFromMovieFileList(movie *radarr.Movie, m
 				Monitored:     movie.Monitored,
 				MediaFilePath: movieFile.Path,
 				DateAdded:     movieFile.DateAdded,
+				Size:          movieFile.Size,
 			},
 		}
 	}

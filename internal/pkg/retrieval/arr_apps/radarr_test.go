@@ -36,6 +36,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 						ID:        13371,
 						Path:      "some/film/dir/Some Cool Film Name.mkv",
 						DateAdded: utils.ParseTime("2025-02-18T13:29:48Z"),
+						Size:      928734637,
 					},
 				}},
 			map[common.EntryName]common.Entry{
@@ -47,6 +48,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 						Monitored:     true,
 						MediaFilePath: "some/film/dir/Some Cool Film Name.mkv",
 						DateAdded:     utils.ParseTime("2025-02-18T13:29:48Z"),
+						Size:          928734637,
 					},
 				},
 			},

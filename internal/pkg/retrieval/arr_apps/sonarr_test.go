@@ -37,6 +37,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					RelativePath: "Season 1/Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:    utils.ParseTime("2025-02-18T13:29:48Z"),
+					Size:         21849284229329,
 				},
 			}, common.Entry{
 				Name: "Some Episode.mkv",
@@ -46,6 +47,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					Monitored:     true,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:     utils.ParseTime("2025-02-18T13:29:48Z"),
+					Size:          21849284229329,
 				},
 			},
 		},
@@ -64,6 +66,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					RelativePath: "Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:    utils.ParseTime("2025-02-09T08:19:04Z"),
+					Size:         21849284229329,
 				},
 			}, common.Entry{
 				Name: "Some Episode.mkv",
@@ -73,6 +76,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					Monitored:     false,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:     utils.ParseTime("2025-02-09T08:19:04Z"),
+					Size:          21849284229329,
 				},
 			},
 		},

@@ -15,4 +15,5 @@ type ArrAppEntry struct {
 	Monitored     bool
 	MediaFilePath string
 	DateAdded     time.Time
+	Size          int64
 }
