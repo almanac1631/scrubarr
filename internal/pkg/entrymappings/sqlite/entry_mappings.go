@@ -7,25 +7,31 @@ import (
 	"time"
 )
 
-func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter) (entryMappings []*common.EntryMapping, totalCount int, err error) {
+func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter, sortBy common.EntryMappingSortBy) (entryMappings []*common.EntryMapping, totalCount int, err error) {
 	offset := (page - 1) * pageSize
 
 	var rows *sql.Rows
-	categoriesFilter := " where categories %s (select group_concat(distinct r.category order by r.category) as categories from retrievers r)"
-	if filter == common.EntryMappingFilterNoFilter {
-		categoriesFilter = ""
-	} else if filter == common.EntryMappingFilterCompleteEntry {
-		categoriesFilter = fmt.Sprintf(categoriesFilter, "=")
-	} else if filter == common.EntryMappingFilterIncompleteEntry {
-		categoriesFilter = fmt.Sprintf(categoriesFilter, "!=")
-	} else {
-		return nil, 0, fmt.Errorf("invalid filter: %d", filter)
+	var categoriesFilter string
+	categoriesFilter, err = getCategoriesFilter(filter)
+	if err != nil {
+		return nil, 0, err
 	}
-
-	query := fmt.Sprintf(`with category_counts as (select em.name, group_concat(distinct r.category order by r.category) as categories
+	sortByAggrColumn := ""
+	sortByOrderBy := ""
+	if sortBy == common.EntryMappingSortByDateAsc {
+		sortByAggrColumn = ", max(em.date_added) as date_added"
+		sortByOrderBy = " order by date_added asc"
+	} else if sortBy == common.EntryMappingSortByDateDesc {
+		sortByAggrColumn = ", max(em.date_added) as date_added"
+		sortByOrderBy = " order by date_added desc"
+	} else if sortBy != common.EntryMappingSortByNoSort {
+		return nil, 0, fmt.Errorf("invalid sort by: %d", sortBy)
+	}
+	query := fmt.Sprintf(`with category_counts as (select em.name,
+                                group_concat(distinct r.category order by r.category) as categories%s
                          from entry_mappings em
                                   join retrievers r on em.retriever_id = r.retriever_id
-                         group by em.name order by em.name),
+                         group by em.name%s),
      filtered_names as (select name from category_counts%s),
      total_count as (select count(distinct name) as total from filtered_names),
      filtered_entries as (select em.*
@@ -35,7 +41,7 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
                                         on em.name = limited_filtered_names.name)
 select fe.name, fe.retriever_id, fe.date_added, fe.size, tc.total
 from filtered_entries fe
-         join total_count tc order by fe.name;`, categoriesFilter)
+         join total_count tc%s;`, sortByAggrColumn, sortByOrderBy, categoriesFilter, sortByOrderBy)
 	rows, err = e.db.Query(query, pageSize, offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("could not get entry mappings: %w", err)
@@ -71,6 +77,20 @@ from filtered_entries fe
 		err = fmt.Errorf("could not get entry mappings: %w", err)
 	}
 	return
+}
+
+func getCategoriesFilter(filter common.EntryMappingFilter) (string, error) {
+	categoriesFilter := " where categories %s (select group_concat(distinct r.category order by r.category) as categories from retrievers r)"
+	if filter == common.EntryMappingFilterNoFilter {
+		categoriesFilter = ""
+	} else if filter == common.EntryMappingFilterCompleteEntry {
+		categoriesFilter = fmt.Sprintf(categoriesFilter, "=")
+	} else if filter == common.EntryMappingFilterIncompleteEntry {
+		categoriesFilter = fmt.Sprintf(categoriesFilter, "!=")
+	} else {
+		return "", fmt.Errorf("invalid filter: %d", filter)
+	}
+	return categoriesFilter, nil
 }
 
 func (e *EntryMappingManager) parseEntryMapping(entryName string, retrieverId string, dateAdded time.Time, size int64, entryMappings []*common.EntryMapping) ([]*common.EntryMapping, error) {

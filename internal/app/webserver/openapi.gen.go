@@ -42,6 +42,12 @@ const (
 	IncompleteEntries GetEntryMappingsParamsFilter = "incomplete_entries"
 )
 
+// Defines values for GetEntryMappingsParamsSortBy.
+const (
+	DateAddedAsc  GetEntryMappingsParamsSortBy = "date_added_asc"
+	DateAddedDesc GetEntryMappingsParamsSortBy = "date_added_desc"
+)
+
 // EntryMapping defines model for EntryMapping.
 type EntryMapping struct {
 	// DateAdded The date and time this entry was added.
@@ -138,10 +144,16 @@ type GetEntryMappingsParams struct {
 
 	// Filter The filter to apply before returning the entries.
 	Filter *GetEntryMappingsParamsFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// SortBy The criteria to sort the entries by.
+	SortBy *GetEntryMappingsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 }
 
 // GetEntryMappingsParamsFilter defines parameters for GetEntryMappings.
 type GetEntryMappingsParamsFilter string
+
+// GetEntryMappingsParamsSortBy defines parameters for GetEntryMappings.
+type GetEntryMappingsParamsSortBy string
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequestBody
@@ -220,6 +232,14 @@ func (siw *ServerInterfaceWrapper) GetEntryMappings(w http.ResponseWriter, r *ht
 	err = runtime.BindQueryParameter("form", true, false, "filter", r.URL.Query(), &params.Filter)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sortBy" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortBy", r.URL.Query(), &params.SortBy)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sortBy", Err: err})
 		return
 	}
 

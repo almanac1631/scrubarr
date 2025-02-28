@@ -21,7 +21,12 @@ func (a ApiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEnt
 		return nil, err
 	}
 
-	entryMappings, totalAmount, err := a.entryMappingManager.GetEntryMappings(page, pageSize, filter)
+	sortBy, err := parseSortBy(request.Params.SortBy)
+	if err != nil {
+		return nil, err
+	}
+
+	entryMappings, totalAmount, err := a.entryMappingManager.GetEntryMappings(page, pageSize, filter, sortBy)
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +54,23 @@ func parseRequestFilter(paramFilter *GetEntryMappingsParamsFilter) (common.Entry
 		return -1, &InvalidParamFormatError{
 			ParamName: "filter",
 			Err:       fmt.Errorf("invalid filter parameter: %q", *paramFilter),
+		}
+	}
+}
+
+func parseSortBy(by *GetEntryMappingsParamsSortBy) (common.EntryMappingSortBy, error) {
+	if by == nil {
+		return common.EntryMappingSortByNoSort, nil
+	}
+	switch *by {
+	case "date_added_asc":
+		return common.EntryMappingSortByDateAsc, nil
+	case "date_added_desc":
+		return common.EntryMappingSortByDateDesc, nil
+	default:
+		return -1, &InvalidParamFormatError{
+			ParamName: "sortBy",
+			Err:       fmt.Errorf("invalid sortBy parameter: %q", *by),
 		}
 	}
 }

@@ -31,6 +31,14 @@ paths:
             enum:
               - "incomplete_entries"
               - "complete_entries"
+        - in: "query"
+          name: "sortBy"
+          description: "The criteria to sort the entries by."
+          schema:
+            type: string
+            enum:
+              - "date_added_asc"
+              - "date_added_desc"
       responses:
         "200":
           description: "A successful response."
