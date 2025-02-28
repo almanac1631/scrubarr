@@ -46,4 +46,6 @@ const (
 	EntryMappingSortByNoSort EntryMappingSortBy = iota
 	EntryMappingSortByDateAsc
 	EntryMappingSortByDateDesc
+	EntryMappingSortBySizeAsc
+	EntryMappingSortBySizeDesc
 )

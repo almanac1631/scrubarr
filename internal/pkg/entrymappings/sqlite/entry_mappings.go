@@ -10,23 +10,16 @@ import (
 func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter, sortBy common.EntryMappingSortBy) (entryMappings []*common.EntryMapping, totalCount int, err error) {
 	offset := (page - 1) * pageSize
 
-	var rows *sql.Rows
-	var categoriesFilter string
-	categoriesFilter, err = getCategoriesFilter(filter)
+	categoriesFilter, err := getCategoriesFilter(filter)
 	if err != nil {
 		return nil, 0, err
 	}
-	sortByAggrColumn := ""
-	sortByOrderBy := ""
-	if sortBy == common.EntryMappingSortByDateAsc {
-		sortByAggrColumn = ", max(em.date_added) as date_added"
-		sortByOrderBy = " order by date_added asc"
-	} else if sortBy == common.EntryMappingSortByDateDesc {
-		sortByAggrColumn = ", max(em.date_added) as date_added"
-		sortByOrderBy = " order by date_added desc"
-	} else if sortBy != common.EntryMappingSortByNoSort {
-		return nil, 0, fmt.Errorf("invalid sort by: %d", sortBy)
+
+	sortByAggrColumn, sortByOrderBy, err := getSortBy(sortBy)
+	if err != nil {
+		return nil, 0, err
 	}
+
 	query := fmt.Sprintf(`with category_counts as (select em.name,
                                 group_concat(distinct r.category order by r.category) as categories%s
                          from entry_mappings em
@@ -42,6 +35,7 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
 select fe.name, fe.retriever_id, fe.date_added, fe.size, tc.total
 from filtered_entries fe
          join total_count tc%s;`, sortByAggrColumn, sortByOrderBy, categoriesFilter, sortByOrderBy)
+	var rows *sql.Rows
 	rows, err = e.db.Query(query, pageSize, offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("could not get entry mappings: %w", err)
@@ -77,6 +71,33 @@ from filtered_entries fe
 		err = fmt.Errorf("could not get entry mappings: %w", err)
 	}
 	return
+}
+
+func getSortBy(sortBy common.EntryMappingSortBy) (string, string, error) {
+	var sortAscending bool
+	var sortByAggr, sortByColName string
+	switch sortBy {
+	case common.EntryMappingSortByNoSort:
+		return "", "", nil
+	case common.EntryMappingSortByDateAsc, common.EntryMappingSortByDateDesc:
+		sortByAggr = "max(em.date_added)"
+		sortByColName = "date_added"
+		sortAscending = sortBy == common.EntryMappingSortByDateAsc
+		break
+	case common.EntryMappingSortBySizeAsc, common.EntryMappingSortBySizeDesc:
+		sortByAggr = "max(em.size)"
+		sortByColName = "size"
+		sortAscending = sortBy == common.EntryMappingSortBySizeAsc
+		break
+	default:
+		return "", "", fmt.Errorf("invalid sort by: %d", sortBy)
+	}
+	orderBySuffix := "desc"
+	if sortAscending {
+		orderBySuffix = "asc"
+	}
+	return fmt.Sprintf(", %s as %s", sortByAggr, sortByColName),
+		fmt.Sprintf(" order by %s %s", sortByColName, orderBySuffix), nil
 }
 
 func getCategoriesFilter(filter common.EntryMappingFilter) (string, error) {

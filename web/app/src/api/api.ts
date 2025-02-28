@@ -574,7 +574,9 @@ export type GetEntryMappingsFilterEnum = typeof GetEntryMappingsFilterEnum[keyof
  */
 export const GetEntryMappingsSortByEnum = {
     DateAddedAsc: 'date_added_asc',
-    DateAddedDesc: 'date_added_desc'
+    DateAddedDesc: 'date_added_desc',
+    SizeAsc: 'size_asc',
+    SizeDesc: 'size_desc'
 } as const;
 export type GetEntryMappingsSortByEnum = typeof GetEntryMappingsSortByEnum[keyof typeof GetEntryMappingsSortByEnum];
 
