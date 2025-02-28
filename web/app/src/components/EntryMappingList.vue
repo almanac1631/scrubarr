@@ -204,7 +204,7 @@ async function refreshEntryMapping() {
               Name
             </div>
           </th>
-          <th class="w-52 pr-3 font-medium">
+          <th class="w-28 pr-3 font-medium">
             <button class="flex items-center"
                     v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.SizeAsc, GetEntryMappingsSortByEnum.SizeDesc])">
               Size
