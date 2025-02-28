@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed, onMounted, Ref, ref, watch} from "vue";
-import {EntryMapping, GetEntryMappingsFilterEnum, Retriever} from "../api";
+import {EntryMapping, GetEntryMappingsFilterEnum, GetEntryMappingsSortByEnum, Retriever} from "../api";
 import PreloaderTableEntry from "./entry-mapping-list/PreloaderTableEntry.vue";
 import Dropdown, {DropdownOption} from "./common/Dropdown.vue";
 import Pagination from "./common/Pagination.vue";
@@ -60,7 +60,7 @@ async function fetchAndDisplayEntries() {
     return;
   }
   try {
-    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum)).data;
+    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum, selectedSortBy.value)).data;
     entryMappingList.value = entryMappingResponse.entries;
     entryMappingTotalAmount.value = entryMappingResponse.totalAmount;
   } finally {
@@ -100,6 +100,21 @@ const filterElemList = [
 
 const selectedFilter: Ref<DropdownOption | null> = ref(null);
 
+const selectedSortBy: Ref<GetEntryMappingsSortByEnum | undefined> = ref(undefined);
+
+function toggleSortBy(availableOptions: Array<GetEntryMappingsSortByEnum>) {
+  if (selectedSortBy.value === undefined) {
+    selectedSortBy.value = availableOptions[0];
+  } else {
+    const currentIndex = availableOptions.indexOf(selectedSortBy.value);
+    if (currentIndex === availableOptions.length - 1) {
+      selectedSortBy.value = undefined;
+    } else {
+      selectedSortBy.value = availableOptions[currentIndex + 1];
+    }
+  }
+}
+
 const pageSizeElemList = [
   {displayName: "Page size", value: "25"},
   {displayName: "10", value: "10"},
@@ -110,7 +125,7 @@ const pageSizeElemList = [
 
 const selectedPageSize: Ref<DropdownOption | null> = ref(null);
 
-watch([selectedFilter, selectedPageSize, selectedPage], () => {
+watch([selectedFilter, selectedPageSize, selectedPage, selectedSortBy], () => {
   fetchAndDisplayEntries();
 });
 
@@ -185,13 +200,32 @@ async function refreshEntryMapping() {
             </div>
           </th>
           <th class="py-3 pr-3 font-medium">
-            Name
+            <div class="flex items-center">
+              Name
+            </div>
           </th>
           <th class="w-52 pr-3 font-medium">
-            Size
+            <div class="flex items-center">
+              Size
+            </div>
           </th>
           <th class="w-52 pr-3 font-medium">
-            Added
+            <button class="flex items-center"
+                    v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.DateAddedAsc, GetEntryMappingsSortByEnum.DateAddedDesc])">
+              Added
+              <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                   height="24" fill="none" viewBox="0 0 24 24">
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.DateAddedAsc}"
+                      stroke="currentColor" stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m16 9-4-4-4 4"/>
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.DateAddedDesc}"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m8 15 4 4 4-4"/>
+              </svg>
+            </button>
           </th>
           <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
               class="w-[120px] p-3 font-medium text-center truncate">
