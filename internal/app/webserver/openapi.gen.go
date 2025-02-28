@@ -46,6 +46,8 @@ const (
 const (
 	DateAddedAsc  GetEntryMappingsParamsSortBy = "date_added_asc"
 	DateAddedDesc GetEntryMappingsParamsSortBy = "date_added_desc"
+	SizeAsc       GetEntryMappingsParamsSortBy = "size_asc"
+	SizeDesc      GetEntryMappingsParamsSortBy = "size_desc"
 )
 
 // EntryMapping defines model for EntryMapping.

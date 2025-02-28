@@ -39,6 +39,8 @@ paths:
             enum:
               - "date_added_asc"
               - "date_added_desc"
+              - "size_asc"
+              - "size_desc"
       responses:
         "200":
           description: "A successful response."
