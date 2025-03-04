@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/knadh/koanf/v2"
+	"io"
 	"io/fs"
 	"log/slog"
 	"mime"
@@ -15,6 +16,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"syscall"
 )
 
 //go:embed all:content
@@ -112,8 +114,16 @@ func serveFrontendFiles(router *http.ServeMux) {
 		w.Header().Set("Content-Type", mimeType)
 
 		_, err = w.Write(data)
-		if err != nil {
+		if err != nil && !isBrokenPipe(err) {
 			slog.Error("failed to write response", "err", err)
 		}
 	})
+}
+
+func isBrokenPipe(err error) bool {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return errors.Is(opErr.Err, syscall.EPIPE) || errors.Is(err, io.ErrClosedPipe)
+	}
+	return false
 }
