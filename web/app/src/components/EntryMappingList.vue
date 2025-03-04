@@ -147,7 +147,7 @@ async function refreshEntryMapping() {
 </script>
 
 <template>
-  <div class="h-full bg-gray-100 py-12">
+  <div class="bg-gray-100 py-12">
     <div class="container mx-auto rounded-md bg-white p-10 shadow">
       <h1 class="text-2xl my-3">
         Entry Mappings

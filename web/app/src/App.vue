@@ -45,7 +45,7 @@ import {logout} from "./auth/auth.ts";
       </div>
     </div>
   </Disclosure>
-  <main class="h-full">
+  <main>
     <RouterView/>
   </main>
 </template>
