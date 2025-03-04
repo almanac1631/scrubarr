@@ -111,6 +111,28 @@ paths:
           $ref: "./responses/ErrorResponse.yaml"
       security:
         - BearerAuth: [ ]
+  /stats:
+    get:
+      operationId: "getStats"
+      summary: "Get the statistics of the application."
+      responses:
+        "200":
+          description: "A successful response."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "stats"
+                properties:
+                  stats:
+                    $ref: "./components/schemas/Stats.yaml"
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
+      security:
+        - BearerAuth: [ ]
   /login:
     post:
       operationId: "login"
