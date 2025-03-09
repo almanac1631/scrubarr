@@ -1,4 +1,7 @@
-export function formatFileSize(sizeInBytes: number): string {
+export function formatFileSize(sizeInBytes: number | undefined): string {
+    if (sizeInBytes === undefined) {
+        return "0 B";
+    }
     if (sizeInBytes < 1000) {
         return `${sizeInBytes} B`;
     }

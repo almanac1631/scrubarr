@@ -243,12 +243,6 @@ export interface Stats {
      * @memberof Stats
      */
     'diskSpace': StatsDiskSpace;
-    /**
-     * 
-     * @type {StatsTraffic}
-     * @memberof Stats
-     */
-    'traffic': StatsTraffic;
 }
 /**
  * 
@@ -268,31 +262,6 @@ export interface StatsDiskSpace {
      * @memberof StatsDiskSpace
      */
     'bytesUsed': number;
-}
-/**
- * 
- * @export
- * @interface StatsTraffic
- */
-export interface StatsTraffic {
-    /**
-     * The total number of bytes available.
-     * @type {number}
-     * @memberof StatsTraffic
-     */
-    'bytesTotal': number;
-    /**
-     * The number of bytes used.
-     * @type {number}
-     * @memberof StatsTraffic
-     */
-    'bytesUsed': number;
-    /**
-     * The date and time when the traffic counter will be reset.
-     * @type {string}
-     * @memberof StatsTraffic
-     */
-    'nextReset': string;
 }
 
 /**

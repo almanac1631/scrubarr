@@ -48,7 +48,7 @@ import {logout} from "./auth/auth.ts";
     </Disclosure>
     <main class="bg-gray-100 flex-grow" v-if="$route.meta.displayedInNavigation">
       <div class="py-2">
-        <div class="container mx-auto">
+        <div class="container mx-auto text-gray-900">
           <h1 class="text-3xl my-5">
             {{ $route.name }}
           </h1>

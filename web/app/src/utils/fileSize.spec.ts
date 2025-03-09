@@ -22,4 +22,9 @@ describe("format file size", () => {
         const expectedFileSizeString = "3.29 GB";
         expect(formatFileSize(fileSize)).toBe(expectedFileSizeString);
     });
+    test("formats the file size on undefined", () => {
+        const fileSize = undefined;
+        const expectedFileSizeString = "0 B";
+        expect(formatFileSize(fileSize)).toBe(expectedFileSizeString);
+    });
 });

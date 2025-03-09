@@ -17,22 +17,3 @@ properties:
         type: "integer"
         format: "int64"
         description: "The number of bytes used."
-  traffic:
-    type: object
-    required:
-      - "bytesTotal"
-      - "bytesUsed"
-      - "nextReset"
-    properties:
-      bytesTotal:
-        type: "integer"
-        format: "int64"
-        description: "The total number of bytes available."
-      bytesUsed:
-        type: "integer"
-        format: "int64"
-        description: "The number of bytes used."
-      nextReset:
-        type: "string"
-        format: "date-time"
-        description: "The date and time when the traffic counter will be reset."
