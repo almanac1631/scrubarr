@@ -111,7 +111,6 @@ type RetrieverId = string
 // Stats defines model for Stats.
 type Stats struct {
 	DiskSpace StatsDiskSpace `json:"diskSpace"`
-	Traffic   StatsTraffic   `json:"traffic"`
 }
 
 // StatsDiskSpace defines model for Stats_diskSpace.
@@ -121,18 +120,6 @@ type StatsDiskSpace struct {
 
 	// BytesUsed The number of bytes used.
 	BytesUsed int64 `json:"bytesUsed"`
-}
-
-// StatsTraffic defines model for Stats_traffic.
-type StatsTraffic struct {
-	// BytesTotal The total number of bytes available.
-	BytesTotal int64 `json:"bytesTotal"`
-
-	// BytesUsed The number of bytes used.
-	BytesUsed int64 `json:"bytesUsed"`
-
-	// NextReset The date and time when the traffic counter will be reset.
-	NextReset time.Time `json:"nextReset"`
 }
 
 // GetEntryMappings200Response defines model for getEntryMappings_200_response.

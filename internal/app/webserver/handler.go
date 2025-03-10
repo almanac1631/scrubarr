@@ -5,16 +5,23 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/ultraapi"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/knadh/koanf/v2"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type JwtConfig struct {
 	PrivateKey *ecdsa.PrivateKey
 	PublicKey  *ecdsa.PublicKey
+}
+
+type StatsRetriever interface {
+	// GetDiskStats returns the total and used disk space in bytes.
+	GetDiskStats() (totalSpaceBytes int64, usedSpaceBytes int64, err error)
 }
 
 type ApiEndpointHandler struct {
@@ -23,6 +30,7 @@ type ApiEndpointHandler struct {
 	username            string
 	passwordRetriever   func() []byte
 	passwordSalt        []byte
+	statsRetriever      StatsRetriever
 }
 
 func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, config *koanf.Koanf) (*ApiEndpointHandler, error) {
@@ -55,7 +63,47 @@ func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, confi
 		return nil, err
 	}
 	jwtConfig := &JwtConfig{privateKey, publicKey}
-	return &ApiEndpointHandler{entryMappingManager, jwtConfig, username, passwordRetriever, passwordSalt}, nil
+	var statsRetriever StatsRetriever
+	if ultraApiConf := config.StringMap("ultra-api"); ultraApiConf != nil {
+		endpoint := ultraApiConf["endpoint"]
+		apiKey := []byte(ultraApiConf["api_key"])
+		ultraApi := ultraapi.New(endpoint, apiKey)
+		statsRetriever = ultraApiToStatsRetriever(ultraApi)
+	}
+	return &ApiEndpointHandler{entryMappingManager, jwtConfig, username, passwordRetriever, passwordSalt, statsRetriever}, nil
+}
+
+type wrappedStatsRetriever struct {
+	retrievalFunc    func() (int64, int64, error)
+	cachedTotalBytes int64
+	cachedUsedBytes  int64
+	lastQueried      time.Time
+}
+
+func (r wrappedStatsRetriever) GetDiskStats() (int64, int64, error) {
+	if r.lastQueried.IsZero() || time.Since(r.lastQueried) > time.Hour {
+		var err error
+		r.cachedTotalBytes, r.cachedUsedBytes, err = r.retrievalFunc()
+		if err != nil {
+			return -1, -1, err
+		}
+		r.lastQueried = time.Now()
+	}
+	return r.cachedTotalBytes, r.cachedUsedBytes, nil
+}
+
+func ultraApiToStatsRetriever(ultraApi *ultraapi.Instance) StatsRetriever {
+	return wrappedStatsRetriever{
+		retrievalFunc: func() (int64, int64, error) {
+			quota, err := ultraApi.GetDiskQuota()
+			if err != nil {
+				return -1, -1, err
+			}
+			totalStorageBytes := int64(quota.StorageInfo.TotalStorageValue) * 1024 * 1024 * 1024
+			usedStorageBytes := totalStorageBytes - quota.StorageInfo.FreeStorageBytes
+			return totalStorageBytes, usedStorageBytes, nil
+		},
+	}
 }
 
 func loadJwtPrivateKey(config *koanf.Koanf) (*ecdsa.PrivateKey, error) {

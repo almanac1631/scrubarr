@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"log/slog"
 )
 
 func (a ApiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEntryMappingsRequestObject) (GetEntryMappingsResponseObject, error) {
@@ -144,4 +145,22 @@ func (a ApiEndpointHandler) GetRetrievers(ctx context.Context, request GetRetrie
 		retrieverList = append(retrieverList, retrieverInstance)
 	}
 	return GetRetrievers200JSONResponse{retrieverList}, nil
+}
+
+func (a ApiEndpointHandler) GetStats(ctx context.Context, request GetStatsRequestObject) (GetStatsResponseObject, error) {
+	bytesTotal, bytesUsed := int64(-1), int64(-1)
+	var err error
+	if a.statsRetriever != nil {
+		bytesTotal, bytesUsed, err = a.statsRetriever.GetDiskStats()
+		if err != nil {
+			slog.Error("error getting disk stats", "error", err)
+			return nil, err
+		}
+	}
+	return GetStats200JSONResponse{Stats{
+		DiskSpace: StatsDiskSpace{
+			BytesTotal: bytesTotal,
+			BytesUsed:  bytesUsed,
+		},
+	}}, nil
 }
