@@ -177,10 +177,19 @@ async function refreshEntryMapping() {
         </div>
       </div>
       <div class="my-2 flex justify-between">
-        <div class="flex items-center gap-2">
+        <div class="relative">
           <input type="text" id="search-bar"
-                 class="bg-gray-100 text-gray-400 font-medium rounded focus:ring-red-500 block p-2 w-80"
-                 placeholder="Search" v-model="name"/>
+                 class="bg-gray-100 text-gray-400 font-medium rounded focus:ring-red-500 block pl-9 py-2 pr-2 w-80"
+                 placeholder="Search" v-model="name">
+          <div class="absolute left-0 top-0 flex items-center p-2 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="icon icon-tabler icons-tabler-outline icon-tabler-search">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/>
+              <path d="M21 21l-6 -6"/>
+            </svg>
+          </div>
         </div>
         <div class="my-2 flex justify-end gap-2">
           <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>
