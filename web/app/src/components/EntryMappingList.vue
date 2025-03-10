@@ -310,31 +310,32 @@ async function refreshEntryMapping() {
             {{ entryMapping.name }}
           </td>
 
-        <td class="py-3 pr-3 font-medium truncate" :title="formatFileSize(entryMapping.size)">
-          {{ formatFileSize(entryMapping.size) }}
-        </td>
+          <td class="py-3 pr-3 font-medium truncate" :title="formatFileSize(entryMapping.size)">
+            {{ formatFileSize(entryMapping.size) }}
+          </td>
 
-        <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.dateAdded">
-          {{ new Date(entryMapping.dateAdded).toISOString().replace(".000", "") }}
-        </td>
+          <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.dateAdded">
+            {{ new Date(entryMapping.dateAdded).toISOString().replace(".000", "") }}
+          </td>
 
-        <TableRetrieverStateRowEntry
-            v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
-            :present="isEntryPresentInRetrieverCategory(entryMapping, retrieverCategory.name)"
-        />
-        <TableRetrieverStateRowEntry
-            v-else v-for="retriever in retrieverList"
-            :present="isEntryPresentInRetriever(entryMapping, retriever.id)"
-        />
-      </tr>
-      <PreloaderTableEntry v-for="_ in 10" v-else/>
-      </tbody>
-    </table>
-    <Pagination
-        v-if="contentLoaded && entryMappingTotalAmount !== null &&selectedPageSize !== null &&  selectedPageSize.value !== undefined"
-        :page-size="+selectedPageSize.value"
-        :selected-page="1"
-        :total-amount-of-items="entryMappingTotalAmount" v-model="selectedPage"/>
+          <TableRetrieverStateRowEntry
+              v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
+              :present="isEntryPresentInRetrieverCategory(entryMapping, retrieverCategory.name)"
+          />
+          <TableRetrieverStateRowEntry
+              v-else v-for="retriever in retrieverList"
+              :present="isEntryPresentInRetriever(entryMapping, retriever.id)"
+          />
+        </tr>
+        <PreloaderTableEntry v-for="_ in 10" v-else/>
+        </tbody>
+      </table>
+      <Pagination
+          v-if="contentLoaded && entryMappingTotalAmount !== null &&selectedPageSize !== null &&  selectedPageSize.value !== undefined"
+          :page-size="+selectedPageSize.value"
+          :selected-page="1"
+          :total-amount-of-items="entryMappingTotalAmount" v-model="selectedPage"/>
+    </div>
   </div>
 </template>
 
