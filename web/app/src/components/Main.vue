@@ -40,14 +40,6 @@ const percentage = computed(() => {
         }}
       </div>
     </div>
-    <div class="rounded-md bg-white p-4 shadow">
-    </div>
-    <div class="rounded-md bg-white p-4 shadow">
-    </div>
-    <div class="rounded-md bg-white p-4 shadow">
-    </div>
-    <div class="rounded-md bg-white p-4 shadow">
-    </div>
   </div>
 </template>
 
