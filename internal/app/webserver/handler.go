@@ -80,7 +80,7 @@ type wrappedStatsRetriever struct {
 	lastQueried      time.Time
 }
 
-func (r wrappedStatsRetriever) GetDiskStats() (int64, int64, error) {
+func (r *wrappedStatsRetriever) GetDiskStats() (int64, int64, error) {
 	if r.lastQueried.IsZero() || time.Since(r.lastQueried) > time.Hour {
 		var err error
 		r.cachedTotalBytes, r.cachedUsedBytes, err = r.retrievalFunc()
@@ -93,7 +93,7 @@ func (r wrappedStatsRetriever) GetDiskStats() (int64, int64, error) {
 }
 
 func ultraApiToStatsRetriever(ultraApi *ultraapi.Instance) StatsRetriever {
-	return wrappedStatsRetriever{
+	return &wrappedStatsRetriever{
 		retrievalFunc: func() (int64, int64, error) {
 			quota, err := ultraApi.GetDiskQuota()
 			if err != nil {
