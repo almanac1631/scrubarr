@@ -60,7 +60,8 @@ async function fetchAndDisplayEntries() {
     return;
   }
   try {
-    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum, selectedSortBy.value)).data;
+    const nameVal = name.value === null ? undefined : name.value;
+    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum, selectedSortBy.value, nameVal)).data;
     entryMappingList.value = entryMappingResponse.entries;
     entryMappingTotalAmount.value = entryMappingResponse.totalAmount;
   } finally {
@@ -129,6 +130,19 @@ watch([selectedFilter, selectedPageSize, selectedPage, selectedSortBy], () => {
   fetchAndDisplayEntries();
 });
 
+
+const name: Ref<string | null> = ref(null);
+
+watch([name], () => {
+  const valueChangedTo = name.value;
+  setTimeout(() => {
+    if (name.value !== valueChangedTo) {
+      return;
+    }
+    fetchAndDisplayEntries();
+  }, 200);
+});
+
 const refreshInProgress = ref(false);
 
 async function refreshEntryMapping() {
@@ -147,9 +161,12 @@ async function refreshEntryMapping() {
 </script>
 
 <template>
-  <div class="rounded-md bg-white p-8 shadow">
-    <div class="mb-2 flex justify-between">
-      <div class="flex items-center">
+  <div class="h-full bg-gray-100 py-12">
+    <div class="container mx-auto rounded-md bg-white p-10 shadow">
+      <h1 class="text-2xl my-3">
+        Entry Mappings
+      </h1>
+      <div class="my-2 flex">
         <div>
           <label class="inline-flex items-center cursor-pointer">
             <span class="me-3 text-sm font-medium text-gray-900">Group by retriever category</span>
@@ -159,124 +176,139 @@ async function refreshEntryMapping() {
           </label>
         </div>
       </div>
-      <div class="my-2 flex justify-end gap-2">
-        <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>
-        <Dropdown :options="filterElemList" :default-option="filterElemList[0]" v-model="selectedFilter"/>
-        <button v-on:click="refreshEntryMapping" :disabled="refreshInProgress"
-                class="flex w-24 justify-center items-center rounded-md bg-red-500 px-3 py-1.5 text-medium font-semibold text-gray-100 hover:text-white shadow-xs hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:bg-red-300 disabled:hover:text-gray-100">
-          <span v-if="!refreshInProgress">Refresh</span>
-          <svg v-if="refreshInProgress" class="size-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg"
-               fill="none"
-               viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </button>
+      <div class="my-2 flex justify-between">
+        <div class="relative">
+          <input type="text" id="search-bar"
+                 class="bg-gray-100 text-gray-400 font-medium rounded focus:ring-red-500 block pl-9 py-2 pr-2 w-80"
+                 placeholder="Search" v-model="name">
+          <div class="absolute left-0 top-0 flex items-center p-2 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="icon icon-tabler icons-tabler-outline icon-tabler-search">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/>
+              <path d="M21 21l-6 -6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="my-2 flex justify-end gap-2">
+          <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>
+          <Dropdown :options="filterElemList" :default-option="filterElemList[0]" v-model="selectedFilter"/>
+          <button v-on:click="refreshEntryMapping" :disabled="refreshInProgress"
+                  class="flex w-24 justify-center items-center rounded-md bg-red-500 px-3 py-1.5 text-medium font-semibold text-gray-100 hover:text-white shadow-xs hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:bg-red-300 disabled:hover:text-gray-100">
+            <span v-if="!refreshInProgress">Refresh</span>
+            <svg v-if="refreshInProgress" class="size-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg"
+                 fill="none"
+                 viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
-    <table class="table-fixed w-full">
-      <thead>
-      <tr class="text-left border-b-2" v-if="contentLoaded">
-        <th class="w-[50px]">
-          <div class="flex justify-center">
-            <div class="relative h-5 w-5">
-              <input type="checkbox"
-                     class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
-                     :checked="areAllSelected()" @change="toggleAll">
-              <div
-                  class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
-                <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="5"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+      <table class="table-fixed w-full">
+        <thead>
+        <tr class="text-left border-b-2" v-if="contentLoaded">
+          <th class="w-[50px]">
+            <div class="flex justify-center">
+              <div class="relative h-5 w-5">
+                <input type="checkbox"
+                       class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
+                       :checked="areAllSelected()" @change="toggleAll">
+                <div
+                    class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
+                  <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="5"
+                       stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
-        </th>
-        <th class="py-3 pr-3 font-medium">
-          <div class="flex items-center">
-            Name
-          </div>
-        </th>
-        <th class="w-28 pr-3 font-medium">
-          <button class="flex items-center"
-                  v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.SizeAsc, GetEntryMappingsSortByEnum.SizeDesc])">
-            Size
-            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                 height="24" fill="none" viewBox="0 0 24 24">
-              <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.SizeAsc}"
-                    stroke="currentColor" stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="3"
-                    d="m16 9-4-4-4 4"/>
-              <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.SizeDesc}"
-                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                    stroke-width="3"
-                    d="m8 15 4 4 4-4"/>
-            </svg>
-          </button>
-        </th>
-        <th class="w-52 pr-3 font-medium">
-          <button class="flex items-center"
-                  v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.DateAddedAsc, GetEntryMappingsSortByEnum.DateAddedDesc])">
-            Added
-            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                 height="24" fill="none" viewBox="0 0 24 24">
-              <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.DateAddedAsc}"
-                    stroke="currentColor" stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="3"
-                    d="m16 9-4-4-4 4"/>
-              <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.DateAddedDesc}"
-                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                    stroke-width="3"
-                    d="m8 15 4 4 4-4"/>
-            </svg>
-          </button>
-        </th>
-        <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
-            class="w-[120px] p-3 font-medium text-center truncate">
-          <div class="h-6 flex justify-center">
-            <div class="relative">
-              {{ retrieverCategory.displayName }}
+          </th>
+          <th class="py-3 pr-3 font-medium">
+            <div class="flex items-center">
+              Name
             </div>
-          </div>
-        </th>
-        <th v-else v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
-          <TableRetrieverStateHeader
-              :name="retriever.hasMultipleInstances ? retriever.name : null"
-              :hover-text="retriever.softwareName"
-              :logo-filename="`${retriever.softwareName}-128x128.png`"
-              :logo-alt-text="`The logo of the ${retriever.softwareName} software project.`"
-          />
-        </th>
-      </tr>
-      <PreloaderTableEntry class="border-b-2" v-else/>
-      </thead>
-      <tbody>
-      <tr v-for="entryMapping in entryMappingList" class="hover:bg-stone-100 border-t" v-if="contentLoaded">
-        <td class="py-3 pl-3 pr-3">
-          <div class="flex justify-center">
-            <div class="relative h-5 w-5">
-              <input type="checkbox"
-                     class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
-                     v-bind:value="entryMapping" v-model="selectedItems">
-              <div
-                  class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
-                <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="5"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+          </th>
+          <th class="w-28 pr-3 font-medium">
+            <button class="flex items-center"
+                    v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.SizeAsc, GetEntryMappingsSortByEnum.SizeDesc])">
+              Size
+              <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                   height="24" fill="none" viewBox="0 0 24 24">
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.SizeAsc}"
+                      stroke="currentColor" stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m16 9-4-4-4 4"/>
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.SizeDesc}"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m8 15 4 4 4-4"/>
+              </svg>
+            </button>
+          </th>
+          <th class="w-52 pr-3 font-medium">
+            <button class="flex items-center"
+                    v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.DateAddedAsc, GetEntryMappingsSortByEnum.DateAddedDesc])">
+              Added
+              <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                   height="24" fill="none" viewBox="0 0 24 24">
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.DateAddedAsc}"
+                      stroke="currentColor" stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m16 9-4-4-4 4"/>
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.DateAddedDesc}"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m8 15 4 4 4-4"/>
+              </svg>
+            </button>
+          </th>
+          <th v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
+              class="w-[120px] p-3 font-medium text-center truncate">
+            <div class="h-6 flex justify-center">
+              <div class="relative">
+                {{ retrieverCategory.displayName }}
               </div>
             </div>
-          </div>
-        </td>
-        <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.name">
-          {{ entryMapping.name }}
-        </td>
+          </th>
+          <th v-else v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
+            <TableRetrieverStateHeader
+                :name="retriever.hasMultipleInstances ? retriever.name : null"
+                :hover-text="retriever.softwareName"
+                :logo-filename="`${retriever.softwareName}-128x128.png`"
+                :logo-alt-text="`The logo of the ${retriever.softwareName} software project.`"
+            />
+          </th>
+        </tr>
+        <PreloaderTableEntry class="border-b-2" v-else/>
+        </thead>
+        <tbody>
+        <tr v-for="entryMapping in entryMappingList" class="hover:bg-stone-100 border-t" v-if="contentLoaded">
+          <td class="py-3 pl-3 pr-3">
+            <div class="flex justify-center">
+              <div class="relative h-5 w-5">
+                <input type="checkbox"
+                       class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
+                       v-bind:value="entryMapping" v-model="selectedItems">
+                <div
+                    class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
+                  <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="5"
+                       stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.name">
+            {{ entryMapping.name }}
+          </td>
 
         <td class="py-3 pr-3 font-medium truncate" :title="formatFileSize(entryMapping.size)">
           {{ formatFileSize(entryMapping.size) }}

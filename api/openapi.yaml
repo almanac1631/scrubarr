@@ -41,6 +41,11 @@ paths:
               - "date_added_desc"
               - "size_asc"
               - "size_desc"
+        - in: "query"
+          name: "name"
+          description: "The name of the entry to search for."
+          schema:
+            type: string
       responses:
         "200":
           description: "A successful response."

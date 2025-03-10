@@ -4,16 +4,19 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"strings"
 	"time"
 )
 
-func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter, sortBy common.EntryMappingSortBy) (entryMappings []*common.EntryMapping, totalCount int, err error) {
+func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter, sortBy common.EntryMappingSortBy, name string) (entryMappings []*common.EntryMapping, totalCount int, err error) {
 	offset := (page - 1) * pageSize
 
 	categoriesFilter, err := getCategoriesFilter(filter)
 	if err != nil {
 		return nil, 0, err
 	}
+
+	nameFilter := getNameFilter(name)
 
 	sortByAggrColumn, sortByOrderBy, err := getSortBy(sortBy)
 	if err != nil {
@@ -23,7 +26,7 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
 	query := fmt.Sprintf(`with category_counts as (select em.name,
                                 group_concat(distinct r.category order by r.category) as categories%s
                          from entry_mappings em
-                                  join retrievers r on em.retriever_id = r.retriever_id
+                                  join retrievers r on em.retriever_id = r.retriever_id%s
                          group by em.name%s),
      filtered_names as (select name from category_counts%s),
      total_count as (select count(distinct name) as total from filtered_names),
@@ -34,9 +37,15 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
                                         on em.name = limited_filtered_names.name)
 select fe.name, fe.retriever_id, fe.date_added, fe.size, tc.total
 from filtered_entries fe
-         join total_count tc%s;`, sortByAggrColumn, sortByOrderBy, categoriesFilter, sortByOrderBy)
+         join total_count tc%s;`, sortByAggrColumn, nameFilter, sortByOrderBy, categoriesFilter, sortByOrderBy)
 	var rows *sql.Rows
-	rows, err = e.db.Query(query, pageSize, offset)
+	args := []any{
+		pageSize, offset,
+	}
+	if nameFilter != "" {
+		args = append([]any{strings.ToLower(name)}, args...)
+	}
+	rows, err = e.db.Query(query, args...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("could not get entry mappings: %w", err)
 	}
@@ -112,6 +121,13 @@ func getCategoriesFilter(filter common.EntryMappingFilter) (string, error) {
 		return "", fmt.Errorf("invalid filter: %d", filter)
 	}
 	return categoriesFilter, nil
+}
+
+func getNameFilter(name string) string {
+	if name == "" {
+		return ""
+	}
+	return " where instr(lower(em.name), ?) > 0"
 }
 
 func (e *EntryMappingManager) parseEntryMapping(entryName string, retrieverId string, dateAdded time.Time, size int64, entryMappings []*common.EntryMapping) ([]*common.EntryMapping, error) {

@@ -277,10 +277,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {number} pageSize The amount of items to display per each page.
          * @param {GetEntryMappingsFilterEnum} [filter] The filter to apply before returning the entries.
          * @param {GetEntryMappingsSortByEnum} [sortBy] The criteria to sort the entries by.
+         * @param {string} [name] The name of the entry to search for.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getEntryMappings: async (page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getEntryMappings: async (page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, name?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'page' is not null or undefined
             assertParamExists('getEntryMappings', 'page', page)
             // verify required parameter 'pageSize' is not null or undefined
@@ -315,6 +316,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 
             if (sortBy !== undefined) {
                 localVarQueryParameter['sortBy'] = sortBy;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
             }
 
 
@@ -483,11 +488,12 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {number} pageSize The amount of items to display per each page.
          * @param {GetEntryMappingsFilterEnum} [filter] The filter to apply before returning the entries.
          * @param {GetEntryMappingsSortByEnum} [sortBy] The criteria to sort the entries by.
+         * @param {string} [name] The name of the entry to search for.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getEntryMappings(page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetEntryMappings200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getEntryMappings(page, pageSize, filter, sortBy, options);
+        async getEntryMappings(page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, name?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetEntryMappings200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getEntryMappings(page, pageSize, filter, sortBy, name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.getEntryMappings']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -558,11 +564,12 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {number} pageSize The amount of items to display per each page.
          * @param {GetEntryMappingsFilterEnum} [filter] The filter to apply before returning the entries.
          * @param {GetEntryMappingsSortByEnum} [sortBy] The criteria to sort the entries by.
+         * @param {string} [name] The name of the entry to search for.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getEntryMappings(page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, options?: RawAxiosRequestConfig): AxiosPromise<GetEntryMappings200Response> {
-            return localVarFp.getEntryMappings(page, pageSize, filter, sortBy, options).then((request) => request(axios, basePath));
+        getEntryMappings(page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, name?: string, options?: RawAxiosRequestConfig): AxiosPromise<GetEntryMappings200Response> {
+            return localVarFp.getEntryMappings(page, pageSize, filter, sortBy, name, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -618,12 +625,13 @@ export class DefaultApi extends BaseAPI {
      * @param {number} pageSize The amount of items to display per each page.
      * @param {GetEntryMappingsFilterEnum} [filter] The filter to apply before returning the entries.
      * @param {GetEntryMappingsSortByEnum} [sortBy] The criteria to sort the entries by.
+     * @param {string} [name] The name of the entry to search for.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public getEntryMappings(page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).getEntryMappings(page, pageSize, filter, sortBy, options).then((request) => request(this.axios, this.basePath));
+    public getEntryMappings(page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, name?: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getEntryMappings(page, pageSize, filter, sortBy, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
