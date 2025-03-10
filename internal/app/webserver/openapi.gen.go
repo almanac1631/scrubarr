@@ -149,6 +149,9 @@ type GetEntryMappingsParams struct {
 
 	// SortBy The criteria to sort the entries by.
 	SortBy *GetEntryMappingsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// Name The name of the entry to search for.
+	Name *string `form:"name,omitempty" json:"name,omitempty"`
 }
 
 // GetEntryMappingsParamsFilter defines parameters for GetEntryMappings.
@@ -242,6 +245,14 @@ func (siw *ServerInterfaceWrapper) GetEntryMappings(w http.ResponseWriter, r *ht
 	err = runtime.BindQueryParameter("form", true, false, "sortBy", r.URL.Query(), &params.SortBy)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sortBy", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "name" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "name", r.URL.Query(), &params.Name)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
 		return
 	}
 

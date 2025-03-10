@@ -60,7 +60,8 @@ async function fetchAndDisplayEntries() {
     return;
   }
   try {
-    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum, selectedSortBy.value)).data;
+    const nameVal = name.value === null ? undefined : name.value;
+    const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum, selectedSortBy.value, nameVal)).data;
     entryMappingList.value = entryMappingResponse.entries;
     entryMappingTotalAmount.value = entryMappingResponse.totalAmount;
   } finally {
@@ -129,6 +130,19 @@ watch([selectedFilter, selectedPageSize, selectedPage, selectedSortBy], () => {
   fetchAndDisplayEntries();
 });
 
+
+const name: Ref<string | null> = ref(null);
+
+watch([name], () => {
+  const valueChangedTo = name.value;
+  setTimeout(() => {
+    if (name.value !== valueChangedTo) {
+      return;
+    }
+    fetchAndDisplayEntries();
+  }, 200);
+});
+
 const refreshInProgress = ref(false);
 
 async function refreshEntryMapping() {
@@ -152,16 +166,21 @@ async function refreshEntryMapping() {
       <h1 class="text-2xl my-3">
         Entry Mappings
       </h1>
+      <div class="my-2 flex">
+        <div>
+          <label class="inline-flex items-center cursor-pointer">
+            <span class="me-3 text-sm font-medium text-gray-900">Group by retriever category</span>
+            <input type="checkbox" value="" class="sr-only peer" v-model="retrieverGroupingEnabled">
+            <span
+                class="relative w-11 h-6 bg-gray-200 peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></span>
+          </label>
+        </div>
+      </div>
       <div class="my-2 flex justify-between">
-        <div class="flex items-center">
-          <div>
-            <label class="inline-flex items-center cursor-pointer">
-              <span class="me-3 text-sm font-medium text-gray-900">Group by retriever category</span>
-              <input type="checkbox" value="" class="sr-only peer" v-model="retrieverGroupingEnabled">
-              <span
-                  class="relative w-11 h-6 bg-gray-200 peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></span>
-            </label>
-          </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="search-bar"
+                 class="bg-gray-100 text-gray-400 font-medium rounded focus:ring-red-500 block p-2 w-80"
+                 placeholder="Search" v-model="name"/>
         </div>
         <div class="my-2 flex justify-end gap-2">
           <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>

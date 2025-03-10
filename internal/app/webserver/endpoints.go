@@ -26,7 +26,12 @@ func (a ApiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEnt
 		return nil, err
 	}
 
-	entryMappings, totalAmount, err := a.entryMappingManager.GetEntryMappings(page, pageSize, filter, sortBy)
+	var name string
+	if request.Params.Name != nil {
+		name = *request.Params.Name
+	}
+
+	entryMappings, totalAmount, err := a.entryMappingManager.GetEntryMappings(page, pageSize, filter, sortBy, name)
 	if err != nil {
 		return nil, err
 	}
