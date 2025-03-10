@@ -3,6 +3,7 @@ import Login from "./components/Login.vue";
 import {RouteRecordRaw} from "vue-router";
 
 import 'vue-router';
+import Main from "./components/Main.vue";
 
 declare module 'vue-router' {
     interface RouteMeta {
@@ -11,6 +12,7 @@ declare module 'vue-router' {
 }
 
 export const routes: Array<RouteRecordRaw> = [
-    {path: '/', component: EntryMappingList, name: "Entry Mappings", meta: {displayedInNavigation: true}},
+    {path: '/', component: Main, name: "Overview", meta: {displayedInNavigation: true}},
+    {path: '/entry-mappings', component: EntryMappingList, name: "Entry Mappings", meta: {displayedInNavigation: true}},
     {path: '/login', component: Login, name: "Login", meta: {displayedInNavigation: false}},
 ]

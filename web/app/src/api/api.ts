@@ -121,6 +121,19 @@ export interface GetRetrievers200Response {
 /**
  * 
  * @export
+ * @interface GetStats200Response
+ */
+export interface GetStats200Response {
+    /**
+     * 
+     * @type {Stats}
+     * @memberof GetStats200Response
+     */
+    'stats': Stats;
+}
+/**
+ * 
+ * @export
  * @interface Login200Response
  */
 export interface Login200Response {
@@ -218,6 +231,38 @@ export const RetrieverSoftwareNameEnum = {
 
 export type RetrieverSoftwareNameEnum = typeof RetrieverSoftwareNameEnum[keyof typeof RetrieverSoftwareNameEnum];
 
+/**
+ * 
+ * @export
+ * @interface Stats
+ */
+export interface Stats {
+    /**
+     * 
+     * @type {StatsDiskSpace}
+     * @memberof Stats
+     */
+    'diskSpace': StatsDiskSpace;
+}
+/**
+ * 
+ * @export
+ * @interface StatsDiskSpace
+ */
+export interface StatsDiskSpace {
+    /**
+     * The total number of bytes available.
+     * @type {number}
+     * @memberof StatsDiskSpace
+     */
+    'bytesTotal': number;
+    /**
+     * The number of bytes used.
+     * @type {number}
+     * @memberof StatsDiskSpace
+     */
+    'bytesUsed': number;
+}
 
 /**
  * DefaultApi - axios parameter creator
@@ -291,6 +336,40 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          */
         getRetrievers: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/retrievers`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the statistics of the application.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStats: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/stats`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -427,6 +506,18 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the statistics of the application.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getStats(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetStats200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getStats(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getStats']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Login to the application using the provided credentials.
          * @param {LoginRequestBody} loginRequestBody 
          * @param {*} [options] Override http request option.
@@ -484,6 +575,15 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Get the statistics of the application.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStats(options?: RawAxiosRequestConfig): AxiosPromise<GetStats200Response> {
+            return localVarFp.getStats(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Login to the application using the provided credentials.
          * @param {LoginRequestBody} loginRequestBody 
          * @param {*} [options] Override http request option.
@@ -535,6 +635,17 @@ export class DefaultApi extends BaseAPI {
      */
     public getRetrievers(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).getRetrievers(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get the statistics of the application.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public getStats(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getStats(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

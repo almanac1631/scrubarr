@@ -108,6 +108,20 @@ type RetrieverSoftwareName string
 // RetrieverId Id used to identify retrievers.
 type RetrieverId = string
 
+// Stats defines model for Stats.
+type Stats struct {
+	DiskSpace StatsDiskSpace `json:"diskSpace"`
+}
+
+// StatsDiskSpace defines model for Stats_diskSpace.
+type StatsDiskSpace struct {
+	// BytesTotal The total number of bytes available.
+	BytesTotal int64 `json:"bytesTotal"`
+
+	// BytesUsed The number of bytes used.
+	BytesUsed int64 `json:"bytesUsed"`
+}
+
 // GetEntryMappings200Response defines model for getEntryMappings_200_response.
 type GetEntryMappings200Response struct {
 	Entries []EntryMapping `json:"entries"`
@@ -119,6 +133,11 @@ type GetEntryMappings200Response struct {
 // GetRetrievers200Response defines model for getRetrievers_200_response.
 type GetRetrievers200Response struct {
 	Retrievers []Retriever `json:"retrievers"`
+}
+
+// GetStats200Response defines model for getStats_200_response.
+type GetStats200Response struct {
+	Stats Stats `json:"stats"`
 }
 
 // Login200Response defines model for login_200_response.
@@ -174,6 +193,9 @@ type ServerInterface interface {
 	// Get a list of retrievers.
 	// (GET /retrievers)
 	GetRetrievers(w http.ResponseWriter, r *http.Request)
+	// Get the statistics of the application.
+	// (GET /stats)
+	GetStats(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -310,6 +332,26 @@ func (siw *ServerInterfaceWrapper) GetRetrievers(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// GetStats operation middleware
+func (siw *ServerInterfaceWrapper) GetStats(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetStats(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -434,6 +476,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/entry-mappings", wrapper.RefreshEntryMappings)
 	m.HandleFunc("POST "+options.BaseURL+"/login", wrapper.Login)
 	m.HandleFunc("GET "+options.BaseURL+"/retrievers", wrapper.GetRetrievers)
+	m.HandleFunc("GET "+options.BaseURL+"/stats", wrapper.GetStats)
 
 	return m
 }
@@ -611,6 +654,46 @@ func (response GetRetrievers5XXJSONResponse) VisitGetRetrieversResponse(w http.R
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type GetStatsRequestObject struct {
+}
+
+type GetStatsResponseObject interface {
+	VisitGetStatsResponse(w http.ResponseWriter) error
+}
+
+type GetStats200JSONResponse GetStats200Response
+
+func (response GetStats200JSONResponse) VisitGetStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetStats4XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response GetStats4XXJSONResponse) VisitGetStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetStats5XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response GetStats5XXJSONResponse) VisitGetStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Get a list of entry mappings.
@@ -625,6 +708,9 @@ type StrictServerInterface interface {
 	// Get a list of retrievers.
 	// (GET /retrievers)
 	GetRetrievers(ctx context.Context, request GetRetrieversRequestObject) (GetRetrieversResponseObject, error)
+	// Get the statistics of the application.
+	// (GET /stats)
+	GetStats(ctx context.Context, request GetStatsRequestObject) (GetStatsResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -754,6 +840,30 @@ func (sh *strictHandler) GetRetrievers(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetRetrieversResponseObject); ok {
 		if err := validResponse.VisitGetRetrieversResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetStats operation middleware
+func (sh *strictHandler) GetStats(w http.ResponseWriter, r *http.Request) {
+	var request GetStatsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetStats(ctx, request.(GetStatsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetStats")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetStatsResponseObject); ok {
+		if err := validResponse.VisitGetStatsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
