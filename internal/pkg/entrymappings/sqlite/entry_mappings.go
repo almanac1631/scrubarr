@@ -98,6 +98,10 @@ func getSortBy(sortBy common.EntryMappingSortBy) (string, string, error) {
 		sortByColName = "size"
 		sortAscending = sortBy == common.EntryMappingSortBySizeAsc
 		break
+	case common.EntryMappingSortByNameAsc, common.EntryMappingSortByNameDesc:
+		sortByAggr = "em.name"
+		sortByColName = "name"
+		sortAscending = sortBy == common.EntryMappingSortByNameAsc
 	default:
 		return "", "", fmt.Errorf("invalid sort by: %d", sortBy)
 	}

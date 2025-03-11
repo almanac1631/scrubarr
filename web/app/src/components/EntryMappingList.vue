@@ -228,9 +228,22 @@ async function refreshEntryMapping() {
             </div>
           </th>
           <th class="py-3 pr-3 font-medium">
-            <div class="flex items-center">
+            <button class="flex items-center"
+                    v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.NameAsc, GetEntryMappingsSortByEnum.NameDesc])">
               Name
-            </div>
+              <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                   height="24" fill="none" viewBox="0 0 24 24">
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.NameAsc}"
+                      stroke="currentColor" stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m16 9-4-4-4 4"/>
+                <path :class="{'text-slate-300': selectedSortBy !== GetEntryMappingsSortByEnum.NameDesc}"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="3"
+                      d="m8 15 4 4 4-4"/>
+              </svg>
+            </button>
           </th>
           <th class="w-28 pr-3 font-medium">
             <button class="flex items-center"

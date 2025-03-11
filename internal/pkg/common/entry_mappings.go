@@ -48,4 +48,6 @@ const (
 	EntryMappingSortByDateDesc
 	EntryMappingSortBySizeAsc
 	EntryMappingSortBySizeDesc
+	EntryMappingSortByNameAsc
+	EntryMappingSortByNameDesc
 )

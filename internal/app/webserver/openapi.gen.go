@@ -46,6 +46,8 @@ const (
 const (
 	DateAddedAsc  GetEntryMappingsParamsSortBy = "date_added_asc"
 	DateAddedDesc GetEntryMappingsParamsSortBy = "date_added_desc"
+	NameAsc       GetEntryMappingsParamsSortBy = "name_asc"
+	NameDesc      GetEntryMappingsParamsSortBy = "name_desc"
 	SizeAsc       GetEntryMappingsParamsSortBy = "size_asc"
 	SizeDesc      GetEntryMappingsParamsSortBy = "size_desc"
 )

@@ -69,14 +69,18 @@ func parseSortBy(by *GetEntryMappingsParamsSortBy) (common.EntryMappingSortBy, e
 		return common.EntryMappingSortByNoSort, nil
 	}
 	switch *by {
-	case "date_added_asc":
+	case DateAddedAsc:
 		return common.EntryMappingSortByDateAsc, nil
-	case "date_added_desc":
+	case DateAddedDesc:
 		return common.EntryMappingSortByDateDesc, nil
-	case "size_asc":
+	case SizeAsc:
 		return common.EntryMappingSortBySizeAsc, nil
-	case "size_desc":
+	case SizeDesc:
 		return common.EntryMappingSortBySizeDesc, nil
+	case NameAsc:
+		return common.EntryMappingSortByNameAsc, nil
+	case NameDesc:
+		return common.EntryMappingSortByNameDesc, nil
 	default:
 		return -1, &InvalidParamFormatError{
 			ParamName: "sortBy",
