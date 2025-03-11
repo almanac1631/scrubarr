@@ -5,10 +5,11 @@ import {routes} from "./routes.ts";
 import Notification from "./components/Notification.vue";
 import {notificationList} from "./utils/notificationList.ts";
 import {logout} from "./auth/auth.ts";
+import RefreshButton from "./components/RefreshButton.vue";
 </script>
 
 <template>
-  <div class="fixed right-0">
+  <div class="fixed right-0 z-10 pt-14 pr-2">
     <TransitionGroup tag="div" enter-active-class="transition-opacity">
       <Notification v-for="notification in notificationList" :notification="notification">
       </Notification>
@@ -34,13 +35,13 @@ import {logout} from "./auth/auth.ts";
             </div>
           </div>
 
-          <div class="flex items-end justify-center sm:items-stretch sm:justify-start">
-            <div class="hidden sm:ml-6 sm:block">
-              <div class="flex space-x-4">
-                <a aria-current="true" href="#" @click="logout"
-                   class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
-                  Logout
-                </a></div>
+          <div class="flex space-x-4 items-end justify-center sm:items-stretch sm:justify-start">
+            <RefreshButton></RefreshButton>
+            <div class="flex items-center">
+              <a aria-current="true" href="#" @click="logout"
+                 class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                Logout
+              </a>
             </div>
           </div>
         </div>
