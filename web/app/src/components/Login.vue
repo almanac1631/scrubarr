@@ -2,7 +2,7 @@
 import {ref} from "vue";
 import {Configuration, DefaultApiFactory} from "../api";
 import {AxiosError} from "axios";
-import {notify} from "../utils/notificationList.ts";
+import {NotificationType, notify} from "../utils/notificationList.ts";
 import {initializeAuthToken} from "../auth/auth.ts";
 import {useRouter} from "vue-router";
 import {basePath} from "../utils/api.ts";
@@ -24,7 +24,7 @@ async function submitLoginForm(e: any) {
     await router.push({path: "/"});
   } catch (e) {
     if (e instanceof AxiosError && e.status === 401) {
-      notify("Invalid login credentials.");
+      notify("Invalid login credentials.", NotificationType.Error);
       return;
     }
     console.log("unknown error occurred while logging in");
@@ -55,7 +55,8 @@ async function submitLoginForm(e: any) {
               <label for="password" class="block text-sm/6 font-medium text-gray-100">Password</label>
             </div>
             <div class="mt-2">
-              <input type="password" name="password" id="password" autocomplete="current-password" required v-model="password"
+              <input type="password" name="password" id="password" autocomplete="current-password" required
+                     v-model="password"
                      class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-500 sm:text-sm/6">
             </div>
           </div>

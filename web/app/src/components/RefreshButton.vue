@@ -1,22 +1,25 @@
 <script setup lang="ts">
 import {getApiClient} from "../utils/api.ts";
 import {ref} from "vue";
+import {NotificationType, notify} from "../utils/notificationList.ts";
 
 const apiClient = getApiClient();
 
 const refreshInProgress = ref(false);
 
 async function refreshEntryMapping() {
+  notify("Refreshing entry mapping...", NotificationType.Info);
   refreshInProgress.value = true;
   try {
     await apiClient.refreshEntryMappings();
+    notify("Entry mapping refreshed successfully.", NotificationType.Success);
   } catch (e) {
+    notify("Failed to refresh entry mapping.", NotificationType.Error);
     console.error("unknown error occurred while requesting a refresh in");
     console.error(e);
   } finally {
     refreshInProgress.value = false;
   }
-  return false;
 }
 </script>
 
@@ -28,7 +31,6 @@ async function refreshEntryMapping() {
             :class="{ 'hover:bg-gray-700': !refreshInProgress, 'hover:text-white rounded-md': !refreshInProgress }">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-           class="icon icon-tabler icons-tabler-outline icon-tabler-refresh"
            :class="{ 'animate-spin': refreshInProgress }">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
         <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/>

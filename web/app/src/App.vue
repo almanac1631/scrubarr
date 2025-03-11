@@ -9,7 +9,7 @@ import RefreshButton from "./components/RefreshButton.vue";
 </script>
 
 <template>
-  <div class="fixed right-0">
+  <div class="fixed right-0 z-10 pt-14 pr-2">
     <TransitionGroup tag="div" enter-active-class="transition-opacity">
       <Notification v-for="notification in notificationList" :notification="notification">
       </Notification>
