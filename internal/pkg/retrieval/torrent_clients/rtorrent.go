@@ -67,5 +67,29 @@ func (r *RtorrentEntryRetriever) parseTorrentFileList(torrent rtorrent.Torrent, 
 		}
 		mediaEntryList[entry.Name] = entry
 	}
+	if len(mediaEntryList) == 1 {
+		for _, entry := range mediaEntryList {
+			delete(mediaEntryList, entry.Name)
+			fileExtension := path.Ext(string(entry.Name))
+			combinedTorrentName := common.EntryName(torrent.Name)
+			torrentNameFileExt := getTorrentNameFileExt(torrent.Name, fileExtension)
+			if torrentNameFileExt == fileExtension {
+				combinedTorrentName = common.EntryName(torrent.Name)
+			} else {
+				combinedTorrentName = common.EntryName(fmt.Sprintf("%s%s", torrent.Name, fileExtension))
+			}
+			entry.Name = combinedTorrentName
+			mediaEntryList[combinedTorrentName] = entry
+		}
+	}
 	return mediaEntryList
+}
+
+func getTorrentNameFileExt(torrentName string, expectedFileExtension string) string {
+	if path.Ext(torrentName) == "" {
+		return ""
+	} else if len(torrentName) < len(expectedFileExtension) {
+		return ""
+	}
+	return torrentName[len(torrentName)-len(expectedFileExtension):]
 }
