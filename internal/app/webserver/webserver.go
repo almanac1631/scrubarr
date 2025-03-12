@@ -22,10 +22,10 @@ import (
 //go:embed all:content
 var content embed.FS
 
-func SetupWebserver(config *koanf.Koanf, entryMappingManager common.EntryMappingManager) (http.Handler, error) {
+func SetupWebserver(config *koanf.Koanf, entryMappingManager common.EntryMappingManager, info Info) (http.Handler, error) {
 	// Create a new router & API
 	router := http.NewServeMux()
-	apiServer, err := NewApiEndpointHandler(entryMappingManager, config)
+	apiServer, err := NewApiEndpointHandler(entryMappingManager, config, info)
 	if err != nil {
 		return nil, fmt.Errorf("could not create api endpoint handler: %w", err)
 	}
@@ -67,6 +67,7 @@ func SetupWebserver(config *koanf.Koanf, entryMappingManager common.EntryMapping
 		BaseRouter: router,
 		Middlewares: []MiddlewareFunc{apiServer.AuthenticationMiddleware([]string{
 			"/api/login",
+			"/api/info",
 		})},
 	})
 	serveFrontendFiles(router)

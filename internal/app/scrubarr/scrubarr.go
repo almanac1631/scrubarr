@@ -70,7 +70,7 @@ func StartApp() {
 		slog.Error("could not setup web server listener", "error", err)
 		os.Exit(1)
 	}
-	router, err := webserver.SetupWebserver(k, entryMappingManager)
+	router, err := webserver.SetupWebserver(k, entryMappingManager, webserver.Info{Commit: commit, Version: version})
 	if err != nil {
 		slog.Error("could not setup web server router", "error", err)
 		os.Exit(1)

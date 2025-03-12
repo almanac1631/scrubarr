@@ -173,3 +173,12 @@ func (a ApiEndpointHandler) GetStats(ctx context.Context, request GetStatsReques
 		},
 	}}, nil
 }
+
+func (a ApiEndpointHandler) GetInfo(ctx context.Context, request GetInfoRequestObject) (GetInfoResponseObject, error) {
+	return GetInfo200JSONResponse{
+		Info{
+			Commit:  a.info.Commit,
+			Version: a.info.Version,
+		},
+	}, nil
+}

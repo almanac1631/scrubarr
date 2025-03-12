@@ -6,6 +6,7 @@ import Notification from "./components/Notification.vue";
 import {notificationList} from "./utils/notificationList.ts";
 import {logout} from "./auth/auth.ts";
 import RefreshButton from "./components/RefreshButton.vue";
+import InfoFooter from "./components/InfoFooter.vue";
 </script>
 
 <template>
@@ -47,7 +48,7 @@ import RefreshButton from "./components/RefreshButton.vue";
         </div>
       </div>
     </Disclosure>
-    <main class="bg-gray-100 flex-grow" v-if="$route.meta.displayedInNavigation">
+    <main class="bg-gray-100 flex-grow relative" v-if="$route.meta.displayedInNavigation">
       <div class="py-2">
         <div class="container mx-auto text-gray-900">
           <h1 class="text-3xl my-5">
@@ -56,6 +57,7 @@ import RefreshButton from "./components/RefreshButton.vue";
           <RouterView/>
         </div>
       </div>
+      <InfoFooter></InfoFooter>
     </main>
     <RouterView v-else class="flex-grow"/>
   </div>

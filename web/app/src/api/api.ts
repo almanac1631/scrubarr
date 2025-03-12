@@ -108,6 +108,19 @@ export interface GetEntryMappings200Response {
 /**
  * 
  * @export
+ * @interface GetInfo200Response
+ */
+export interface GetInfo200Response {
+    /**
+     * 
+     * @type {Info}
+     * @memberof GetInfo200Response
+     */
+    'info': Info;
+}
+/**
+ * 
+ * @export
  * @interface GetRetrievers200Response
  */
 export interface GetRetrievers200Response {
@@ -130,6 +143,25 @@ export interface GetStats200Response {
      * @memberof GetStats200Response
      */
     'stats': Stats;
+}
+/**
+ * 
+ * @export
+ * @interface Info
+ */
+export interface Info {
+    /**
+     * The version of the application.
+     * @type {string}
+     * @memberof Info
+     */
+    'version': string;
+    /**
+     * The commit hash of the application.
+     * @type {string}
+     * @memberof Info
+     */
+    'commit': string;
 }
 /**
  * 
@@ -335,6 +367,36 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Get the information about the application.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getInfo: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/info`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of retrievers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -500,6 +562,18 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the information about the application.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getInfo(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetInfo200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getInfo(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getInfo']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get a list of retrievers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -573,6 +647,15 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Get the information about the application.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getInfo(options?: RawAxiosRequestConfig): AxiosPromise<GetInfo200Response> {
+            return localVarFp.getInfo(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get a list of retrievers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -632,6 +715,17 @@ export class DefaultApi extends BaseAPI {
      */
     public getEntryMappings(page: number, pageSize: number, filter?: GetEntryMappingsFilterEnum, sortBy?: GetEntryMappingsSortByEnum, name?: string, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).getEntryMappings(page, pageSize, filter, sortBy, name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get the information about the application.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public getInfo(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getInfo(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

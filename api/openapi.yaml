@@ -3,6 +3,26 @@ info:
   title: "scrubarr API"
   version: "0.0.1"
 paths:
+  /info:
+    get:
+      operationId: "getInfo"
+      summary: "Get the information about the application."
+      responses:
+        "200":
+          description: "A successful response."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "info"
+                properties:
+                  info:
+                    $ref: "./components/schemas/Info.yaml"
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
   /entry-mappings:
     get:
       operationId: "getEntryMappings"
