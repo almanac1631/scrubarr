@@ -7,6 +7,7 @@ import (
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
 	"github.com/almanac1631/scrubarr/internal/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	"hash/maphash"
 	"testing"
 	"time"
 )
@@ -88,4 +89,18 @@ func Test_getSizeFromEntry(t *testing.T) {
 			assert.Equalf(t, tt.want, got, "getSizeFromEntry(%v)", tt.args.entry)
 		})
 	}
+}
+
+func Test_getEntryId(t *testing.T) {
+	hash := &maphash.Hash{}
+	name := common.EntryName("test")
+	id1, err := getEntryId(hash, name)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, id1)
+	id2, err := getEntryId(hash, name)
+	assert.Nil(t, err)
+	assert.Equal(t, id1, id2)
+	id3, err := getEntryId(hash, "test2")
+	assert.Nil(t, err)
+	assert.NotEqual(t, id1, id3)
 }

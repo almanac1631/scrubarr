@@ -59,9 +59,10 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	if err != nil {
 		return fmt.Errorf("could not prepare entry mappings insert statement: %w", err)
 	}
+	hashInstance := &maphash.Hash{}
 	for retrieverInfo, entries := range rawEntries {
 		for name, entry := range entries {
-			entryId, err := generateEntryId(string(name))
+			entryId, err := getEntryId(hashInstance, name)
 			if err != nil {
 				return fmt.Errorf("could not generate entry id for entry: %w", err)
 			}
@@ -86,13 +87,13 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	return nil
 }
 
-func generateEntryId(name string) (string, error) {
-	var hash maphash.Hash
+func getEntryId(hash *maphash.Hash, name common.EntryName) (string, error) {
 	hash.Reset()
-	if _, err := hash.WriteString(name); err != nil {
+	if _, err := hash.WriteString(string(name)); err != nil {
 		return "", err
 	}
-	return strconv.FormatUint(hash.Sum64(), 10), nil
+	idStr := strconv.FormatUint(hash.Sum64(), 10)
+	return idStr, nil
 }
 
 func getDateAddedFromEntry(entry common.Entry) (*time.Time, error) {
