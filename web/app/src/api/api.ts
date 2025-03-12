@@ -30,6 +30,12 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
  */
 export interface EntryMapping {
     /**
+     * The unique identifier of this entry.
+     * @type {string}
+     * @memberof EntryMapping
+     */
+    'id': string;
+    /**
      * The name of this entry.
      * @type {string}
      * @memberof EntryMapping

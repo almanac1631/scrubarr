@@ -1,10 +1,14 @@
 type: "object"
 required:
+  - "id"
   - "name"
   - "retrieverFindings"
   - "dateAdded"
   - "size"
 properties:
+  id:
+    type: "string"
+    description: "The unique identifier of this entry."
   name:
     type: "string"
     description: "The name of this entry."

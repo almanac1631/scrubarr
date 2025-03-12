@@ -35,7 +35,7 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
                                    join category_counts cc on em.name = cc.name
                                    join (select name from filtered_names limit ? offset ?) limited_filtered_names
                                         on em.name = limited_filtered_names.name)
-select fe.name, fe.retriever_id, fe.date_added, fe.size, tc.total
+select fe.id, fe.name, fe.retriever_id, fe.date_added, fe.size, tc.total
 from filtered_entries fe
          join total_count tc%s;`, sortByAggrColumn, nameFilter, sortByOrderBy, categoriesFilter, sortByOrderBy)
 	var rows *sql.Rows
@@ -60,15 +60,15 @@ from filtered_entries fe
 
 	entryMappings = []*common.EntryMapping{}
 	for rows.Next() {
-		var name, retrieverId string
+		var id, name, retrieverId string
 		var dateAdded time.Time
 		var size int64
-		if err = rows.Scan(&name, &retrieverId, &dateAdded, &size, &totalCount); err != nil {
+		if err = rows.Scan(&id, &name, &retrieverId, &dateAdded, &size, &totalCount); err != nil {
 			entryMappings = nil
 			err = fmt.Errorf("could not scan entry mappings: %w", err)
 			return
 		}
-		entryMappings, err = e.parseEntryMapping(name, retrieverId, dateAdded, size, entryMappings)
+		entryMappings, err = e.parseEntryMapping(id, name, retrieverId, dateAdded, size, entryMappings)
 		if err != nil {
 			entryMappings = nil
 			err = fmt.Errorf("could not parse entry mappings: %w", err)
@@ -134,8 +134,7 @@ func getNameFilter(name string) string {
 	return " where instr(lower(em.name), ?) > 0"
 }
 
-func (e *EntryMappingManager) parseEntryMapping(entryName string, retrieverId string, dateAdded time.Time, size int64, entryMappings []*common.EntryMapping) ([]*common.EntryMapping, error) {
-	entryNameMapped := common.EntryName(entryName)
+func (e *EntryMappingManager) parseEntryMapping(id string, entryName string, retrieverId string, dateAdded time.Time, size int64, entryMappings []*common.EntryMapping) ([]*common.EntryMapping, error) {
 	retrieverIdMapped := common.RetrieverId(retrieverId)
 
 	retrieverInfo, err := e.getRetrieverById(retrieverIdMapped)
@@ -144,14 +143,15 @@ func (e *EntryMappingManager) parseEntryMapping(entryName string, retrieverId st
 	}
 	var entryMapping *common.EntryMapping
 	for _, presentEntryMapping := range entryMappings {
-		if presentEntryMapping.Name == entryNameMapped {
+		if presentEntryMapping.Id == id {
 			entryMapping = presentEntryMapping
 			break
 		}
 	}
 	if entryMapping == nil {
 		entryMapping = &common.EntryMapping{
-			Name:            entryNameMapped,
+			Id:              id,
+			Name:            common.EntryName(entryName),
 			RetrieversFound: []common.RetrieverInfo{},
 		}
 		entryMappings = append(entryMappings, entryMapping)
