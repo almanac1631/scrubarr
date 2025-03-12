@@ -77,6 +77,15 @@ type ErrorResponseBody struct {
 	Error  string `json:"error"`
 }
 
+// Info defines model for Info.
+type Info struct {
+	// Commit The commit hash of the application.
+	Commit string `json:"commit"`
+
+	// Version The version of the application.
+	Version string `json:"version"`
+}
+
 // LoginRequestBody defines model for LoginRequestBody.
 type LoginRequestBody struct {
 	// Password The password to login with.
@@ -130,6 +139,11 @@ type GetEntryMappings200Response struct {
 
 	// TotalAmount The total amount of entries that could be returned for the provided filter.
 	TotalAmount int `json:"totalAmount"`
+}
+
+// GetInfo200Response defines model for getInfo_200_response.
+type GetInfo200Response struct {
+	Info Info `json:"info"`
 }
 
 // GetRetrievers200Response defines model for getRetrievers_200_response.
@@ -192,6 +206,9 @@ type ServerInterface interface {
 	// Trigger a refresh of the entry mappings.
 	// (POST /entry-mappings)
 	RefreshEntryMappings(w http.ResponseWriter, r *http.Request)
+	// Get the information about the application.
+	// (GET /info)
+	GetInfo(w http.ResponseWriter, r *http.Request)
 	// Login to the application using the provided credentials.
 	// (POST /login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -302,6 +319,20 @@ func (siw *ServerInterfaceWrapper) RefreshEntryMappings(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RefreshEntryMappings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetInfo(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInfo(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -487,6 +518,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc("GET "+options.BaseURL+"/entry-mappings", wrapper.GetEntryMappings)
 	m.HandleFunc("POST "+options.BaseURL+"/entry-mappings", wrapper.RefreshEntryMappings)
+	m.HandleFunc("GET "+options.BaseURL+"/info", wrapper.GetInfo)
 	m.HandleFunc("POST "+options.BaseURL+"/login", wrapper.Login)
 	m.HandleFunc("GET "+options.BaseURL+"/retrievers", wrapper.GetRetrievers)
 	m.HandleFunc("GET "+options.BaseURL+"/stats", wrapper.GetStats)
@@ -571,6 +603,46 @@ type RefreshEntryMappings5XXJSONResponse struct {
 }
 
 func (response RefreshEntryMappings5XXJSONResponse) VisitRefreshEntryMappingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetInfoRequestObject struct {
+}
+
+type GetInfoResponseObject interface {
+	VisitGetInfoResponse(w http.ResponseWriter) error
+}
+
+type GetInfo200JSONResponse GetInfo200Response
+
+func (response GetInfo200JSONResponse) VisitGetInfoResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetInfo4XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response GetInfo4XXJSONResponse) VisitGetInfoResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetInfo5XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response GetInfo5XXJSONResponse) VisitGetInfoResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -715,6 +787,9 @@ type StrictServerInterface interface {
 	// Trigger a refresh of the entry mappings.
 	// (POST /entry-mappings)
 	RefreshEntryMappings(ctx context.Context, request RefreshEntryMappingsRequestObject) (RefreshEntryMappingsResponseObject, error)
+	// Get the information about the application.
+	// (GET /info)
+	GetInfo(ctx context.Context, request GetInfoRequestObject) (GetInfoResponseObject, error)
 	// Login to the application using the provided credentials.
 	// (POST /login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
@@ -798,6 +873,30 @@ func (sh *strictHandler) RefreshEntryMappings(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RefreshEntryMappingsResponseObject); ok {
 		if err := validResponse.VisitRefreshEntryMappingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetInfo operation middleware
+func (sh *strictHandler) GetInfo(w http.ResponseWriter, r *http.Request) {
+	var request GetInfoRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetInfo(ctx, request.(GetInfoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetInfo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetInfoResponseObject); ok {
+		if err := validResponse.VisitGetInfoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

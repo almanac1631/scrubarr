@@ -1,0 +1,11 @@
+type: object
+required:
+  - version
+  - commit
+properties:
+  version:
+    type: string
+    description: The version of the application.
+  commit:
+    type: string
+    description: The commit hash of the application.

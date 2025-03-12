@@ -31,9 +31,10 @@ type ApiEndpointHandler struct {
 	passwordRetriever   func() []byte
 	passwordSalt        []byte
 	statsRetriever      StatsRetriever
+	info                Info
 }
 
-func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, config *koanf.Koanf) (*ApiEndpointHandler, error) {
+func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, config *koanf.Koanf, info Info) (*ApiEndpointHandler, error) {
 	username := strings.ToLower(config.MustString("general.auth.username"))
 	loadByteValue := func(path string) ([]byte, error) {
 		value, err := hex.DecodeString(config.MustString(path))
@@ -70,7 +71,7 @@ func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, confi
 		ultraApi := ultraapi.New(endpoint, apiKey)
 		statsRetriever = ultraApiToStatsRetriever(ultraApi)
 	}
-	return &ApiEndpointHandler{entryMappingManager, jwtConfig, username, passwordRetriever, passwordSalt, statsRetriever}, nil
+	return &ApiEndpointHandler{entryMappingManager, jwtConfig, username, passwordRetriever, passwordSalt, statsRetriever, info}, nil
 }
 
 type wrappedStatsRetriever struct {
