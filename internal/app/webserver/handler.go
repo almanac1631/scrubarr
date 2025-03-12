@@ -65,7 +65,7 @@ func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, confi
 	}
 	jwtConfig := &JwtConfig{privateKey, publicKey}
 	var statsRetriever StatsRetriever
-	if ultraApiConf := config.StringMap("ultra-api"); ultraApiConf != nil {
+	if ultraApiConf := config.StringMap("ultra-api"); len(ultraApiConf) != 0 {
 		endpoint := ultraApiConf["endpoint"]
 		apiKey := []byte(ultraApiConf["api_key"])
 		ultraApi := ultraapi.New(endpoint, apiKey)
