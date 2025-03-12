@@ -8,7 +8,7 @@ import (
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
-	"hash/maphash"
+	"hash/fnv"
 	"strconv"
 	"time"
 )
@@ -60,10 +60,9 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	if err != nil {
 		return fmt.Errorf("could not prepare entry mappings insert statement: %w", err)
 	}
-	hashInstance := &maphash.Hash{}
 	for retrieverInfo, entries := range rawEntries {
 		for name, entry := range entries {
-			entryId, err := getEntryId(hashInstance, name)
+			entryId, err := getEntryId(name)
 			if err != nil {
 				return fmt.Errorf("could not generate entry id for entry: %w", err)
 			}
@@ -88,9 +87,9 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	return nil
 }
 
-func getEntryId(hash *maphash.Hash, name common.EntryName) (string, error) {
-	hash.Reset()
-	if _, err := hash.WriteString(string(name)); err != nil {
+func getEntryId(name common.EntryName) (string, error) {
+	hash := fnv.New64a()
+	if _, err := hash.Write([]byte(name)); err != nil {
 		return "", err
 	}
 	idStr := strconv.FormatUint(hash.Sum64(), 10)
