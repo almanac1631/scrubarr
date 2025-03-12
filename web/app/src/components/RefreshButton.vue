@@ -3,15 +3,13 @@ import {getApiClient} from "../utils/api.ts";
 import {ref} from "vue";
 import {NotificationType, notify} from "../utils/notificationList.ts";
 
-const apiClient = getApiClient();
-
 const refreshInProgress = ref(false);
 
 async function refreshEntryMapping() {
   notify("Refreshing entry mapping...", NotificationType.Info);
   refreshInProgress.value = true;
   try {
-    await apiClient.refreshEntryMappings();
+    await getApiClient().refreshEntryMappings();
     notify("Entry mapping refreshed successfully.", NotificationType.Success);
   } catch (e) {
     notify("Failed to refresh entry mapping.", NotificationType.Error);
