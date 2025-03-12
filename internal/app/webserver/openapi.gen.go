@@ -57,6 +57,9 @@ type EntryMapping struct {
 	// DateAdded The date and time this entry was added.
 	DateAdded time.Time `json:"dateAdded"`
 
+	// Id The unique identifier of this entry.
+	Id string `json:"id"`
+
 	// Name The name of this entry.
 	Name              string                               `json:"name"`
 	RetrieverFindings []EntryMappingRetrieverFindingsInner `json:"retrieverFindings"`

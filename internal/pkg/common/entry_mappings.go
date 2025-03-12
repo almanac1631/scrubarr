@@ -6,6 +6,8 @@ import (
 )
 
 type EntryMapping struct {
+	// Id is the unique identifier of the entry.
+	Id string
 	// Name is the normalized name of the entry.
 	Name EntryName
 	// DateAdded is the date when the entry was added.
@@ -17,7 +19,7 @@ type EntryMapping struct {
 }
 
 func (e EntryMapping) String() string {
-	return fmt.Sprintf("EntryMapping{Name: %q, RetrieversFound: %v}", e.Name, e.RetrieversFound)
+	return fmt.Sprintf("EntryMapping{Id: %q, Name: %q, RetrieversFound: %v}", e.Id, e.Name, e.RetrieversFound)
 }
 
 // EntryMappingManager is used to aggregate the results of single EntryRetriever instances and return the combined results.
