@@ -24,8 +24,11 @@ func (e *EntryMappingManager) RefreshEntryMappings() (err error) {
 		if err == nil {
 			return
 		}
-		if err = tx.Rollback(); err != nil {
-			err = fmt.Errorf("failed to rollback transaction: %w", err)
+		oldErr := err
+		if err := tx.Rollback(); err != nil {
+			err = fmt.Errorf("failed to rollback transaction (original err: %w): %w", oldErr, err)
+		} else if err == nil {
+			err = fmt.Errorf("rolled back transaction due to err: %w", oldErr)
 		}
 	}()
 
