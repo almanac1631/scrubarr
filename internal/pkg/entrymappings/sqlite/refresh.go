@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
 	"time"
 )
@@ -87,8 +86,6 @@ func getDateAddedFromEntry(entry common.Entry) (*time.Time, error) {
 	switch entry.AdditionalData.(type) {
 	case arr_apps.ArrAppEntry:
 		dateAdded = entry.AdditionalData.(arr_apps.ArrAppEntry).DateAdded
-	case folder_scanning.FileEntry:
-		dateAdded = entry.AdditionalData.(folder_scanning.FileEntry).DateModified
 	case torrent_clients.TorrentClientEntry:
 		dateAdded = entry.AdditionalData.(torrent_clients.TorrentClientEntry).DownloadedAt
 	default:
@@ -106,8 +103,6 @@ func getSizeFromEntry(entry common.Entry) (int64, error) {
 	switch entry.AdditionalData.(type) {
 	case arr_apps.ArrAppEntry:
 		size = entry.AdditionalData.(arr_apps.ArrAppEntry).Size
-	case folder_scanning.FileEntry:
-		size = entry.AdditionalData.(folder_scanning.FileEntry).SizeInBytes
 	case torrent_clients.TorrentClientEntry:
 		size = entry.AdditionalData.(torrent_clients.TorrentClientEntry).FileSizeBytes
 	default:

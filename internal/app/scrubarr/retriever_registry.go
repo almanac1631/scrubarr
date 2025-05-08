@@ -5,8 +5,6 @@ import (
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	_ "github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
-	_ "github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
 	_ "github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
 	"github.com/knadh/koanf/v2"
@@ -21,7 +19,6 @@ type instantiateRetrieverInfo struct {
 }
 
 var instantiateFunctions = map[instantiateRetrieverInfo]instantiateFuncType{
-	{category: "folder", softwareName: "folder"}:           instantiateFolderScanner,
 	{category: "arr_app", softwareName: "sonarr"}:          instantiateSonarrRetriever,
 	{category: "arr_app", softwareName: "radarr"}:          instantiateRadarrRetriever,
 	{category: "torrent_client", softwareName: "deluge"}:   instantiateDelugeRetriever,
@@ -68,15 +65,6 @@ func checkAndRegisterRetriever(koanf *koanf.Koanf, category, softwareName string
 		retrieverRegistry[retrieverInfo] = retriever
 	}
 	return nil
-}
-
-func instantiateFolderScanner(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error) {
-	folderPath := koanf.MustString("path")
-	retriever, err := folder_scanning.NewFolderScanner(allowedFileEndings, folderPath)
-	if err != nil {
-		return nil, err
-	}
-	return retriever, nil
 }
 
 func instantiateSonarrRetriever(koanf *koanf.Koanf, allowedFileEndings []string) (common.EntryRetriever, error) {

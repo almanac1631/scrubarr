@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/folder_scanning"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
 	"github.com/almanac1631/scrubarr/internal/pkg/utils"
 	"github.com/stretchr/testify/assert"
@@ -37,12 +36,6 @@ func Test_getAddedDateFromEntry(t *testing.T) {
 				DateAdded: time.Time{},
 			},
 		}}, want{nil, nil}},
-		{"test get added date from FileEntry", args{common.Entry{
-			Name: "test",
-			AdditionalData: folder_scanning.FileEntry{
-				DateModified: utils.ParseTime("2025-01-24T16:58:17Z"),
-			},
-		}}, want{utils.ParseTimePtr("2025-01-24T16:58:17Z"), nil}},
 		{"test get added date from TorrentClientEntry", args{common.Entry{
 			Name: "test",
 			AdditionalData: torrent_clients.TorrentClientEntry{
@@ -75,12 +68,6 @@ func Test_getSizeFromEntry(t *testing.T) {
 				Size: 123456,
 			},
 		}}, 123456, assert.NoError},
-		{"test get size from FileEntry", args{common.Entry{
-			Name: "test",
-			AdditionalData: folder_scanning.FileEntry{
-				SizeInBytes: 987654,
-			},
-		}}, 987654, assert.NoError},
 		{"test get size from TorrentClientEntry", args{common.Entry{
 			Name: "test",
 			AdditionalData: torrent_clients.TorrentClientEntry{
