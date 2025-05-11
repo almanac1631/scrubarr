@@ -43,6 +43,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 				"Some Cool Film Name.mkv": {
 					Name: "Some Cool Film Name.mkv",
 					AdditionalData: ArrAppEntry{
+						ID:            13371,
 						Type:          MediaTypeMovie,
 						ParentName:    "Some Cool Film yo",
 						Monitored:     true,

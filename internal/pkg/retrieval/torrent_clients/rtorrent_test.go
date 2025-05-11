@@ -26,6 +26,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			"can parse multiple torrent files",
 			fields{[]string{".mkv"}},
 			args{rtorrent.Torrent{
+				Hash:     "somehash",
 				Path:     "/some/dir/Some cheeky torrent file bundle",
 				Name:     "Some cheeky torrent file bundle",
 				Ratio:    0.84,
@@ -38,6 +39,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie1.mkv": {
 					Name: "Movie1.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "somehash",
 						TorrentClientName: "rtorrent",
 						TorrentName:       "Some cheeky torrent file bundle",
 						DownloadFilePath:  "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
@@ -50,6 +52,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie2.mkv": {
 					Name: "Movie2.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "somehash",
 						TorrentClientName: "rtorrent",
 						TorrentName:       "Some cheeky torrent file bundle",
 						DownloadFilePath:  "/some/dir/Some cheeky torrent file bundle/Movie2.mkv",
@@ -65,6 +68,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			"can filter torrent files with invalid file extensions",
 			fields{[]string{".mkv"}},
 			args{rtorrent.Torrent{
+				Hash:     "someotherhash",
 				Path:     "/some/dir/Some cheeky torrent file bundle",
 				Name:     "Some cheeky torrent file bundle",
 				Ratio:    0.84,
@@ -78,6 +82,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie1.mkv": {
 					Name: "Movie1.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "someotherhash",
 						TorrentClientName: "rtorrent",
 						TorrentName:       "Some cheeky torrent file bundle",
 						DownloadFilePath:  "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
@@ -90,6 +95,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie2.mkv": {
 					Name: "Movie2.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "someotherhash",
 						TorrentClientName: "rtorrent",
 						TorrentName:       "Some cheeky torrent file bundle",
 						DownloadFilePath:  "/some/dir/Some cheeky torrent file bundle/Movie2.mkv",
@@ -105,6 +111,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			"uses the torrent name if only one valid file exists in the torrent",
 			fields{[]string{".mkv"}},
 			args{rtorrent.Torrent{
+				Hash:     "yetanotherhash",
 				Path:     "/some/dir/Some cheeky torrent file bundle",
 				Name:     "Some cheeky torrent file bundle.mkv",
 				Ratio:    0.84,
@@ -117,6 +124,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Some cheeky torrent file bundle.mkv": {
 					Name: "Some cheeky torrent file bundle.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "yetanotherhash",
 						TorrentClientName: "rtorrent",
 						TorrentName:       "Some cheeky torrent file bundle.mkv",
 						DownloadFilePath:  "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
@@ -132,6 +140,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			"uses the torrent name if only one valid file exists in the torrent and adds the file extension",
 			fields{[]string{".mkv"}},
 			args{rtorrent.Torrent{
+				Hash:     "yetanotherhash",
 				Path:     "/some/dir/Some cheeky torrent file bundle",
 				Name:     "Some cheeky torrent file bundle",
 				Ratio:    0.84,
@@ -144,6 +153,7 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Some cheeky torrent file bundle.mkv": {
 					Name: "Some cheeky torrent file bundle.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "yetanotherhash",
 						TorrentClientName: "rtorrent",
 						TorrentName:       "Some cheeky torrent file bundle",
 						DownloadFilePath:  "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",

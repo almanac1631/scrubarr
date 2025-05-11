@@ -10,6 +10,8 @@ import (
 	"slices"
 )
 
+var _ common.EntryRetriever = (*RadarrMediaRetriever)(nil)
+
 type RadarrMediaRetriever struct {
 	client             *radarr.Radarr
 	allowedFileEndings []string
@@ -52,6 +54,7 @@ func (r RadarrMediaRetriever) getEntriesFromMovieFileList(movie *radarr.Movie, m
 		mediaEntryList[name] = common.Entry{
 			Name: name,
 			AdditionalData: ArrAppEntry{
+				ID:            movieFile.ID,
 				Type:          MediaTypeMovie,
 				ParentName:    movie.Title,
 				Monitored:     movie.Monitored,
@@ -62,4 +65,16 @@ func (r RadarrMediaRetriever) getEntriesFromMovieFileList(movie *radarr.Movie, m
 		}
 	}
 	return mediaEntryList
+}
+
+func (r RadarrMediaRetriever) DeleteEntry(id any) error {
+	movieFileID, ok := id.(int64)
+	if !ok {
+		return fmt.Errorf("could not convert id to int64: %v", id)
+	}
+	err := r.client.DeleteMovieFiles(movieFileID)
+	if err != nil {
+		return fmt.Errorf("could not delete movie file with id %d: %w", movieFileID, err)
+	}
+	return nil
 }

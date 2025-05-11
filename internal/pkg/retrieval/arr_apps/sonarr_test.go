@@ -33,6 +33,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					Title: "Some series!",
 				},
 				&sonarr.EpisodeFile{
+					ID:           21991,
 					SeasonNumber: 2,
 					RelativePath: "Season 1/Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
@@ -42,6 +43,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 			}, common.Entry{
 				Name: "Some Episode.mkv",
 				AdditionalData: ArrAppEntry{
+					ID:            21991,
 					Type:          MediaTypeSeries,
 					ParentName:    "Some series!",
 					Monitored:     true,
@@ -62,6 +64,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					Title: "Some series!",
 				},
 				&sonarr.EpisodeFile{
+					ID:           84291,
 					SeasonNumber: 3,
 					RelativePath: "Some Episode.mkv",
 					Path:         "/home/myuser/media/downloads/Some Episode.mkv",
@@ -71,6 +74,7 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 			}, common.Entry{
 				Name: "Some Episode.mkv",
 				AdditionalData: ArrAppEntry{
+					ID:            84291,
 					Type:          MediaTypeSeries,
 					ParentName:    "Some series!",
 					Monitored:     false,

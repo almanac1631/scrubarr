@@ -14,6 +14,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 		allowedFileEndings []string
 	}
 	type args struct {
+		hash          string
 		torrentStatus *delugeclient.TorrentStatus
 	}
 	tests := []struct {
@@ -25,26 +26,29 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 		{
 			"can parse standard torrent status",
 			fields{[]string{".mkv"}},
-			args{&delugeclient.TorrentStatus{
-				ActiveTime:       0,
-				CompletedTime:    1725444490,
-				Ratio:            1.74,
-				SavePath:         "/home/someguy/downloads/deluge",
-				DownloadLocation: "/home/someguy/downloads/deluge",
-				Name:             "Family.Guy.S22E14.1080p.WEB.H264",
-				SeedingTime:      751680, // 8.7 days
-				TrackerHost:      "sometrakkr.co.uk",
-				Files: []delugeclient.File{
-					{
-						Size: 1800000000,
-						Path: "Somesubfolder/series/Episode1.mkv",
+			args{
+				"somehash",
+				&delugeclient.TorrentStatus{
+					ActiveTime:       0,
+					CompletedTime:    1725444490,
+					Ratio:            1.74,
+					SavePath:         "/home/someguy/downloads/deluge",
+					DownloadLocation: "/home/someguy/downloads/deluge",
+					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
+					SeedingTime:      751680, // 8.7 days
+					TrackerHost:      "sometrakkr.co.uk",
+					Files: []delugeclient.File{
+						{
+							Size: 1800000000,
+							Path: "Somesubfolder/series/Episode1.mkv",
+						},
 					},
-				},
-			}},
+				}},
 			[]common.Entry{
 				{
 					Name: "Episode1.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "somehash",
 						TorrentClientName: "deluge",
 						TorrentName:       "Family.Guy.S22E14.1080p.WEB.H264",
 						DownloadFilePath:  "/home/someguy/downloads/deluge/Somesubfolder/series/Episode1.mkv",
@@ -59,30 +63,33 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 		{
 			"can filter multiple files in a torrent status",
 			fields{[]string{".mkv"}},
-			args{&delugeclient.TorrentStatus{
-				ActiveTime:       0,
-				CompletedTime:    1725444490,
-				Ratio:            1.74,
-				SavePath:         "/home/someguy/downloads/deluge",
-				DownloadLocation: "/home/someguy/downloads/deluge",
-				Name:             "Family.Guy.S22E14.1080p.WEB.H264",
-				SeedingTime:      751680, // 8.7 days
-				TrackerHost:      "sometrakkr.co.uk",
-				Files: []delugeclient.File{
-					{
-						Size: 1800000000,
-						Path: "Somesubfolder/series/Episode1.mp4",
+			args{
+				"someotherhash",
+				&delugeclient.TorrentStatus{
+					ActiveTime:       0,
+					CompletedTime:    1725444490,
+					Ratio:            1.74,
+					SavePath:         "/home/someguy/downloads/deluge",
+					DownloadLocation: "/home/someguy/downloads/deluge",
+					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
+					SeedingTime:      751680, // 8.7 days
+					TrackerHost:      "sometrakkr.co.uk",
+					Files: []delugeclient.File{
+						{
+							Size: 1800000000,
+							Path: "Somesubfolder/series/Episode1.mp4",
+						},
+						{
+							Size: 19021903,
+							Path: "Somesubfolder/series/Episode2.mkv",
+						},
 					},
-					{
-						Size: 19021903,
-						Path: "Somesubfolder/series/Episode2.mkv",
-					},
-				},
-			}},
+				}},
 			[]common.Entry{
 				{
 					Name: "Episode2.mkv",
 					AdditionalData: TorrentClientEntry{
+						ID:                "someotherhash",
 						TorrentClientName: "deluge",
 						TorrentName:       "Family.Guy.S22E14.1080p.WEB.H264",
 						DownloadFilePath:  "/home/someguy/downloads/deluge/Somesubfolder/series/Episode2.mkv",
@@ -97,17 +104,19 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 		{
 			"can parse zero files in a torrent status",
 			fields{nil},
-			args{&delugeclient.TorrentStatus{
-				ActiveTime:       0,
-				CompletedTime:    1725444490,
-				Ratio:            1.74,
-				SavePath:         "/home/someguy/downloads/deluge",
-				DownloadLocation: "/home/someguy/downloads/deluge",
-				Name:             "Family.Guy.S22E14.1080p.WEB.H264",
-				SeedingTime:      751680, // 8.7 days
-				TrackerHost:      "sometrakkr.co.uk",
-				Files:            []delugeclient.File{},
-			}},
+			args{
+				"yetanotherhash",
+				&delugeclient.TorrentStatus{
+					ActiveTime:       0,
+					CompletedTime:    1725444490,
+					Ratio:            1.74,
+					SavePath:         "/home/someguy/downloads/deluge",
+					DownloadLocation: "/home/someguy/downloads/deluge",
+					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
+					SeedingTime:      751680, // 8.7 days
+					TrackerHost:      "sometrakkr.co.uk",
+					Files:            []delugeclient.File{},
+				}},
 			[]common.Entry{},
 		},
 	}
@@ -116,7 +125,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 			d := &DelugeEntryRetriever{
 				nil, tt.fields.allowedFileEndings,
 			}
-			if got := d.parseDelugeTorrentStatus(tt.args.torrentStatus); !reflect.DeepEqual(got, tt.want) {
+			if got := d.parseDelugeTorrentStatus(tt.args.hash, tt.args.torrentStatus); !reflect.DeepEqual(got, tt.want) {
 				assert.Equal(t, tt.want, got)
 			}
 		})
