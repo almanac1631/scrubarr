@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+var (
+	ErrEntryMappingNotFound = fmt.Errorf("entry mapping not found")
+)
+
 type EntryMapping struct {
 	// Id is the unique identifier of the entry.
 	Id string
@@ -30,8 +34,17 @@ type EntryMappingManager interface {
 	// GetEntryMappings returns the filtered entry mapping by applying the given filters.
 	GetEntryMappings(page int, pageSize int, filter EntryMappingFilter, sortBy EntryMappingSortBy, name string) ([]*EntryMapping, int, error)
 
+	// GetEntryMappingById returns the entry mapping by its unique identifier.
+	GetEntryMappingById(id string) (*EntryMapping, error)
+
 	// GetRetrievers returns the information on all registered retrievers.
 	GetRetrievers() ([]RetrieverInfo, error)
+
+	// GetRetrieverById returns the retriever by its unique identifier.
+	GetRetrieverById(id RetrieverId) (RetrieverInfo, EntryRetriever, error)
+
+	// DeleteEntryMappingById deletes the entry mapping by its unique identifier.
+	DeleteEntryMappingById(id string) error
 }
 
 type EntryMappingFilter int

@@ -6,6 +6,8 @@ import (
 	"hash/fnv"
 )
 
+var ErrEntryNotFound = fmt.Errorf("entry not found")
+
 type RetrieverId string
 
 type RetrieverInfo struct {
@@ -32,6 +34,8 @@ type RetrieverEntries map[EntryName]Entry
 type EntryRetriever interface {
 	// RetrieveEntries retrieves a mapping of entries consisting of  unique entry names and the actual entry as value.
 	RetrieveEntries() (RetrieverEntries, error)
+	// DeleteEntry deletes (and un-monitors) the entry with the given id.
+	DeleteEntry(id any) error
 }
 
 // BundledEntryRetriever queries all of the EntryRetriever instances, returns the responses and blocks until completion.

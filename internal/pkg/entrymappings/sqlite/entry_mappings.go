@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"strings"
@@ -38,16 +39,20 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
 select fe.id, fe.name, fe.retriever_id, fe.date_added, fe.size, tc.total
 from filtered_entries fe
          join total_count tc%s;`, sortByAggrColumn, nameFilter, sortByOrderBy, categoriesFilter, sortByOrderBy)
-	var rows *sql.Rows
 	args := []any{
 		pageSize, offset,
 	}
 	if nameFilter != "" {
 		args = append([]any{strings.ToLower(name)}, args...)
 	}
+	return e.queryAndParseEntryMappings(query, args)
+}
+
+func (e *EntryMappingManager) queryAndParseEntryMappings(query string, args []any) (entryMappings []*common.EntryMapping, totalCount int, err error) {
+	var rows *sql.Rows
 	rows, err = e.db.Query(query, args...)
 	if err != nil {
-		return nil, 0, fmt.Errorf("could not get entry mappings: %w", err)
+		return nil, 0, fmt.Errorf("could not query entry mappings: %w", err)
 	}
 
 	defer func() {
@@ -134,10 +139,33 @@ func getNameFilter(name string) string {
 	return " where instr(lower(em.name), ?) > 0"
 }
 
+func (e *EntryMappingManager) GetEntryMappingById(id string) (*common.EntryMapping, error) {
+	query := `select em.id, em.name, em.retriever_id, em.date_added, em.size, 0 from entry_mappings em where em.id = ?;`
+	args := []any{id}
+	entryMappings, _, err := e.queryAndParseEntryMappings(query, args)
+	if err != nil {
+		return nil, fmt.Errorf("could not get entry mapping by id %q: %w", id, err)
+	}
+	if len(entryMappings) == 0 {
+		return nil, common.ErrEntryMappingNotFound
+	}
+	return entryMappings[0], nil
+}
+
+func (e *EntryMappingManager) GetRetrieverById(id common.RetrieverId) (common.RetrieverInfo, common.EntryRetriever, error) {
+	for retrieverInfo, retriever := range e.entryRetrievers {
+		if retrieverInfo.Id() != id {
+			continue
+		}
+		return retrieverInfo, retriever, nil
+	}
+	return common.RetrieverInfo{}, nil, errors.New("retriever not found")
+}
+
 func (e *EntryMappingManager) parseEntryMapping(id string, entryName string, retrieverId string, dateAdded time.Time, size int64, entryMappings []*common.EntryMapping) ([]*common.EntryMapping, error) {
 	retrieverIdMapped := common.RetrieverId(retrieverId)
 
-	retrieverInfo, err := e.getRetrieverById(retrieverIdMapped)
+	retrieverInfo, _, err := e.GetRetrieverById(retrieverIdMapped)
 	if err != nil {
 		return nil, err
 	}
@@ -164,13 +192,4 @@ func (e *EntryMappingManager) parseEntryMapping(id string, entryName string, ret
 		entryMapping.Size = size
 	}
 	return entryMappings, nil
-}
-
-func (e *EntryMappingManager) getRetrieverById(retrieverId common.RetrieverId) (common.RetrieverInfo, error) {
-	for retrieverInfo, _ := range e.entryRetrievers {
-		if retrieverInfo.Id() == retrieverId {
-			return retrieverInfo, nil
-		}
-	}
-	return common.RetrieverInfo{}, fmt.Errorf("retriever with id %s not found", retrieverId)
 }
