@@ -114,6 +114,36 @@ paths:
           $ref: "./responses/ErrorResponse.yaml"
       security:
         - BearerAuth: [ ]
+  /entry-mappings/{entryId}:
+    delete:
+      operationId: "deleteEntryMapping"
+      summary: "Delete an entry mapping from all found retrievers."
+      parameters:
+        - in: "path"
+          name: "entryId"
+          required: true
+          schema:
+            type: "string"
+          description: "The ID of the entry mapping to delete."
+      responses:
+        "200":
+          description: "A successful response."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "message"
+                properties:
+                  message:
+                    type: "string"
+                    description: "The status message to display."
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
+      security:
+        - BearerAuth: [ ]
   /retrievers:
     get:
       operationId: "getRetrievers"

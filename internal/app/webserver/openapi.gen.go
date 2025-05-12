@@ -209,6 +209,9 @@ type ServerInterface interface {
 	// Trigger a refresh of the entry mappings.
 	// (POST /entry-mappings)
 	RefreshEntryMappings(w http.ResponseWriter, r *http.Request)
+	// Delete an entry mapping from all found retrievers.
+	// (DELETE /entry-mappings/{entryId})
+	DeleteEntryMapping(w http.ResponseWriter, r *http.Request, entryId string)
 	// Get the information about the application.
 	// (GET /info)
 	GetInfo(w http.ResponseWriter, r *http.Request)
@@ -322,6 +325,37 @@ func (siw *ServerInterfaceWrapper) RefreshEntryMappings(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RefreshEntryMappings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteEntryMapping operation middleware
+func (siw *ServerInterfaceWrapper) DeleteEntryMapping(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteEntryMapping(w, r, entryId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -521,6 +555,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc("GET "+options.BaseURL+"/entry-mappings", wrapper.GetEntryMappings)
 	m.HandleFunc("POST "+options.BaseURL+"/entry-mappings", wrapper.RefreshEntryMappings)
+	m.HandleFunc("DELETE "+options.BaseURL+"/entry-mappings/{entryId}", wrapper.DeleteEntryMapping)
 	m.HandleFunc("GET "+options.BaseURL+"/info", wrapper.GetInfo)
 	m.HandleFunc("POST "+options.BaseURL+"/login", wrapper.Login)
 	m.HandleFunc("GET "+options.BaseURL+"/retrievers", wrapper.GetRetrievers)
@@ -606,6 +641,47 @@ type RefreshEntryMappings5XXJSONResponse struct {
 }
 
 func (response RefreshEntryMappings5XXJSONResponse) VisitRefreshEntryMappingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type DeleteEntryMappingRequestObject struct {
+	EntryId string `json:"entryId"`
+}
+
+type DeleteEntryMappingResponseObject interface {
+	VisitDeleteEntryMappingResponse(w http.ResponseWriter) error
+}
+
+type DeleteEntryMapping200JSONResponse RefreshEntryMappings200Response
+
+func (response DeleteEntryMapping200JSONResponse) VisitDeleteEntryMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteEntryMapping4XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response DeleteEntryMapping4XXJSONResponse) VisitDeleteEntryMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type DeleteEntryMapping5XXJSONResponse struct {
+	Body       ErrorResponseBody
+	StatusCode int
+}
+
+func (response DeleteEntryMapping5XXJSONResponse) VisitDeleteEntryMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -790,6 +866,9 @@ type StrictServerInterface interface {
 	// Trigger a refresh of the entry mappings.
 	// (POST /entry-mappings)
 	RefreshEntryMappings(ctx context.Context, request RefreshEntryMappingsRequestObject) (RefreshEntryMappingsResponseObject, error)
+	// Delete an entry mapping from all found retrievers.
+	// (DELETE /entry-mappings/{entryId})
+	DeleteEntryMapping(ctx context.Context, request DeleteEntryMappingRequestObject) (DeleteEntryMappingResponseObject, error)
 	// Get the information about the application.
 	// (GET /info)
 	GetInfo(ctx context.Context, request GetInfoRequestObject) (GetInfoResponseObject, error)
@@ -876,6 +955,32 @@ func (sh *strictHandler) RefreshEntryMappings(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RefreshEntryMappingsResponseObject); ok {
 		if err := validResponse.VisitRefreshEntryMappingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteEntryMapping operation middleware
+func (sh *strictHandler) DeleteEntryMapping(w http.ResponseWriter, r *http.Request, entryId string) {
+	var request DeleteEntryMappingRequestObject
+
+	request.EntryId = entryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteEntryMapping(ctx, request.(DeleteEntryMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteEntryMapping")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteEntryMappingResponseObject); ok {
+		if err := validResponse.VisitDeleteEntryMappingResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
