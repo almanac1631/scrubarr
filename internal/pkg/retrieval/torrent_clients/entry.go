@@ -6,7 +6,7 @@ import (
 )
 
 type TorrentClientEntry struct {
-	ID                any
+	ID                string
 	TorrentClientName string
 	TorrentName       string
 	DownloadFilePath  string
