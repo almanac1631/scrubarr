@@ -11,6 +11,10 @@ type testEntryRetriever struct {
 	err     error
 }
 
+func (t testEntryRetriever) DeleteEntry(_ any) error {
+	panic("implement me")
+}
+
 func (t testEntryRetriever) RetrieveEntries() (common.RetrieverEntries, error) {
 	return t.entries, t.err
 }
