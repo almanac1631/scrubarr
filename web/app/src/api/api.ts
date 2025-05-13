@@ -310,6 +310,44 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
     return {
         /**
          * 
+         * @summary Delete an entry mapping from all found retrievers.
+         * @param {string} entryId The ID of the entry mapping to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteEntryMapping: async (entryId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'entryId' is not null or undefined
+            assertParamExists('deleteEntryMapping', 'entryId', entryId)
+            const localVarPath = `/entry-mappings/{entryId}`
+                .replace(`{${"entryId"}}`, encodeURIComponent(String(entryId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of entry mappings.
          * @param {number} page The page number to display.
          * @param {number} pageSize The amount of items to display per each page.
@@ -551,6 +589,19 @@ export const DefaultApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Delete an entry mapping from all found retrievers.
+         * @param {string} entryId The ID of the entry mapping to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteEntryMapping(entryId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RefreshEntryMappings200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteEntryMapping(entryId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.deleteEntryMapping']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get a list of entry mappings.
          * @param {number} page The page number to display.
          * @param {number} pageSize The amount of items to display per each page.
@@ -639,6 +690,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
     return {
         /**
          * 
+         * @summary Delete an entry mapping from all found retrievers.
+         * @param {string} entryId The ID of the entry mapping to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteEntryMapping(entryId: string, options?: RawAxiosRequestConfig): AxiosPromise<RefreshEntryMappings200Response> {
+            return localVarFp.deleteEntryMapping(entryId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get a list of entry mappings.
          * @param {number} page The page number to display.
          * @param {number} pageSize The amount of items to display per each page.
@@ -707,6 +768,18 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
  * @extends {BaseAPI}
  */
 export class DefaultApi extends BaseAPI {
+    /**
+     * 
+     * @summary Delete an entry mapping from all found retrievers.
+     * @param {string} entryId The ID of the entry mapping to delete.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public deleteEntryMapping(entryId: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).deleteEntryMapping(entryId, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @summary Get a list of entry mappings.
