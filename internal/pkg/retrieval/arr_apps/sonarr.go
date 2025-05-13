@@ -9,6 +9,8 @@ import (
 	"slices"
 )
 
+var _ common.EntryRetriever = (*SonarrMediaRetriever)(nil)
+
 type SonarrMediaRetriever struct {
 	client             *sonarr.Sonarr
 	allowedFileEndings []string
@@ -52,6 +54,7 @@ func (s *SonarrMediaRetriever) parseSeriesEpisodeFile(series *sonarr.Series, epi
 	return common.Entry{
 		Name: common.EntryName(name),
 		AdditionalData: ArrAppEntry{
+			ID:            episodeFile.ID,
 			Type:          MediaTypeSeries,
 			ParentName:    series.Title,
 			Monitored:     monitored,
@@ -69,4 +72,16 @@ func (s *SonarrMediaRetriever) isSeasonMonitored(series *sonarr.Series, seasonNu
 		}
 	}
 	return false
+}
+
+func (s *SonarrMediaRetriever) DeleteEntry(id any) error {
+	episodeFileID, ok := id.(int64)
+	if !ok {
+		return fmt.Errorf("could not convert id to int64: %v", id)
+	}
+	err := s.client.DeleteEpisodeFile(episodeFileID)
+	if err != nil {
+		return fmt.Errorf("could not delete episode file (id: %d): %w", episodeFileID, err)
+	}
+	return nil
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
+	"hash/fnv"
+	"strconv"
 	"time"
 )
 
@@ -53,12 +55,16 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	if _, err := tx.Exec("delete from main.entry_mappings;"); err != nil {
 		return fmt.Errorf("could not truncate entry_mappings table: %w", err)
 	}
-	statement, err := tx.Prepare("insert into main.entry_mappings (retriever_id, date_added, size, name, api_resp) values (?, ?, ?, ?, ?)")
+	statement, err := tx.Prepare("insert into main.entry_mappings (id, retriever_id, date_added, size, name, api_resp) values (?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return fmt.Errorf("could not prepare entry mappings insert statement: %w", err)
 	}
 	for retrieverInfo, entries := range rawEntries {
 		for name, entry := range entries {
+			entryId, err := getEntryId(name)
+			if err != nil {
+				return fmt.Errorf("could not generate entry id for entry: %w", err)
+			}
 			dateAdded, err := getDateAddedFromEntry(entry)
 			if err != nil {
 				return fmt.Errorf("could not get date added from entry for retriever (%+v): %w", retrieverInfo, err)
@@ -72,12 +78,21 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 			if err != nil {
 				return fmt.Errorf("could not marshal entry for retriever (%+v): %w", retrieverInfo, err)
 			}
-			if _, err = statement.Exec(retrieverInfo.Id(), dateAdded, size, name, apiResp); err != nil {
+			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp); err != nil {
 				return fmt.Errorf("could not insert entry for retriever (%+v): %w", retrieverInfo, err)
 			}
 		}
 	}
 	return nil
+}
+
+func getEntryId(name common.EntryName) (string, error) {
+	hash := fnv.New64a()
+	if _, err := hash.Write([]byte(name)); err != nil {
+		return "", err
+	}
+	idStr := strconv.FormatUint(hash.Sum64(), 10)
+	return idStr, nil
 }
 
 func getDateAddedFromEntry(entry common.Entry) (*time.Time, error) {

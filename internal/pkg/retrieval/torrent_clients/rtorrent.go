@@ -10,6 +10,8 @@ import (
 	"slices"
 )
 
+var _ common.EntryRetriever = (*RtorrentEntryRetriever)(nil)
+
 type RtorrentEntryRetriever struct {
 	client             *rtorrent.Client
 	allowedFileEndings []string
@@ -56,6 +58,7 @@ func (r *RtorrentEntryRetriever) parseTorrentFileList(torrent rtorrent.Torrent, 
 		entry := common.Entry{
 			Name: name,
 			AdditionalData: TorrentClientEntry{
+				ID:                torrent.Hash,
 				TorrentClientName: "rtorrent",
 				TorrentName:       torrent.Name,
 				DownloadFilePath:  filePath,
@@ -92,4 +95,17 @@ func getTorrentNameFileExt(torrentName string, expectedFileExtension string) str
 		return ""
 	}
 	return torrentName[len(torrentName)-len(expectedFileExtension):]
+}
+
+func (r *RtorrentEntryRetriever) DeleteEntry(id any) error {
+	hash, ok := id.(string)
+	if !ok {
+		return fmt.Errorf("could not convert id to hash string: %q", id)
+	}
+	torrent := rtorrent.Torrent{Hash: hash}
+	err := r.client.Delete(context.Background(), torrent)
+	if err != nil {
+		return fmt.Errorf("could not delete torrent %q: %w", hash, err)
+	}
+	return nil
 }

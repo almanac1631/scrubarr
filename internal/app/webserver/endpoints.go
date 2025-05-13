@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"log/slog"
+	"net/http"
 )
 
 func (a ApiEndpointHandler) GetEntryMappings(ctx context.Context, request GetEntryMappingsRequestObject) (GetEntryMappingsResponseObject, error) {
@@ -119,11 +120,34 @@ func getResponseEntryMappingFromPresencePairs(entryMapping *common.EntryMapping)
 		findings = append(findings, finding)
 	}
 	return EntryMapping{
+		Id:                entryMapping.Id,
 		Name:              string(entryMapping.Name),
 		DateAdded:         entryMapping.DateAdded,
 		Size:              entryMapping.Size,
 		RetrieverFindings: findings,
 	}
+}
+
+func (a ApiEndpointHandler) DeleteEntryMapping(ctx context.Context, request DeleteEntryMappingRequestObject) (DeleteEntryMappingResponseObject, error) {
+	_, err := a.entryMappingManager.GetEntryMappingById(request.EntryId)
+	if errors.Is(err, common.ErrEntryMappingNotFound) {
+		return DeleteEntryMapping4XXJSONResponse{
+			ErrorResponseBody{
+				Error:  http.StatusText(http.StatusNotFound),
+				Detail: fmt.Sprintf("no entry mapping with id %q found", request.EntryId),
+			},
+			http.StatusNotFound,
+		}, nil
+	} else if err != nil {
+		return nil, err
+	}
+	err = a.entryMappingManager.DeleteEntryMappingById(request.EntryId)
+	if err != nil {
+		return nil, fmt.Errorf("could not delete entry mapping with id %q: %w", request.EntryId, err)
+	}
+	return DeleteEntryMapping200JSONResponse{
+		Message: "ok",
+	}, nil
 }
 
 func (a ApiEndpointHandler) RefreshEntryMappings(ctx context.Context, request RefreshEntryMappingsRequestObject) (RefreshEntryMappingsResponseObject, error) {

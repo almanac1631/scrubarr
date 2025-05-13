@@ -89,3 +89,16 @@ func Test_getSizeFromEntry(t *testing.T) {
 		})
 	}
 }
+
+func Test_getEntryId(t *testing.T) {
+	name := common.EntryName("test")
+	id1, err := getEntryId(name)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, id1)
+	id2, err := getEntryId(name)
+	assert.Nil(t, err)
+	assert.Equal(t, id1, id2)
+	id3, err := getEntryId("test2")
+	assert.Nil(t, err)
+	assert.NotEqual(t, id1, id3)
+}

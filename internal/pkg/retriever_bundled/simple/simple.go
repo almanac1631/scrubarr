@@ -1,6 +1,7 @@
 package simple
 
 import (
+	"errors"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"log/slog"
 	"strings"
@@ -34,6 +35,9 @@ func BundledEntryRetriever(fileEndings []string) func(entryRetrievers map[common
 		}
 		for i := 0; i < len(entryRetrievers); i++ {
 			result := <-resultChan
+			if result.entries == nil {
+				return nil, errors.New("retriever returned nil entries")
+			}
 			entriesCombined[result.info] = result.entries
 		}
 		close(resultChan)

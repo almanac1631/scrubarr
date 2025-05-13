@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var _ common.EntryRetriever = (*DelugeEntryRetriever)(nil)
+
 type DelugeEntryRetriever struct {
 	client             *delugeclient.ClientV2
 	allowedFileEndings []string
@@ -35,8 +37,8 @@ func (d *DelugeEntryRetriever) RetrieveEntries() (common.RetrieverEntries, error
 	}
 
 	torrentEntryMap := common.RetrieverEntries{}
-	for _, torrentStatus := range torrentsStatusList {
-		iterTorrentStatusList := d.parseDelugeTorrentStatus(torrentStatus)
+	for hash, torrentStatus := range torrentsStatusList {
+		iterTorrentStatusList := d.parseDelugeTorrentStatus(hash, torrentStatus)
 		for _, torrentStatusEntry := range iterTorrentStatusList {
 			torrentEntryMap[torrentStatusEntry.Name] = torrentStatusEntry
 		}
@@ -44,7 +46,7 @@ func (d *DelugeEntryRetriever) RetrieveEntries() (common.RetrieverEntries, error
 	return torrentEntryMap, nil
 }
 
-func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(torrentStatus *delugeclient.TorrentStatus) []common.Entry {
+func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(hash string, torrentStatus *delugeclient.TorrentStatus) []common.Entry {
 	entryList := make([]common.Entry, 0)
 	for _, file := range torrentStatus.Files {
 		if !slices.Contains(d.allowedFileEndings, path.Ext(file.Path)) {
@@ -56,6 +58,7 @@ func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(torrentStatus *delugecli
 		entry := common.Entry{
 			Name: common.EntryName(name),
 			AdditionalData: TorrentClientEntry{
+				ID:                hash,
 				TorrentClientName: "deluge",
 				TorrentName:       torrentStatus.Name,
 				DownloadFilePath:  filePath,
@@ -68,4 +71,18 @@ func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(torrentStatus *delugecli
 		entryList = append(entryList, entry)
 	}
 	return entryList
+}
+
+func (d *DelugeEntryRetriever) DeleteEntry(id any) error {
+	torrentID, ok := id.(string)
+	if !ok {
+		return fmt.Errorf("could not convert id to string")
+	}
+	ok, err := d.client.RemoveTorrent(torrentID, true)
+	if !ok {
+		return fmt.Errorf(": %w", err)
+	} else if err != nil {
+		return fmt.Errorf("could not remove torrent: %w", err)
+	}
+	return nil
 }

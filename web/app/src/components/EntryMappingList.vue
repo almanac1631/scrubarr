@@ -9,6 +9,7 @@ import TableRetrieverStateHeader from "./entry-mapping-list/TableRetrieverStateH
 import TableRetrieverStateRowEntry from "./entry-mapping-list/TableRetrieverStateRowEntry.vue";
 import {getApiClient} from "../utils/api.ts";
 import {formatFileSize} from "../utils/fileSize.ts";
+import {notify} from "../utils/notificationList.ts";
 
 const contentLoaded = ref(false);
 const entryMappingList: Ref<Array<EntryMapping> | null> = ref(null);
@@ -33,21 +34,7 @@ function isEntryPresentInRetrieverCategory(entryMapping: EntryMapping, retriever
   }).length > 0;
 }
 
-function toggleAll() {
-  if (areAllSelected()) {
-    selectedItems.value = [];
-  } else {
-    selectedItems.value = entryMappingList.value ?? [];
-  }
-}
-
-const selectedItems: Ref<Array<EntryMapping>> = ref([]);
-
 const selectedPage: Ref<number> = ref(1);
-
-function areAllSelected() {
-  return entryMappingList.value?.length === selectedItems.value.length;
-}
 
 const apiClient = getApiClient();
 
@@ -76,6 +63,26 @@ const retrieverCategoryList = computed(() => {
   }
   return getCategoriesFromRetrieverList(retrieverList.value);
 });
+
+async function deleteEntryMapping(entryMapping: EntryMapping) {
+  if (entrySelectedForDeletion.value !== entryMapping) {
+    throw Error("cannot delete entry mapping if it is not selected for deletion");
+  }
+  try {
+    await apiClient.deleteEntryMapping(entryMapping.id);
+  } catch (e) {
+    console.error("Error deleting entry mapping.");
+    console.error(e);
+    notify("Could not delete entry mapping: " + e, "error");
+    return;
+  } finally {
+    entrySelectedForDeletion.value = null;
+  }
+  notify(`Entry mapping ${entryMapping.name} deleted.`, "success");
+  await fetchAndDisplayEntries();
+}
+
+const entrySelectedForDeletion: Ref<EntryMapping | null> = ref(null);
 
 onMounted(async () => {
   const retrieverListResp = (await apiClient.getRetrievers()).data.retrievers;
@@ -179,24 +186,7 @@ watch([name], () => {
     <table class="table-fixed w-full">
       <thead>
       <tr class="text-left border-b-2" v-if="contentLoaded">
-        <th class="w-[50px]">
-          <div class="flex justify-center">
-            <div class="relative h-5 w-5">
-              <input type="checkbox"
-                     class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
-                     :checked="areAllSelected()" @change="toggleAll">
-              <div
-                  class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
-                <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="5"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </th>
-        <th class="py-3 pr-3 font-medium">
+        <th class="py-3 pr-3 font-medium pl-3">
           <button class="flex items-center"
                   v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.NameAsc, GetEntryMappingsSortByEnum.NameDesc])">
             Name
@@ -258,7 +248,7 @@ watch([name], () => {
             </div>
           </div>
         </th>
-        <th v-else v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
+        <th v-else v-for="retriever in retrieverList" class="w-[80px] p-3 font-medium text-center">
           <TableRetrieverStateHeader
               :name="retriever.hasMultipleInstances ? retriever.name : null"
               :hover-text="retriever.softwareName"
@@ -266,29 +256,13 @@ watch([name], () => {
               :logo-alt-text="`The logo of the ${retriever.softwareName} software project.`"
           />
         </th>
+        <th class="w-[80px] p-3"></th>
       </tr>
       <PreloaderTableEntry class="border-b-2" v-else/>
       </thead>
       <tbody>
       <tr v-for="entryMapping in entryMappingList" class="hover:bg-stone-100 border-t" v-if="contentLoaded">
-        <td class="py-3 pl-3 pr-3">
-          <div class="flex justify-center">
-            <div class="relative h-5 w-5">
-              <input type="checkbox"
-                     class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
-                     v-bind:value="entryMapping" v-model="selectedItems">
-              <div
-                  class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
-                <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="5"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </td>
-        <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.name">
+        <td class="py-3 pr-3 pl-3 font-medium truncate" :title="entryMapping.name">
           {{ entryMapping.name }}
         </td>
 
@@ -308,6 +282,41 @@ watch([name], () => {
             v-else v-for="retriever in retrieverList"
             :present="isEntryPresentInRetriever(entryMapping, retriever.id)"
         />
+
+        <td class="p-3 flex justify-center">
+          <button class="text-gray-500" v-if="entrySelectedForDeletion !== entryMapping"
+                  v-on:click="entrySelectedForDeletion = entryMapping">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M4 7l16 0"/>
+              <path d="M10 11l0 6"/>
+              <path d="M14 11l0 6"/>
+              <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
+              <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
+            </svg>
+          </button>
+          <button class="text-green-500 hover:bg-green-100 rounded-md" v-if="entrySelectedForDeletion === entryMapping"
+                  v-on:click="deleteEntryMapping(entryMapping)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M5 12l5 5l10 -10"/>
+            </svg>
+          </button>
+          <button class="text-red-500 hover:bg-red-100 rounded-md" v-if="entrySelectedForDeletion === entryMapping"
+                  v-on:click="entrySelectedForDeletion = null">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M18 6l-12 12"/>
+              <path d="M6 6l12 12"/>
+            </svg>
+          </button>
+        </td>
       </tr>
       <PreloaderTableEntry v-for="_ in 10" v-else/>
       </tbody>

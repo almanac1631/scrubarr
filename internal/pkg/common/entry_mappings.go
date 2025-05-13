@@ -5,7 +5,13 @@ import (
 	"time"
 )
 
+var (
+	ErrEntryMappingNotFound = fmt.Errorf("entry mapping not found")
+)
+
 type EntryMapping struct {
+	// Id is the unique identifier of the entry.
+	Id string
 	// Name is the normalized name of the entry.
 	Name EntryName
 	// DateAdded is the date when the entry was added.
@@ -17,7 +23,7 @@ type EntryMapping struct {
 }
 
 func (e EntryMapping) String() string {
-	return fmt.Sprintf("EntryMapping{Name: %q, RetrieversFound: %v}", e.Name, e.RetrieversFound)
+	return fmt.Sprintf("EntryMapping{Id: %q, Name: %q, RetrieversFound: %v}", e.Id, e.Name, e.RetrieversFound)
 }
 
 // EntryMappingManager is used to aggregate the results of single EntryRetriever instances and return the combined results.
@@ -28,8 +34,17 @@ type EntryMappingManager interface {
 	// GetEntryMappings returns the filtered entry mapping by applying the given filters.
 	GetEntryMappings(page int, pageSize int, filter EntryMappingFilter, sortBy EntryMappingSortBy, name string) ([]*EntryMapping, int, error)
 
+	// GetEntryMappingById returns the entry mapping by its unique identifier.
+	GetEntryMappingById(id string) (*EntryMapping, error)
+
 	// GetRetrievers returns the information on all registered retrievers.
 	GetRetrievers() ([]RetrieverInfo, error)
+
+	// GetRetrieverById returns the retriever by its unique identifier.
+	GetRetrieverById(id RetrieverId) (RetrieverInfo, EntryRetriever, error)
+
+	// DeleteEntryMappingById deletes the entry mapping by its unique identifier.
+	DeleteEntryMappingById(id string) error
 }
 
 type EntryMappingFilter int

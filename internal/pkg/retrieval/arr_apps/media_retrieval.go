@@ -10,6 +10,7 @@ const (
 )
 
 type ArrAppEntry struct {
+	ID            int64
 	Type          MediaType
 	ParentName    string
 	Monitored     bool
