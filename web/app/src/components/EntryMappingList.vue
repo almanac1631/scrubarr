@@ -33,21 +33,7 @@ function isEntryPresentInRetrieverCategory(entryMapping: EntryMapping, retriever
   }).length > 0;
 }
 
-function toggleAll() {
-  if (areAllSelected()) {
-    selectedItems.value = [];
-  } else {
-    selectedItems.value = entryMappingList.value ?? [];
-  }
-}
-
-const selectedItems: Ref<Array<EntryMapping>> = ref([]);
-
 const selectedPage: Ref<number> = ref(1);
-
-function areAllSelected() {
-  return entryMappingList.value?.length === selectedItems.value.length;
-}
 
 const apiClient = getApiClient();
 
@@ -179,24 +165,7 @@ watch([name], () => {
     <table class="table-fixed w-full">
       <thead>
       <tr class="text-left border-b-2" v-if="contentLoaded">
-        <th class="w-[50px]">
-          <div class="flex justify-center">
-            <div class="relative h-5 w-5">
-              <input type="checkbox"
-                     class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
-                     :checked="areAllSelected()" @change="toggleAll">
-              <div
-                  class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
-                <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="5"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </th>
-        <th class="py-3 pr-3 font-medium">
+        <th class="py-3 pr-3 font-medium pl-3">
           <button class="flex items-center"
                   v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.NameAsc, GetEntryMappingsSortByEnum.NameDesc])">
             Name
@@ -258,7 +227,7 @@ watch([name], () => {
             </div>
           </div>
         </th>
-        <th v-else v-for="retriever in retrieverList" class="w-[100px] p-3 font-medium text-center">
+        <th v-else v-for="retriever in retrieverList" class="w-[80px] p-3 font-medium text-center">
           <TableRetrieverStateHeader
               :name="retriever.hasMultipleInstances ? retriever.name : null"
               :hover-text="retriever.softwareName"
@@ -271,24 +240,7 @@ watch([name], () => {
       </thead>
       <tbody>
       <tr v-for="entryMapping in entryMappingList" class="hover:bg-stone-100 border-t" v-if="contentLoaded">
-        <td class="py-3 pl-3 pr-3">
-          <div class="flex justify-center">
-            <div class="relative h-5 w-5">
-              <input type="checkbox"
-                     class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded border border-slate-300"
-                     v-bind:value="entryMapping" v-model="selectedItems">
-              <div
-                  class="flex justify-center items-center absolute top-0 left-0 z-10 h-5 w-5 pointer-events-none peer-checked:opacity-100 opacity-0 transition-opacity">
-                <svg class="h-3 w-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="5"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </td>
-        <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.name">
+        <td class="py-3 pr-3 pl-3 font-medium truncate" :title="entryMapping.name">
           {{ entryMapping.name }}
         </td>
 
