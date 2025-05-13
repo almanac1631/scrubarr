@@ -39,6 +39,10 @@ func (e *EntryMappingManager) DeleteEntryMappingById(id string) error {
 	if !entryFound {
 		return common.ErrEntryNotFound
 	}
+	_, err = e.db.Exec("delete from entry_mappings where id = ?;", id)
+	if err != nil {
+		return fmt.Errorf("could not delete entry mapping from db: %w", err)
+	}
 	return nil
 }
 
