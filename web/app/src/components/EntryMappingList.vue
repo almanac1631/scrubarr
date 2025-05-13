@@ -185,7 +185,7 @@ watch([name], () => {
     </div>
     <table class="table-fixed w-full">
       <thead>
-      <tr class="text-left border-b-2" v-if="contentLoaded">
+      <tr class="text-left border-b-2 border-gray-200" v-if="contentLoaded">
         <th class="py-3 pr-3 font-medium pl-3">
           <button class="flex items-center"
                   v-on:click="toggleSortBy([GetEntryMappingsSortByEnum.NameAsc, GetEntryMappingsSortByEnum.NameDesc])">
@@ -258,10 +258,10 @@ watch([name], () => {
         </th>
         <th class="w-[80px] p-3"></th>
       </tr>
-      <PreloaderTableEntry class="border-b-2" v-else/>
+      <PreloaderTableEntry class="border-b-2 border-gray-200" v-else/>
       </thead>
       <tbody>
-      <tr v-for="entryMapping in entryMappingList" class="hover:bg-stone-100 border-t" v-if="contentLoaded">
+      <tr v-for="entryMapping in entryMappingList" class="hover:bg-stone-100 border-t border-gray-200" v-if="contentLoaded">
         <td class="py-3 pr-3 pl-3 font-medium truncate" :title="entryMapping.name">
           {{ entryMapping.name }}
         </td>
