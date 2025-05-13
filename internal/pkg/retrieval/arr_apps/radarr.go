@@ -28,7 +28,10 @@ func NewRadarrMediaRetriever(allowedFileEndings []string, hostname string, apiKe
 }
 
 func (r RadarrMediaRetriever) RetrieveEntries() (common.RetrieverEntries, error) {
-	movieList, err := r.client.GetMovie(0)
+	movieList, err := r.client.GetMovie(&radarr.GetMovie{
+		TMDBID:             0,
+		ExcludeLocalCovers: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("could not get movie list: %w", err)
 	}
