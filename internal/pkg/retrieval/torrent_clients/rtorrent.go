@@ -105,7 +105,7 @@ func (r *RtorrentEntryRetriever) DeleteEntry(id any) error {
 		return fmt.Errorf("could not convert id to hash string: %q", id)
 	}
 	torrent := rtorrent.Torrent{Hash: hash}
-	err := r.client.Delete(context.Background(), torrent)
+	err := r.client.DeleteTied(context.Background(), torrent)
 	if err == nil {
 		return nil
 	}
