@@ -105,7 +105,7 @@ func (r *RtorrentEntryRetriever) DeleteEntry(id any) error {
 		return fmt.Errorf("could not convert id to hash string: %q", id)
 	}
 	torrent := rtorrent.Torrent{Hash: hash}
-	err := r.client.SetForceDelete(context.Background(), torrent, true)
+	err := r.client.SetForceDelete(context.Background(), torrent, false)
 	if err != nil {
 		errString := err.Error()
 		if strings.Contains(errString, "Could not find info-hash") || strings.Contains(errString, "info-hash not found") {
