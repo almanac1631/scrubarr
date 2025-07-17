@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/autobrr/go-rtorrent"
+	"log/slog"
 	"maps"
 	"path"
 	"slices"
+	"strings"
 )
 
 var _ common.EntryRetriever = (*RtorrentEntryRetriever)(nil)
@@ -104,8 +106,14 @@ func (r *RtorrentEntryRetriever) DeleteEntry(id any) error {
 	}
 	torrent := rtorrent.Torrent{Hash: hash}
 	err := r.client.Delete(context.Background(), torrent)
-	if err != nil {
+	if err == nil {
+		return nil
+	}
+	errString := err.Error()
+	if strings.Contains(errString, "Could not find info-hash") || strings.Contains(errString, "info-hash not found") {
+		slog.Warn("torrent not found in rtorrent, assuming it was already removed", "hash", hash)
+		return nil
+	} else {
 		return fmt.Errorf("could not delete torrent %q: %w", hash, err)
 	}
-	return nil
 }

@@ -1,9 +1,11 @@
 package torrent_clients
 
 import (
+	"errors"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	delugeclient "github.com/gdm85/go-libdeluge"
+	"log/slog"
 	"path"
 	"slices"
 	"time"
@@ -79,10 +81,13 @@ func (d *DelugeEntryRetriever) DeleteEntry(id any) error {
 		return fmt.Errorf("could not convert id to string")
 	}
 	ok, err := d.client.RemoveTorrent(torrentID, true)
-	if !ok {
-		return fmt.Errorf(": %w", err)
-	} else if err != nil {
-		return fmt.Errorf("could not remove torrent: %w", err)
+	if ok || err == nil {
+		return nil
 	}
-	return nil
+	var wrappedErr delugeclient.RPCError
+	if errors.As(err, &wrappedErr) && wrappedErr.ExceptionType == "InvalidTorrentError" {
+		slog.Warn("torrent not found in deluge, assuming it was already removed", "id", torrentID)
+		return nil
+	}
+	return fmt.Errorf("could not remove torrent: %w", err)
 }
