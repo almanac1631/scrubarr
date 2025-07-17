@@ -106,14 +106,18 @@ func (r *RtorrentEntryRetriever) DeleteEntry(id any) error {
 	}
 	torrent := rtorrent.Torrent{Hash: hash}
 	err := r.client.DeleteTied(context.Background(), torrent)
-	if err == nil {
-		return nil
+	if err != nil {
+		errString := err.Error()
+		if strings.Contains(errString, "Could not find info-hash") || strings.Contains(errString, "info-hash not found") {
+			slog.Warn("torrent not found in rtorrent, assuming it was already removed", "hash", hash, "err", err)
+			return nil
+		} else {
+			return fmt.Errorf("could not delete torrent files from torrent %q: %w", hash, err)
+		}
 	}
-	errString := err.Error()
-	if strings.Contains(errString, "Could not find info-hash") || strings.Contains(errString, "info-hash not found") {
-		slog.Warn("torrent not found in rtorrent, assuming it was already removed", "hash", hash, "err", err)
-		return nil
-	} else {
+	err = r.client.Delete(context.Background(), torrent)
+	if err != nil {
 		return fmt.Errorf("could not delete torrent %q: %w", hash, err)
 	}
+	return nil
 }
