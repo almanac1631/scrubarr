@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
@@ -13,6 +14,12 @@ func (e *EntryMappingManager) DeleteEntryMappingById(id string) error {
 	if err != nil {
 		return fmt.Errorf("could not query entry mapping: %w", err)
 	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			fmt.Printf("could not close rows: %v\n", err)
+		}
+	}(rows)
 	entryFound := false
 	for rows.Next() {
 		if rows.Err() != nil {
