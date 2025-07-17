@@ -51,4 +51,4 @@ require (
 	modernc.org/sqlite v1.37.0 // indirect
 )
 
-replace github.com/autobrr/go-rtorrent v1.12.0 => github.com/almanac1631/go-rtorrent v1.13.0
+replace github.com/autobrr/go-rtorrent v1.12.0 => github.com/almanac1631/go-rtorrent v1.14.0
