@@ -86,7 +86,7 @@ func (d *DelugeEntryRetriever) DeleteEntry(id any) error {
 	}
 	var wrappedErr delugeclient.RPCError
 	if errors.As(err, &wrappedErr) && wrappedErr.ExceptionType == "InvalidTorrentError" {
-		slog.Warn("torrent not found in deluge, assuming it was already removed", "id", torrentID)
+		slog.Warn("torrent not found in deluge, assuming it was already removed", "id", torrentID, "err", err)
 		return nil
 	}
 	return fmt.Errorf("could not remove torrent: %w", err)

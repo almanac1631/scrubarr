@@ -111,7 +111,7 @@ func (r *RtorrentEntryRetriever) DeleteEntry(id any) error {
 	}
 	errString := err.Error()
 	if strings.Contains(errString, "Could not find info-hash") || strings.Contains(errString, "info-hash not found") {
-		slog.Warn("torrent not found in rtorrent, assuming it was already removed", "hash", hash)
+		slog.Warn("torrent not found in rtorrent, assuming it was already removed", "hash", hash, "err", err)
 		return nil
 	} else {
 		return fmt.Errorf("could not delete torrent %q: %w", hash, err)
