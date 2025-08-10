@@ -146,7 +146,7 @@ paths:
         - BearerAuth: [ ]
   /entry-mappings/{entryId}/details:
     get:
-      operationId: "getEntryMapping"
+      operationId: "getEntryMappingDetails"
       summary: "Get the entry mapping by its ID."
       parameters:
         - in: "path"

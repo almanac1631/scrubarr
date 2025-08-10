@@ -154,8 +154,8 @@ type StatsDiskSpace struct {
 	BytesUsed int64 `json:"bytesUsed"`
 }
 
-// GetEntryMapping200Response defines model for getEntryMapping_200_response.
-type GetEntryMapping200Response struct {
+// GetEntryMappingDetails200Response defines model for getEntryMappingDetails_200_response.
+type GetEntryMappingDetails200Response struct {
 	Entry EntryMappingDetail `json:"entry"`
 }
 
@@ -237,7 +237,7 @@ type ServerInterface interface {
 	DeleteEntryMapping(w http.ResponseWriter, r *http.Request, entryId string)
 	// Get the entry mapping by its ID.
 	// (GET /entry-mappings/{entryId}/details)
-	GetEntryMapping(w http.ResponseWriter, r *http.Request, entryId string)
+	GetEntryMappingDetails(w http.ResponseWriter, r *http.Request, entryId string)
 	// Get the information about the application.
 	// (GET /info)
 	GetInfo(w http.ResponseWriter, r *http.Request)
@@ -391,8 +391,8 @@ func (siw *ServerInterfaceWrapper) DeleteEntryMapping(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
-// GetEntryMapping operation middleware
-func (siw *ServerInterfaceWrapper) GetEntryMapping(w http.ResponseWriter, r *http.Request) {
+// GetEntryMappingDetails operation middleware
+func (siw *ServerInterfaceWrapper) GetEntryMappingDetails(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -412,7 +412,7 @@ func (siw *ServerInterfaceWrapper) GetEntryMapping(w http.ResponseWriter, r *htt
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetEntryMapping(w, r, entryId)
+		siw.Handler.GetEntryMappingDetails(w, r, entryId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -613,7 +613,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/entry-mappings", wrapper.GetEntryMappings)
 	m.HandleFunc("POST "+options.BaseURL+"/entry-mappings", wrapper.RefreshEntryMappings)
 	m.HandleFunc("DELETE "+options.BaseURL+"/entry-mappings/{entryId}", wrapper.DeleteEntryMapping)
-	m.HandleFunc("GET "+options.BaseURL+"/entry-mappings/{entryId}/details", wrapper.GetEntryMapping)
+	m.HandleFunc("GET "+options.BaseURL+"/entry-mappings/{entryId}/details", wrapper.GetEntryMappingDetails)
 	m.HandleFunc("GET "+options.BaseURL+"/info", wrapper.GetInfo)
 	m.HandleFunc("POST "+options.BaseURL+"/login", wrapper.Login)
 	m.HandleFunc("GET "+options.BaseURL+"/retrievers", wrapper.GetRetrievers)
@@ -746,41 +746,41 @@ func (response DeleteEntryMapping5XXJSONResponse) VisitDeleteEntryMappingRespons
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
-type GetEntryMappingRequestObject struct {
+type GetEntryMappingDetailsRequestObject struct {
 	EntryId string `json:"entryId"`
 }
 
-type GetEntryMappingResponseObject interface {
-	VisitGetEntryMappingResponse(w http.ResponseWriter) error
+type GetEntryMappingDetailsResponseObject interface {
+	VisitGetEntryMappingDetailsResponse(w http.ResponseWriter) error
 }
 
-type GetEntryMapping200JSONResponse GetEntryMapping200Response
+type GetEntryMappingDetails200JSONResponse GetEntryMappingDetails200Response
 
-func (response GetEntryMapping200JSONResponse) VisitGetEntryMappingResponse(w http.ResponseWriter) error {
+func (response GetEntryMappingDetails200JSONResponse) VisitGetEntryMappingDetailsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetEntryMapping4XXJSONResponse struct {
+type GetEntryMappingDetails4XXJSONResponse struct {
 	Body       ErrorResponseBody
 	StatusCode int
 }
 
-func (response GetEntryMapping4XXJSONResponse) VisitGetEntryMappingResponse(w http.ResponseWriter) error {
+func (response GetEntryMappingDetails4XXJSONResponse) VisitGetEntryMappingDetailsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
-type GetEntryMapping5XXJSONResponse struct {
+type GetEntryMappingDetails5XXJSONResponse struct {
 	Body       ErrorResponseBody
 	StatusCode int
 }
 
-func (response GetEntryMapping5XXJSONResponse) VisitGetEntryMappingResponse(w http.ResponseWriter) error {
+func (response GetEntryMappingDetails5XXJSONResponse) VisitGetEntryMappingDetailsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -970,7 +970,7 @@ type StrictServerInterface interface {
 	DeleteEntryMapping(ctx context.Context, request DeleteEntryMappingRequestObject) (DeleteEntryMappingResponseObject, error)
 	// Get the entry mapping by its ID.
 	// (GET /entry-mappings/{entryId}/details)
-	GetEntryMapping(ctx context.Context, request GetEntryMappingRequestObject) (GetEntryMappingResponseObject, error)
+	GetEntryMappingDetails(ctx context.Context, request GetEntryMappingDetailsRequestObject) (GetEntryMappingDetailsResponseObject, error)
 	// Get the information about the application.
 	// (GET /info)
 	GetInfo(ctx context.Context, request GetInfoRequestObject) (GetInfoResponseObject, error)
@@ -1090,25 +1090,25 @@ func (sh *strictHandler) DeleteEntryMapping(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-// GetEntryMapping operation middleware
-func (sh *strictHandler) GetEntryMapping(w http.ResponseWriter, r *http.Request, entryId string) {
-	var request GetEntryMappingRequestObject
+// GetEntryMappingDetails operation middleware
+func (sh *strictHandler) GetEntryMappingDetails(w http.ResponseWriter, r *http.Request, entryId string) {
+	var request GetEntryMappingDetailsRequestObject
 
 	request.EntryId = entryId
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.GetEntryMapping(ctx, request.(GetEntryMappingRequestObject))
+		return sh.ssi.GetEntryMappingDetails(ctx, request.(GetEntryMappingDetailsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetEntryMapping")
+		handler = middleware(handler, "GetEntryMappingDetails")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(GetEntryMappingResponseObject); ok {
-		if err := validResponse.VisitGetEntryMappingResponse(w); err != nil {
+	} else if validResponse, ok := response.(GetEntryMappingDetailsResponseObject); ok {
+		if err := validResponse.VisitGetEntryMappingDetailsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

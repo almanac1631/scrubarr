@@ -133,13 +133,13 @@ export interface ErrorResponseBody {
 /**
  * 
  * @export
- * @interface GetEntryMapping200Response
+ * @interface GetEntryMappingDetails200Response
  */
-export interface GetEntryMapping200Response {
+export interface GetEntryMappingDetails200Response {
     /**
      * 
      * @type {EntryMappingDetail}
-     * @memberof GetEntryMapping200Response
+     * @memberof GetEntryMappingDetails200Response
      */
     'entry': EntryMappingDetail;
 }
@@ -404,9 +404,9 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getEntryMapping: async (entryId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getEntryMappingDetails: async (entryId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'entryId' is not null or undefined
-            assertParamExists('getEntryMapping', 'entryId', entryId)
+            assertParamExists('getEntryMappingDetails', 'entryId', entryId)
             const localVarPath = `/entry-mappings/{entryId}/details`
                 .replace(`{${"entryId"}}`, encodeURIComponent(String(entryId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -696,10 +696,10 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getEntryMapping(entryId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetEntryMapping200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getEntryMapping(entryId, options);
+        async getEntryMappingDetails(entryId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetEntryMappingDetails200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getEntryMappingDetails(entryId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getEntryMapping']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getEntryMappingDetails']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -807,8 +807,8 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getEntryMapping(entryId: string, options?: RawAxiosRequestConfig): AxiosPromise<GetEntryMapping200Response> {
-            return localVarFp.getEntryMapping(entryId, options).then((request) => request(axios, basePath));
+        getEntryMappingDetails(entryId: string, options?: RawAxiosRequestConfig): AxiosPromise<GetEntryMappingDetails200Response> {
+            return localVarFp.getEntryMappingDetails(entryId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -900,8 +900,8 @@ export class DefaultApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public getEntryMapping(entryId: string, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).getEntryMapping(entryId, options).then((request) => request(this.axios, this.basePath));
+    public getEntryMappingDetails(entryId: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getEntryMappingDetails(entryId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
