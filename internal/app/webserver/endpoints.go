@@ -150,6 +150,36 @@ func (a ApiEndpointHandler) DeleteEntryMapping(ctx context.Context, request Dele
 	}, nil
 }
 
+func (a ApiEndpointHandler) GetEntryMappingDetails(ctx context.Context, request GetEntryMappingDetailsRequestObject) (GetEntryMappingDetailsResponseObject, error) {
+	details, err := a.entryMappingManager.GetEntryMappingDetails(request.EntryId)
+	if errors.Is(err, common.ErrEntryMappingNotFound) {
+		return GetEntryMappingDetails4XXJSONResponse{
+			ErrorResponseBody{
+				Error:  http.StatusText(http.StatusNotFound),
+				Detail: fmt.Sprintf("no entry mapping with id %q found", request.EntryId),
+			},
+			http.StatusNotFound,
+		}, nil
+	} else if err != nil {
+		return nil, err
+	}
+	respDetails := make([]EntryMappingDetailRetrieverDetailsInner, len(details))
+	counter := 0
+	for retrieverId, apiResp := range details {
+		respDetails[counter] = EntryMappingDetailRetrieverDetailsInner{
+			apiResp, RetrieverId(retrieverId),
+		}
+		counter += 1
+	}
+
+	return &GetEntryMappingDetails200JSONResponse{
+		Entry: EntryMappingDetail{
+			Id:               request.EntryId,
+			RetrieverDetails: respDetails,
+		},
+	}, nil
+}
+
 func (a ApiEndpointHandler) RefreshEntryMappings(ctx context.Context, request RefreshEntryMappingsRequestObject) (RefreshEntryMappingsResponseObject, error) {
 	err := a.entryMappingManager.RefreshEntryMappings()
 	if err != nil {
