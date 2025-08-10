@@ -1,0 +1,19 @@
+type: "object"
+required:
+  - "id"
+  - "retrieverDetails"
+properties:
+  id:
+    $ref: "./EntryMappingId.yaml"
+  retrieverDetails:
+    type: "array"
+    items:
+      type: "object"
+      required:
+        - "id"
+        - "apiResp"
+      properties:
+        id:
+          $ref: "./RetrieverId.yaml"
+        apiResp:
+          type: "string"

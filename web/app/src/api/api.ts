@@ -63,6 +63,44 @@ export interface EntryMapping {
 /**
  * 
  * @export
+ * @interface EntryMappingDetail
+ */
+export interface EntryMappingDetail {
+    /**
+     * The unique identifier of this entry.
+     * @type {string}
+     * @memberof EntryMappingDetail
+     */
+    'id': string;
+    /**
+     * 
+     * @type {Array<EntryMappingDetailRetrieverDetailsInner>}
+     * @memberof EntryMappingDetail
+     */
+    'retrieverDetails': Array<EntryMappingDetailRetrieverDetailsInner>;
+}
+/**
+ * 
+ * @export
+ * @interface EntryMappingDetailRetrieverDetailsInner
+ */
+export interface EntryMappingDetailRetrieverDetailsInner {
+    /**
+     * Id used to identify retrievers.
+     * @type {string}
+     * @memberof EntryMappingDetailRetrieverDetailsInner
+     */
+    'id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof EntryMappingDetailRetrieverDetailsInner
+     */
+    'apiResp': string;
+}
+/**
+ * 
+ * @export
  * @interface EntryMappingRetrieverFindingsInner
  */
 export interface EntryMappingRetrieverFindingsInner {
@@ -91,6 +129,19 @@ export interface ErrorResponseBody {
      * @memberof ErrorResponseBody
      */
     'detail': string;
+}
+/**
+ * 
+ * @export
+ * @interface GetEntryMapping200Response
+ */
+export interface GetEntryMapping200Response {
+    /**
+     * 
+     * @type {EntryMappingDetail}
+     * @memberof GetEntryMapping200Response
+     */
+    'entry': EntryMappingDetail;
 }
 /**
  * 
@@ -328,6 +379,44 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             }
 
             const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the entry mapping by its ID.
+         * @param {string} entryId The ID of the entry mapping to retrieve.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getEntryMapping: async (entryId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'entryId' is not null or undefined
+            assertParamExists('getEntryMapping', 'entryId', entryId)
+            const localVarPath = `/entry-mappings/{entryId}/details`
+                .replace(`{${"entryId"}}`, encodeURIComponent(String(entryId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -602,6 +691,19 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the entry mapping by its ID.
+         * @param {string} entryId The ID of the entry mapping to retrieve.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getEntryMapping(entryId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetEntryMapping200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getEntryMapping(entryId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getEntryMapping']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get a list of entry mappings.
          * @param {number} page The page number to display.
          * @param {number} pageSize The amount of items to display per each page.
@@ -700,6 +802,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Get the entry mapping by its ID.
+         * @param {string} entryId The ID of the entry mapping to retrieve.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getEntryMapping(entryId: string, options?: RawAxiosRequestConfig): AxiosPromise<GetEntryMapping200Response> {
+            return localVarFp.getEntryMapping(entryId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get a list of entry mappings.
          * @param {number} page The page number to display.
          * @param {number} pageSize The amount of items to display per each page.
@@ -778,6 +890,18 @@ export class DefaultApi extends BaseAPI {
      */
     public deleteEntryMapping(entryId: string, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).deleteEntryMapping(entryId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get the entry mapping by its ID.
+     * @param {string} entryId The ID of the entry mapping to retrieve.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public getEntryMapping(entryId: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getEntryMapping(entryId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
