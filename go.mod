@@ -15,7 +15,7 @@ require (
 	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/crypto v0.41.0
-	golift.io/starr v1.1.0
+	golift.io/starr v1.2.0
 )
 
 require (
