@@ -22,6 +22,9 @@ type EntryMapping struct {
 	RetrieversFound []RetrieverInfo
 }
 
+// EntryMappingDetails holds the details of an entry mapping, which includes the retriever responses.
+type EntryMappingDetails map[RetrieverId]string
+
 func (e EntryMapping) String() string {
 	return fmt.Sprintf("EntryMapping{Id: %q, Name: %q, RetrieversFound: %v}", e.Id, e.Name, e.RetrieversFound)
 }
@@ -45,8 +48,10 @@ type EntryMappingManager interface {
 
 	// DeleteEntryMappingById deletes the entry mapping by its unique identifier.
 	DeleteEntryMappingById(id string) error
-}
 
+	// GetEntryMappingDetails returns the details (retriever responses) of the entry mapping by its unique identifier.
+	GetEntryMappingDetails(id string) (EntryMappingDetails, error)
+}
 type EntryMappingFilter int
 
 const (

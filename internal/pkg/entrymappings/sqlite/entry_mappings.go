@@ -193,3 +193,33 @@ func (e *EntryMappingManager) parseEntryMapping(id string, entryName string, ret
 	}
 	return entryMappings, nil
 }
+
+func (e *EntryMappingManager) GetEntryMappingDetails(id string) (details common.EntryMappingDetails, err error) {
+	query := `select em.retriever_id, em.api_resp from entry_mappings em where em.id = ?;`
+	var rows *sql.Rows
+	rows, err = e.db.Query(query, id)
+	if err != nil {
+		return nil, fmt.Errorf("could not get entry mapping details by id %q: %w", id, err)
+	}
+	defer func(rows *sql.Rows) {
+		closeErr := rows.Close()
+		if err != nil {
+			err = closeErr
+		}
+	}(rows)
+	details = make(common.EntryMappingDetails)
+	for rows.Next() {
+		if rows.Err() != nil {
+			return nil, fmt.Errorf("could not get entry mapping details by id %q: %w", id, rows.Err())
+		}
+		var retrieverId, apiResp string
+		if err = rows.Scan(&retrieverId, &apiResp); err != nil {
+			return nil, fmt.Errorf("could not scan entry mapping details: %w", err)
+		}
+		details[common.RetrieverId(retrieverId)] = apiResp
+	}
+	if len(details) == 0 {
+		return nil, common.ErrEntryMappingNotFound
+	}
+	return details, nil
+}

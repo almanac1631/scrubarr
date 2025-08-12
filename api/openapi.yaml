@@ -144,6 +144,35 @@ paths:
           $ref: "./responses/ErrorResponse.yaml"
       security:
         - BearerAuth: [ ]
+  /entry-mappings/{entryId}/details:
+    get:
+      operationId: "getEntryMappingDetails"
+      summary: "Get the entry mapping by its ID."
+      parameters:
+        - in: "path"
+          name: "entryId"
+          required: true
+          schema:
+            type: "string"
+          description: "The ID of the entry mapping to retrieve."
+      responses:
+        "200":
+          description: "A successful response."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                  - "entry"
+                properties:
+                  entry:
+                    $ref: "./components/schemas/EntryMappingDetail.yaml"
+        "4XX":
+          $ref: "./responses/ErrorResponse.yaml"
+        "5XX":
+          $ref: "./responses/ErrorResponse.yaml"
+      security:
+        - BearerAuth: [ ]
   /retrievers:
     get:
       operationId: "getRetrievers"

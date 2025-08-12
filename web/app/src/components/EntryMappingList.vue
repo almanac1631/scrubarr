@@ -10,9 +10,15 @@ import TableRetrieverStateRowEntry from "./entry-mapping-list/TableRetrieverStat
 import {getApiClient} from "../utils/api.ts";
 import {formatFileSize} from "../utils/fileSize.ts";
 import {notify} from "../utils/notificationList.ts";
+import EntryMappingDetails from "./entry-mapping-list/EntryMappingDetails.vue";
 
 const contentLoaded = ref(false);
-const entryMappingList: Ref<Array<EntryMapping> | null> = ref(null);
+
+type EntryMappingWrapper = EntryMapping & {
+  unfolded: boolean
+};
+
+const entryMappingList: Ref<Array<EntryMappingWrapper> | null> = ref(null);
 const entryMappingTotalAmount: Ref<number | null> = ref(null);
 
 interface RetrieverWrapper extends Retriever {
@@ -49,7 +55,14 @@ async function fetchAndDisplayEntries() {
   try {
     const nameVal = name.value === null ? undefined : name.value;
     const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum, selectedSortBy.value, nameVal)).data;
-    entryMappingList.value = entryMappingResponse.entries;
+    entryMappingList.value = [];
+    for (const response of entryMappingResponse.entries) {
+      const entryMappingWrapper: EntryMappingWrapper = {
+        ...response,
+        unfolded: false
+      };
+      entryMappingList.value.push(entryMappingWrapper);
+    }
     entryMappingTotalAmount.value = entryMappingResponse.totalAmount;
   } finally {
     contentLoaded.value = true;
@@ -164,7 +177,7 @@ watch([name], () => {
       </div>
     </div>
     <div class="my-2 flex justify-between">
-      <div class="relative">
+      <div class="relative my-2">
         <input type="text" id="search-bar"
                class="bg-gray-100 text-gray-400 font-medium rounded focus:ring-red-500 block pl-9 py-2 pr-2 w-80"
                placeholder="Search" v-model="name">
@@ -261,63 +274,81 @@ watch([name], () => {
       <PreloaderTableEntry class="border-b-2 border-gray-200" v-else/>
       </thead>
       <tbody>
-      <tr v-for="entryMapping in entryMappingList" class="hover:bg-stone-100 border-t border-gray-200" v-if="contentLoaded">
-        <td class="py-3 pr-3 pl-3 font-medium truncate" :title="entryMapping.name">
-          {{ entryMapping.name }}
-        </td>
+      <template v-if="contentLoaded" v-for="entryMapping in entryMappingList">
+        <tr class="hover:bg-stone-100 border-t border-gray-200">
+          <td class="py-3 pr-3 pl-3 font-medium truncate cursor-pointer" :title="entryMapping.name"
+              v-on:click="entryMapping.unfolded = !entryMapping.unfolded">
+            <div class="flex overflow-hidden">
+              <div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-right transform transition-transform"
+                     :class="[entryMapping.unfolded ? 'rotate-90' : '']">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M9 6l6 6l-6 6"/>
+                </svg>
+              </div>
+              <div>
+                {{ entryMapping.name }}
+              </div>
+            </div>
+          </td>
 
-        <td class="py-3 pr-3 font-medium truncate" :title="formatFileSize(entryMapping.size)">
-          {{ formatFileSize(entryMapping.size) }}
-        </td>
+          <td class="py-3 pr-3 font-medium truncate" :title="formatFileSize(entryMapping.size)">
+            {{ formatFileSize(entryMapping.size) }}
+          </td>
 
-        <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.dateAdded">
-          {{ new Date(entryMapping.dateAdded).toISOString().replace(".000", "") }}
-        </td>
+          <td class="py-3 pr-3 font-medium truncate" :title="entryMapping.dateAdded">
+            {{ new Date(entryMapping.dateAdded).toISOString().replace(".000", "") }}
+          </td>
 
-        <TableRetrieverStateRowEntry
-            v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
-            :present="isEntryPresentInRetrieverCategory(entryMapping, retrieverCategory.name)"
-        />
-        <TableRetrieverStateRowEntry
-            v-else v-for="retriever in retrieverList"
-            :present="isEntryPresentInRetriever(entryMapping, retriever.id)"
-        />
+          <TableRetrieverStateRowEntry
+              v-if="retrieverGroupingEnabled" v-for="retrieverCategory in retrieverCategoryList"
+              :present="isEntryPresentInRetrieverCategory(entryMapping, retrieverCategory.name)"
+          />
+          <TableRetrieverStateRowEntry
+              v-else v-for="retriever in retrieverList"
+              :present="isEntryPresentInRetriever(entryMapping, retriever.id)"
+          />
 
-        <td class="p-3 flex justify-center">
-          <button class="text-gray-500" v-if="entrySelectedForDeletion !== entryMapping"
-                  v-on:click="entrySelectedForDeletion = entryMapping">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                 class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M4 7l16 0"/>
-              <path d="M10 11l0 6"/>
-              <path d="M14 11l0 6"/>
-              <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
-              <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
-            </svg>
-          </button>
-          <button class="text-green-500 hover:bg-green-100 rounded-md" v-if="entrySelectedForDeletion === entryMapping"
-                  v-on:click="deleteEntryMapping(entryMapping)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                 class="icon icon-tabler icons-tabler-outline icon-tabler-check">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M5 12l5 5l10 -10"/>
-            </svg>
-          </button>
-          <button class="text-red-500 hover:bg-red-100 rounded-md" v-if="entrySelectedForDeletion === entryMapping"
-                  v-on:click="entrySelectedForDeletion = null">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                 class="icon icon-tabler icons-tabler-outline icon-tabler-x">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M18 6l-12 12"/>
-              <path d="M6 6l12 12"/>
-            </svg>
-          </button>
-        </td>
-      </tr>
+          <td class="p-3 flex justify-center">
+            <button class="text-gray-500" v-if="entrySelectedForDeletion !== entryMapping"
+                    v-on:click="entrySelectedForDeletion = entryMapping">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M4 7l16 0"/>
+                <path d="M10 11l0 6"/>
+                <path d="M14 11l0 6"/>
+                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
+                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
+              </svg>
+            </button>
+            <button class="text-green-500 hover:bg-green-100 rounded-md"
+                    v-if="entrySelectedForDeletion === entryMapping"
+                    v-on:click="deleteEntryMapping(entryMapping)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M5 12l5 5l10 -10"/>
+              </svg>
+            </button>
+            <button class="text-red-500 hover:bg-red-100 rounded-md" v-if="entrySelectedForDeletion === entryMapping"
+                    v-on:click="entrySelectedForDeletion = null">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M18 6l-12 12"/>
+                <path d="M6 6l12 12"/>
+              </svg>
+            </button>
+          </td>
+        </tr>
+        <EntryMappingDetails v-if="entryMapping.unfolded" :entry-id="entryMapping.id"></EntryMappingDetails>
+      </template>
       <PreloaderTableEntry v-for="_ in 10" v-else/>
       </tbody>
     </table>
