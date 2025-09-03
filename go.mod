@@ -12,7 +12,7 @@ require (
 	github.com/knadh/koanf/v2 v2.2.2
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/pressly/goose/v3 v3.24.3
-	github.com/spf13/pflag v1.0.9
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.41.0
 	golift.io/starr v1.2.0
