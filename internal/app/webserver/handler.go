@@ -4,14 +4,14 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/common"
-	"github.com/almanac1631/scrubarr/pkg/ultraapi"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/knadh/koanf/v2"
 	"os"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"github.com/almanac1631/scrubarr/internal/pkg/utils"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/knadh/koanf/v2"
 )
 
 type JwtConfig struct {
@@ -64,47 +64,14 @@ func NewApiEndpointHandler(entryMappingManager common.EntryMappingManager, confi
 		return nil, err
 	}
 	jwtConfig := &JwtConfig{privateKey, publicKey}
-	var statsRetriever StatsRetriever
-	if ultraApiConf := config.StringMap("ultra-api"); len(ultraApiConf) != 0 {
-		endpoint := ultraApiConf["endpoint"]
-		apiKey := []byte(ultraApiConf["api_key"])
-		ultraApi := ultraapi.New(endpoint, apiKey)
-		statsRetriever = ultraApiToStatsRetriever(ultraApi)
-	}
+	statsRetriever := &wrappedStatsRetriever{}
 	return &ApiEndpointHandler{entryMappingManager, jwtConfig, username, passwordRetriever, passwordSalt, statsRetriever, info}, nil
 }
 
-type wrappedStatsRetriever struct {
-	retrievalFunc    func() (int64, int64, error)
-	cachedTotalBytes int64
-	cachedUsedBytes  int64
-	lastQueried      time.Time
-}
+type wrappedStatsRetriever struct{}
 
 func (r *wrappedStatsRetriever) GetDiskStats() (int64, int64, error) {
-	if r.lastQueried.IsZero() || time.Since(r.lastQueried) > time.Hour {
-		var err error
-		r.cachedTotalBytes, r.cachedUsedBytes, err = r.retrievalFunc()
-		if err != nil {
-			return -1, -1, err
-		}
-		r.lastQueried = time.Now()
-	}
-	return r.cachedTotalBytes, r.cachedUsedBytes, nil
-}
-
-func ultraApiToStatsRetriever(ultraApi *ultraapi.Instance) StatsRetriever {
-	return &wrappedStatsRetriever{
-		retrievalFunc: func() (int64, int64, error) {
-			quota, err := ultraApi.GetDiskQuota()
-			if err != nil {
-				return -1, -1, err
-			}
-			totalStorageBytes := int64(quota.StorageInfo.TotalStorageValue) * 1024 * 1024 * 1024
-			usedStorageBytes := totalStorageBytes - quota.StorageInfo.FreeStorageBytes
-			return totalStorageBytes, usedStorageBytes, nil
-		},
-	}
+	return utils.GetDiskQuota()
 }
 
 func loadJwtPrivateKey(config *koanf.Koanf) (*ecdsa.PrivateKey, error) {
