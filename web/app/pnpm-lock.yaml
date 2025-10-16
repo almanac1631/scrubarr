@@ -24,8 +24,8 @@ importers:
         specifier: 3.5.22
         version: 3.5.22(typescript@5.9.3)
       vue-router:
-        specifier: 4.6.2
-        version: 4.6.2(vue@3.5.22(typescript@5.9.3))
+        specifier: 4.6.3
+        version: 4.6.3(vue@3.5.22(typescript@5.9.3))
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: 6.0.1
@@ -1046,8 +1046,8 @@ packages:
   vscode-uri@3.0.8:
     resolution: {integrity: sha512-AyFQ0EVmsOZOlAnxoFOGOq1SQDWAB7C6aqMGS23svWAllfOaxbuFvcT8D1i8z3Gyn8fraVeZNNmN6e9bxxXkKw==}
 
-  vue-router@4.6.2:
-    resolution: {integrity: sha512-my83mxQKXyCms9EegBXZldehOihxBjgSjZqrZwgg4vBacNGl0oBCO+xT//wgOYpLV1RW93ZfqxrjTozd+82nbA==}
+  vue-router@4.6.3:
+    resolution: {integrity: sha512-ARBedLm9YlbvQomnmq91Os7ck6efydTSpRP3nuOKCvgJOHNrhRoJDSKtee8kcL1Vf7nz6U+PMBL+hTvR3bTVQg==}
     peerDependencies:
       vue: ^3.5.0
 
@@ -1939,7 +1939,7 @@ snapshots:
 
   vscode-uri@3.0.8: {}
 
-  vue-router@4.6.2(vue@3.5.22(typescript@5.9.3)):
+  vue-router@4.6.3(vue@3.5.22(typescript@5.9.3)):
     dependencies:
       '@vue/devtools-api': 6.6.4
       vue: 3.5.22(typescript@5.9.3)
