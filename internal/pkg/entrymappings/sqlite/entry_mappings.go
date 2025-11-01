@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"log/slog"
 	"strings"
 	"time"
+
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
 )
 
 func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter common.EntryMappingFilter, sortBy common.EntryMappingSortBy, name string) (entryMappings []*common.EntryMapping, totalCount int, err error) {
@@ -49,6 +51,8 @@ from filtered_entries fe
 }
 
 func (e *EntryMappingManager) queryAndParseEntryMappings(query string, args []any) (entryMappings []*common.EntryMapping, totalCount int, err error) {
+	slog.Info("querying entry mappings", "sql", query, "args", args)
+
 	var rows *sql.Rows
 	rows, err = e.db.Query(query, args...)
 	if err != nil {
