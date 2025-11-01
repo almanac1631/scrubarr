@@ -1,11 +1,12 @@
 package torrent_clients
 
 import (
+	"testing"
+	"time"
+
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/autobrr/go-rtorrent"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
@@ -37,7 +38,8 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			}},
 			map[common.EntryName]common.Entry{
 				"Movie1.mkv": {
-					Name: "Movie1.mkv",
+					Name:     "Movie1.mkv",
+					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "somehash",
 						TorrentClientName: "rtorrent",
@@ -50,7 +52,8 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 					},
 				},
 				"Movie2.mkv": {
-					Name: "Movie2.mkv",
+					Name:     "Movie2.mkv",
+					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie2.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "somehash",
 						TorrentClientName: "rtorrent",
@@ -80,7 +83,8 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			}},
 			map[common.EntryName]common.Entry{
 				"Movie1.mkv": {
-					Name: "Movie1.mkv",
+					Name:     "Movie1.mkv",
+					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "someotherhash",
 						TorrentClientName: "rtorrent",
@@ -93,7 +97,8 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 					},
 				},
 				"Movie2.mkv": {
-					Name: "Movie2.mkv",
+					Name:     "Movie2.mkv",
+					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie2.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "someotherhash",
 						TorrentClientName: "rtorrent",
@@ -122,7 +127,8 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			}},
 			map[common.EntryName]common.Entry{
 				"Some cheeky torrent file bundle.mkv": {
-					Name: "Some cheeky torrent file bundle.mkv",
+					Name:     "Some cheeky torrent file bundle.mkv",
+					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "yetanotherhash",
 						TorrentClientName: "rtorrent",
@@ -151,7 +157,8 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 			}},
 			map[common.EntryName]common.Entry{
 				"Some cheeky torrent file bundle.mkv": {
-					Name: "Some cheeky torrent file bundle.mkv",
+					Name:     "Some cheeky torrent file bundle.mkv",
+					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "yetanotherhash",
 						TorrentClientName: "rtorrent",

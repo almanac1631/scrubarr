@@ -2,11 +2,12 @@ package arr_apps
 
 import (
 	"fmt"
+	"path"
+	"slices"
+
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr"
 	"golift.io/starr/sonarr"
-	"path"
-	"slices"
 )
 
 var _ common.EntryRetriever = (*SonarrMediaRetriever)(nil)
@@ -52,11 +53,13 @@ func (s *SonarrMediaRetriever) parseSeriesEpisodeFile(series *sonarr.Series, epi
 	monitored := s.isSeasonMonitored(series, episodeFile.SeasonNumber)
 	name := path.Base(episodeFile.Path)
 	return common.Entry{
-		Name: common.EntryName(name),
+		Name:     common.EntryName(name),
+		FilePath: episodeFile.Path,
 		AdditionalData: ArrAppEntry{
 			ID:            episodeFile.ID,
 			Type:          MediaTypeSeries,
 			ParentName:    series.Title,
+			ParentId:      series.ID,
 			Monitored:     monitored,
 			MediaFilePath: episodeFile.Path,
 			DateAdded:     episodeFile.DateAdded,
