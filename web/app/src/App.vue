@@ -10,7 +10,7 @@ import InfoFooter from "./components/InfoFooter.vue";
 </script>
 
 <template>
-  <div class="fixed right-0 z-10 pt-14 pr-2">
+  <div class="fixed left-0 bottom-0 z-10 pt-14 pr-2">
     <TransitionGroup tag="div" enter-active-class="transition-opacity">
       <Notification v-for="notification in notificationList" :notification="notification">
       </Notification>
