@@ -136,7 +136,7 @@ func getNameFilter(name string) string {
 	if name == "" {
 		return ""
 	}
-	return " where instr(lower(em.name), ?) > 0"
+	return " where LOWER(em.name) LIKE ('%' || LOWER(replace(REPLACE(?, ' ', '%'), '_', '\\_')) || '%') ESCAPE '\\'"
 }
 
 func (e *EntryMappingManager) GetEntryMappingById(id string) (*common.EntryMapping, error) {
