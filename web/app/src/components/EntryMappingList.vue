@@ -56,7 +56,8 @@ async function fetchAndDisplayEntries() {
     const nameVal = name.value === null ? undefined : name.value;
     const entryMappingResponse = (await apiClient.getEntryMappings(selectedPage.value, +selectedPageSize.value.value, selectedFilter.value.value as GetEntryMappingsFilterEnum, selectedSortBy.value, nameVal)).data;
     entryMappingList.value = [];
-    for (const response of entryMappingResponse.entries) {
+    const entries = entryMappingResponse.entries ?? [];
+    for (const response of entries) {
       const entryMappingWrapper: EntryMappingWrapper = {
         ...response,
         unfolded: false
@@ -150,7 +151,6 @@ watch([selectedFilter, selectedPageSize, selectedPage, selectedSortBy], () => {
   fetchAndDisplayEntries();
 });
 
-
 const name: Ref<string | null> = ref(null);
 
 watch([name], () => {
@@ -159,7 +159,12 @@ watch([name], () => {
     if (name.value !== valueChangedTo) {
       return;
     }
-    fetchAndDisplayEntries();
+
+    if (selectedPage.value !== 1) {
+      selectedPage.value = 1; // Will trigger previous watch and fetch
+    } else {
+      fetchAndDisplayEntries();
+    }
   }, 200);
 });
 </script>
