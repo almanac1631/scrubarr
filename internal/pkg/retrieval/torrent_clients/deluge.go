@@ -70,6 +70,7 @@ func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(hash string, torrentStat
 				Ratio:             torrentStatus.Ratio,
 				FileSizeBytes:     file.Size,
 				TrackerHost:       torrentStatus.TrackerHost,
+				Status:            torrentStatus.TrackerStatus,
 			},
 		}
 		entryList = append(entryList, entry)

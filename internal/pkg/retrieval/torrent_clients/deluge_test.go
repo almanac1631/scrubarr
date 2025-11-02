@@ -38,6 +38,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
 					SeedingTime:      751680, // 8.7 days
 					TrackerHost:      "sometrakkr.co.uk",
+					TrackerStatus:    "Okay",
 					Files: []delugeclient.File{
 						{
 							Size: 1800000000,
@@ -58,6 +59,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 						Ratio:             1.74,
 						FileSizeBytes:     1800000000,
 						TrackerHost:       "sometrakkr.co.uk",
+						Status:            "Okay",
 					},
 				},
 			},
@@ -76,6 +78,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
 					SeedingTime:      751680, // 8.7 days
 					TrackerHost:      "sometrakkr.co.uk",
+					TrackerStatus:    "Error",
 					Files: []delugeclient.File{
 						{
 							Size: 1800000000,
@@ -100,6 +103,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 						Ratio:             1.74,
 						FileSizeBytes:     19021903,
 						TrackerHost:       "sometrakkr.co.uk",
+						Status:            "Error",
 					},
 				},
 			},

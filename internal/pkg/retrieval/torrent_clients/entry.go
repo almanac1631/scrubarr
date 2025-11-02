@@ -14,6 +14,7 @@ type TorrentClientEntry struct {
 	Ratio             float32
 	FileSizeBytes     int64
 	TrackerHost       string
+	Status            string
 }
 
 func (entry TorrentClientEntry) String() string {
