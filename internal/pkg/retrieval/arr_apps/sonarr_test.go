@@ -1,12 +1,11 @@
 package arr_apps
 
 import (
-	"reflect"
-	"testing"
-
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/utils"
 	"golift.io/starr/sonarr"
+	"reflect"
+	"testing"
 )
 
 func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
@@ -26,7 +25,6 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 		{
 			"can parse a monitored episode file", fields{nil}, args{
 				&sonarr.Series{
-					ID: 1337,
 					Seasons: []*sonarr.Season{
 						{true, 1, nil},
 						{true, 2, nil},
@@ -43,13 +41,11 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					Size:         21849284229329,
 				},
 			}, common.Entry{
-				Name:     "Some Episode.mkv",
-				FilePath: "/home/myuser/media/downloads/Some Episode.mkv",
+				Name: "Some Episode.mkv",
 				AdditionalData: ArrAppEntry{
 					ID:            21991,
 					Type:          MediaTypeSeries,
 					ParentName:    "Some series!",
-					ParentId:      1337,
 					Monitored:     true,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:     utils.ParseTime("2025-02-18T13:29:48Z"),
@@ -60,7 +56,6 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 		{
 			"can parse an unmonitored episode file", fields{nil}, args{
 				&sonarr.Series{
-					ID: 1337,
 					Seasons: []*sonarr.Season{
 						{true, 1, nil},
 						{true, 2, nil},
@@ -77,13 +72,11 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 					Size:         21849284229329,
 				},
 			}, common.Entry{
-				Name:     "Some Episode.mkv",
-				FilePath: "/home/myuser/media/downloads/Some Episode.mkv",
+				Name: "Some Episode.mkv",
 				AdditionalData: ArrAppEntry{
 					ID:            84291,
 					Type:          MediaTypeSeries,
 					ParentName:    "Some series!",
-					ParentId:      1337,
 					Monitored:     false,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:     utils.ParseTime("2025-02-09T08:19:04Z"),

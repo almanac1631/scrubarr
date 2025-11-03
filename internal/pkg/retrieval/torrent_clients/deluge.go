@@ -3,13 +3,12 @@ package torrent_clients
 import (
 	"errors"
 	"fmt"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	delugeclient "github.com/gdm85/go-libdeluge"
 	"log/slog"
 	"path"
 	"slices"
 	"time"
-
-	"github.com/almanac1631/scrubarr/internal/pkg/common"
-	delugeclient "github.com/gdm85/go-libdeluge"
 )
 
 var _ common.EntryRetriever = (*DelugeEntryRetriever)(nil)
@@ -59,8 +58,7 @@ func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(hash string, torrentStat
 		downloadedAt := time.Unix(torrentStatus.CompletedTime, 0).In(time.UTC)
 		name := path.Base(filePath)
 		entry := common.Entry{
-			Name:     common.EntryName(name),
-			FilePath: filePath,
+			Name: common.EntryName(name),
 			AdditionalData: TorrentClientEntry{
 				ID:                hash,
 				TorrentClientName: "deluge",

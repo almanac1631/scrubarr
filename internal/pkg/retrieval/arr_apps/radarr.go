@@ -2,13 +2,12 @@ package arr_apps
 
 import (
 	"fmt"
-	"maps"
-	"path"
-	"slices"
-
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr"
 	"golift.io/starr/radarr"
+	"maps"
+	"path"
+	"slices"
 )
 
 var _ common.EntryRetriever = (*RadarrMediaRetriever)(nil)
@@ -56,13 +55,11 @@ func (r RadarrMediaRetriever) getEntriesFromMovieFileList(movie *radarr.Movie, m
 		}
 		name := common.EntryName(path.Base(movieFile.Path))
 		mediaEntryList[name] = common.Entry{
-			Name:     name,
-			FilePath: movieFile.Path,
+			Name: name,
 			AdditionalData: ArrAppEntry{
 				ID:            movieFile.ID,
 				Type:          MediaTypeMovie,
 				ParentName:    movie.Title,
-				ParentId:      movie.ID,
 				Monitored:     movie.Monitored,
 				MediaFilePath: movieFile.Path,
 				DateAdded:     movieFile.DateAdded,

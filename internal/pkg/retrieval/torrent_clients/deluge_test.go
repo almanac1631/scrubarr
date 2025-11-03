@@ -1,13 +1,12 @@
 package torrent_clients
 
 import (
-	"reflect"
-	"testing"
-	"time"
-
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	delugeclient "github.com/gdm85/go-libdeluge"
 	"github.com/stretchr/testify/assert"
+	"reflect"
+	"testing"
+	"time"
 )
 
 func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
@@ -48,8 +47,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 				}},
 			[]common.Entry{
 				{
-					Name:     "Episode1.mkv",
-					FilePath: "/home/someguy/downloads/deluge/Somesubfolder/series/Episode1.mkv",
+					Name: "Episode1.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "somehash",
 						TorrentClientName: "deluge",
@@ -92,8 +90,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 				}},
 			[]common.Entry{
 				{
-					Name:     "Episode2.mkv",
-					FilePath: "/home/someguy/downloads/deluge/Somesubfolder/series/Episode2.mkv",
+					Name: "Episode2.mkv",
 					AdditionalData: TorrentClientEntry{
 						ID:                "someotherhash",
 						TorrentClientName: "deluge",

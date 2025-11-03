@@ -3,14 +3,13 @@ package torrent_clients
 import (
 	"context"
 	"fmt"
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"github.com/autobrr/go-rtorrent"
 	"log/slog"
 	"maps"
 	"path"
 	"slices"
 	"strings"
-
-	"github.com/almanac1631/scrubarr/internal/pkg/common"
-	"github.com/autobrr/go-rtorrent"
 )
 
 var _ common.EntryRetriever = (*RtorrentEntryRetriever)(nil)
@@ -59,8 +58,7 @@ func (r *RtorrentEntryRetriever) parseTorrentFileList(torrent rtorrent.Torrent, 
 		}
 		filePath := path.Join(torrent.Path, torrentFile.Path)
 		entry := common.Entry{
-			Name:     name,
-			FilePath: filePath,
+			Name: name,
 			AdditionalData: TorrentClientEntry{
 				ID:                torrent.Hash,
 				TorrentClientName: "rtorrent",
