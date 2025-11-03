@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/common"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
-	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
 	"hash/fnv"
 	"strconv"
 	"time"
+
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
+	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
 )
 
 func (e *EntryMappingManager) RefreshEntryMappings() (err error) {
@@ -55,7 +56,7 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	if _, err := tx.Exec("delete from main.entry_mappings;"); err != nil {
 		return fmt.Errorf("could not truncate entry_mappings table: %w", err)
 	}
-	statement, err := tx.Prepare("insert into main.entry_mappings (id, retriever_id, date_added, size, name, api_resp) values (?, ?, ?, ?, ?, ?)")
+	statement, err := tx.Prepare("insert into main.entry_mappings (id, retriever_id, date_added, size, name, api_resp, parent_id, file_path) values (?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return fmt.Errorf("could not prepare entry mappings insert statement: %w", err)
 	}
@@ -78,7 +79,7 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 			if err != nil {
 				return fmt.Errorf("could not marshal entry for retriever (%+v): %w", retrieverInfo, err)
 			}
-			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp); err != nil {
+			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp, entry.ParentId, entry.FilePath); err != nil {
 				return fmt.Errorf("could not insert entry for retriever (%+v): %w", retrieverInfo, err)
 			}
 		}
