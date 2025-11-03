@@ -74,12 +74,20 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 			if err != nil {
 				return fmt.Errorf("could not get size from entry for retriever (%+v): %w", retrieverInfo, err)
 			}
+			path, err := getPathFromEntry(entry)
+			if err != nil {
+				return fmt.Errorf("could not get path from entry for retriever (%+v): %w", retrieverInfo, err)
+			}
+			parentId, err := getParentIdFromEntry(entry)
+			if err != nil {
+				return fmt.Errorf("could not get parent id from entry for retriever (%+v): %w", retrieverInfo, err)
+			}
 			var apiResp any
 			apiResp, err = json.Marshal(entry.AdditionalData)
 			if err != nil {
 				return fmt.Errorf("could not marshal entry for retriever (%+v): %w", retrieverInfo, err)
 			}
-			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp, entry.ParentId, entry.FilePath); err != nil {
+			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp, parentId, path); err != nil {
 				return fmt.Errorf("could not insert entry for retriever (%+v): %w", retrieverInfo, err)
 			}
 		}
@@ -125,6 +133,29 @@ func getSizeFromEntry(entry common.Entry) (int64, error) {
 		return 0, fmt.Errorf("could not get size from entry: unknown entry type %T", entry.AdditionalData)
 	}
 	return size, nil
+}
+
+func getParentIdFromEntry(entry common.Entry) (string, error) {
+	switch entry.AdditionalData.(type) {
+	case arr_apps.ArrAppEntry:
+		id := entry.AdditionalData.(arr_apps.ArrAppEntry).ParentId
+		return strconv.FormatInt(id, 10), nil
+	case torrent_clients.TorrentClientEntry:
+		return entry.AdditionalData.(torrent_clients.TorrentClientEntry).ID, nil
+	default:
+		return "", fmt.Errorf("could not get parent id from entry: unknown entry type %T", entry.AdditionalData)
+	}
+}
+
+func getPathFromEntry(entry common.Entry) (string, error) {
+	switch entry.AdditionalData.(type) {
+	case arr_apps.ArrAppEntry:
+		return entry.AdditionalData.(arr_apps.ArrAppEntry).MediaFilePath, nil
+	case torrent_clients.TorrentClientEntry:
+		return entry.AdditionalData.(torrent_clients.TorrentClientEntry).DownloadFilePath, nil
+	default:
+		return "", fmt.Errorf("could not get path from entry: unknown entry type %T", entry.AdditionalData)
+	}
 }
 
 func (e *EntryMappingManager) updateRetrievers(tx *sql.Tx) error {
