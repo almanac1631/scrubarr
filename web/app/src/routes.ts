@@ -13,6 +13,6 @@ declare module 'vue-router' {
 
 export const routes: Array<RouteRecordRaw> = [
     {path: '/', component: Main, name: "Overview", meta: {displayedInNavigation: true}},
-    {path: '/entry-mappings', component: EntryMappingList, name: "Entry Mappings", meta: {displayedInNavigation: true}},
+    {path: '/entry-mappings', component: EntryMappingList, name: "Files", meta: {displayedInNavigation: true}},
     {path: '/login', component: Login, name: "Login", meta: {displayedInNavigation: false}},
 ]

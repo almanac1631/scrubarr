@@ -78,7 +78,7 @@ function activateEntry(entry: RetrieverApiResponse) {
           </div>
         </template>
       </div>
-      <div class="flex overflow-x-scroll">
+      <div class="flex overflow-x-auto">
         <template v-for="entry in highlightedRetrieverApiResponses">
           <div v-if="entry.active" class="flex-1 p-2 bg-gray-50 rounded-b-md">
             <pre v-html="entry.apiResponse" class="text-sm"></pre>
