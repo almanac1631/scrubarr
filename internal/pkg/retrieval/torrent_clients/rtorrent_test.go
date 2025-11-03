@@ -40,7 +40,6 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie1.mkv": {
 					Name:     "Movie1.mkv",
 					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
-					ParentId: "somehash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "somehash",
 						TorrentClientName: "rtorrent",
@@ -55,7 +54,6 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie2.mkv": {
 					Name:     "Movie2.mkv",
 					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie2.mkv",
-					ParentId: "somehash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "somehash",
 						TorrentClientName: "rtorrent",
@@ -87,7 +85,6 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie1.mkv": {
 					Name:     "Movie1.mkv",
 					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
-					ParentId: "someotherhash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "someotherhash",
 						TorrentClientName: "rtorrent",
@@ -102,7 +99,6 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Movie2.mkv": {
 					Name:     "Movie2.mkv",
 					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie2.mkv",
-					ParentId: "someotherhash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "someotherhash",
 						TorrentClientName: "rtorrent",
@@ -133,7 +129,6 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Some cheeky torrent file bundle.mkv": {
 					Name:     "Some cheeky torrent file bundle.mkv",
 					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
-					ParentId: "yetanotherhash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "yetanotherhash",
 						TorrentClientName: "rtorrent",
@@ -164,7 +159,6 @@ func TestRtorrentEntryRetriever_parseTorrentFileList(t *testing.T) {
 				"Some cheeky torrent file bundle.mkv": {
 					Name:     "Some cheeky torrent file bundle.mkv",
 					FilePath: "/some/dir/Some cheeky torrent file bundle/Movie1.mkv",
-					ParentId: "yetanotherhash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "yetanotherhash",
 						TorrentClientName: "rtorrent",

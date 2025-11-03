@@ -61,7 +61,6 @@ func (r *RtorrentEntryRetriever) parseTorrentFileList(torrent rtorrent.Torrent, 
 		entry := common.Entry{
 			Name:     name,
 			FilePath: filePath,
-			ParentId: torrent.Hash,
 			AdditionalData: TorrentClientEntry{
 				ID:                torrent.Hash,
 				TorrentClientName: "rtorrent",

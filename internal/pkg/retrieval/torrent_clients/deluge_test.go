@@ -50,7 +50,6 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 				{
 					Name:     "Episode1.mkv",
 					FilePath: "/home/someguy/downloads/deluge/Somesubfolder/series/Episode1.mkv",
-					ParentId: "somehash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "somehash",
 						TorrentClientName: "deluge",
@@ -95,7 +94,6 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 				{
 					Name:     "Episode2.mkv",
 					FilePath: "/home/someguy/downloads/deluge/Somesubfolder/series/Episode2.mkv",
-					ParentId: "someotherhash",
 					AdditionalData: TorrentClientEntry{
 						ID:                "someotherhash",
 						TorrentClientName: "deluge",
