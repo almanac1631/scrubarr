@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 	"slices"
+	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr"
@@ -55,11 +56,11 @@ func (s *SonarrMediaRetriever) parseSeriesEpisodeFile(series *sonarr.Series, epi
 	return common.Entry{
 		Name:     common.EntryName(name),
 		FilePath: episodeFile.Path,
+		ParentId: strconv.FormatInt(series.ID, 10),
 		AdditionalData: ArrAppEntry{
 			ID:            episodeFile.ID,
 			Type:          MediaTypeSeries,
 			ParentName:    series.Title,
-			ParentId:      series.ID,
 			Monitored:     monitored,
 			MediaFilePath: episodeFile.Path,
 			DateAdded:     episodeFile.DateAdded,

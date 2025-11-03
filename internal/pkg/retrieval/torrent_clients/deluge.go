@@ -61,6 +61,7 @@ func (d *DelugeEntryRetriever) parseDelugeTorrentStatus(hash string, torrentStat
 		entry := common.Entry{
 			Name:     common.EntryName(name),
 			FilePath: filePath,
+			ParentId: hash,
 			AdditionalData: TorrentClientEntry{
 				ID:                hash,
 				TorrentClientName: "deluge",

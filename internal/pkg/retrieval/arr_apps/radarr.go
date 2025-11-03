@@ -5,6 +5,7 @@ import (
 	"maps"
 	"path"
 	"slices"
+	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"golift.io/starr"
@@ -58,11 +59,11 @@ func (r RadarrMediaRetriever) getEntriesFromMovieFileList(movie *radarr.Movie, m
 		mediaEntryList[name] = common.Entry{
 			Name:     name,
 			FilePath: movieFile.Path,
+			ParentId: strconv.FormatInt(movie.ID, 10),
 			AdditionalData: ArrAppEntry{
 				ID:            movieFile.ID,
 				Type:          MediaTypeMovie,
 				ParentName:    movie.Title,
-				ParentId:      movie.ID,
 				Monitored:     movie.Monitored,
 				MediaFilePath: movieFile.Path,
 				DateAdded:     movieFile.DateAdded,

@@ -45,11 +45,11 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 			}, common.Entry{
 				Name:     "Some Episode.mkv",
 				FilePath: "/home/myuser/media/downloads/Some Episode.mkv",
+				ParentId: "1337",
 				AdditionalData: ArrAppEntry{
 					ID:            21991,
 					Type:          MediaTypeSeries,
 					ParentName:    "Some series!",
-					ParentId:      1337,
 					Monitored:     true,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:     utils.ParseTime("2025-02-18T13:29:48Z"),
@@ -79,11 +79,11 @@ func TestSonarrMediaRetriever_parseSeriesEpisodeFile(t *testing.T) {
 			}, common.Entry{
 				Name:     "Some Episode.mkv",
 				FilePath: "/home/myuser/media/downloads/Some Episode.mkv",
+				ParentId: "1337",
 				AdditionalData: ArrAppEntry{
 					ID:            84291,
 					Type:          MediaTypeSeries,
 					ParentName:    "Some series!",
-					ParentId:      1337,
 					Monitored:     false,
 					MediaFilePath: "/home/myuser/media/downloads/Some Episode.mkv",
 					DateAdded:     utils.ParseTime("2025-02-09T08:19:04Z"),
