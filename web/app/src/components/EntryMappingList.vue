@@ -143,14 +143,13 @@ function toggleSortBy(availableOptions: Array<GetEntryMappingsSortByEnum>) {
 }
 
 const pageSizeElemList = [
-  {displayName: "Page size", value: "25"},
-  {displayName: "10", value: "10"},
-  {displayName: "25", value: "25"},
-  {displayName: "50", value: "50"},
-  {displayName: "100", value: "100"}
+  {displayName: "10 per page", value: "10"},
+  {displayName: "25 per page", value: "25"},
+  {displayName: "50 per page ", value: "50"},
+  {displayName: "100 per page", value: "100"}
 ];
 
-const selectedPageSize: Ref<DropdownOption | null> = ref(null);
+const selectedPageSize: Ref<DropdownOption | null> = ref(pageSizeElemList[1]);
 
 watch([selectedFilter, selectedPageSize, selectedPage, selectedSortBy], () => {
   fetchAndDisplayEntries();
@@ -176,18 +175,8 @@ watch([name], () => {
 
 <template>
   <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow">
-    <div class="my-2 flex">
-      <div>
-        <label class="inline-flex items-center cursor-pointer">
-          <span class="me-3 text-sm font-medium text-gray-900">Group by retriever category</span>
-          <input type="checkbox" value="" class="sr-only peer" v-model="retrieverGroupingEnabled">
-          <span
-              class="relative w-11 h-6 bg-gray-200 peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></span>
-        </label>
-      </div>
-    </div>
-    <div class="my-2 flex justify-between">
-      <div class="relative my-2">
+    <div class="my-2 flex items-center gap-4">
+      <div class="relative mb-2">
         <input type="text" id="search-bar"
                class="bg-gray-100 text-gray-400 font-medium rounded focus:ring-red-500 block pl-9 py-2 pr-2 w-80"
                placeholder="Search" v-model="name">
@@ -201,8 +190,17 @@ watch([name], () => {
           </svg>
         </div>
       </div>
-      <div class="my-2 flex justify-end gap-2">
-        <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[0]" v-model="selectedPageSize"/>
+      <div class="flex-grow"></div>
+      <div class="mb-2">
+        <label class="inline-flex items-center cursor-pointer">
+          <span class="me-3 text-sm font-medium text-gray-900">Group by category</span>
+          <input type="checkbox" value="" class="sr-only peer" v-model="retrieverGroupingEnabled">
+          <span
+              class="relative w-11 h-6 bg-gray-200 peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></span>
+        </label>
+      </div>
+      <div class="mb-2 flex justify-end gap-2">
+        <Dropdown :options="pageSizeElemList" :default-option="pageSizeElemList[1]" v-model="selectedPageSize"/>
         <Dropdown :options="filterElemList" :default-option="filterElemList[0]" v-model="selectedFilter"/>
       </div>
     </div>
