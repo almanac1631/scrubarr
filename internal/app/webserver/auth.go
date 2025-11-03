@@ -86,7 +86,7 @@ func generateToken(key *ecdsa.PrivateKey, username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"sub": username,
 		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"exp": time.Now().Add(time.Hour * 12).Unix(),
 	})
 	return token.SignedString(key)
 }
