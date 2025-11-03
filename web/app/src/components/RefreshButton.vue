@@ -6,13 +6,13 @@ import {NotificationType, notify} from "../utils/notificationList.ts";
 const refreshInProgress = ref(false);
 
 async function refreshEntryMapping() {
-  notify("Refreshing entry mapping...", NotificationType.Info);
+  notify("Refreshing files...", NotificationType.Info);
   refreshInProgress.value = true;
   try {
     await getApiClient().refreshEntryMappings();
-    notify("Entry mapping refreshed successfully.", NotificationType.Success);
+    notify("Files refreshed successfully.", NotificationType.Success);
   } catch (e) {
-    notify("Failed to refresh entry mapping.", NotificationType.Error);
+    notify("Failed to refresh files.", NotificationType.Error);
     console.error("unknown error occurred while requesting a refresh in");
     console.error(e);
   } finally {
@@ -23,7 +23,7 @@ async function refreshEntryMapping() {
 
 <template>
   <div class="flex items-center">
-    <button @click="refreshEntryMapping" title="Refresh entry mapping"
+    <button @click="refreshEntryMapping" title="Refresh files"
             class="text-gray-300 px-3 py-2 disabled:text-gray-100"
             :disabled="refreshInProgress"
             :class="{ 'hover:bg-gray-700': !refreshInProgress, 'hover:text-white rounded-md': !refreshInProgress }">

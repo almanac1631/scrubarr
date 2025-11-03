@@ -92,12 +92,12 @@ async function deleteEntryMapping(entryMapping: EntryMapping) {
   } catch (e) {
     console.error("Error deleting entry mapping.");
     console.error(e);
-    notify("Could not delete entry mapping: " + e, "error");
+    notify("Could not delete file: " + e, "error");
     return;
   } finally {
     entrySelectedForDeletion.value = null;
   }
-  notify(`Entry mapping ${entryMapping.name} deleted.`, "success");
+  notify(`${entryMapping.name} deleted^`, "success");
   await fetchAndDisplayEntries();
 }
 
