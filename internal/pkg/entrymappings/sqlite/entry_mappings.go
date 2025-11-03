@@ -26,11 +26,11 @@ func (e *EntryMappingManager) GetEntryMappings(page int, pageSize int, filter co
 		return nil, 0, err
 	}
 
-	query := fmt.Sprintf(`with category_counts as (select em.name,
+	query := fmt.Sprintf(`with category_counts as (select em.file_node, min(em.name) as name,
                                 group_concat(distinct r.category order by r.category) as categories%s
                          from entry_mappings em
-                                  join retrievers r on em.retriever_id = r.retriever_id%s
-                         group by em.name%s),
+                                  join retrievers r on em.retriever_id = r.retriever_id
+                         group by em.file_node %s %s),
      filtered_names as (select name from category_counts%s),
      total_count as (select count(distinct name) as total from filtered_names),
      filtered_entries as (select em.*
@@ -108,7 +108,7 @@ func getSortBy(sortBy common.EntryMappingSortBy) (string, string, error) {
 		sortAscending = sortBy == common.EntryMappingSortBySizeAsc
 		break
 	case common.EntryMappingSortByNameAsc, common.EntryMappingSortByNameDesc:
-		sortByAggr = "em.name"
+		sortByAggr = "min(em.name)"
 		sortByColName = "name"
 		sortAscending = sortBy == common.EntryMappingSortByNameAsc
 	default:
@@ -140,7 +140,7 @@ func getNameFilter(name string) string {
 	if name == "" {
 		return ""
 	}
-	return " where LOWER(em.name) LIKE ('%' || LOWER(replace(REPLACE(?, ' ', '%'), '_', '\\_')) || '%') ESCAPE '\\'"
+	return " having LOWER(min(em.name)) LIKE ('%' || LOWER(replace(REPLACE(?, ' ', '%'), '_', '\\_')) || '%') ESCAPE '\\'"
 }
 
 func (e *EntryMappingManager) GetEntryMappingById(id string) (*common.EntryMapping, error) {

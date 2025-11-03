@@ -11,6 +11,7 @@ import (
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
+	"golang.org/x/sys/unix"
 )
 
 func (e *EntryMappingManager) RefreshEntryMappings() (err error) {
@@ -56,7 +57,7 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	if _, err := tx.Exec("delete from main.entry_mappings;"); err != nil {
 		return fmt.Errorf("could not truncate entry_mappings table: %w", err)
 	}
-	statement, err := tx.Prepare("insert into main.entry_mappings (id, retriever_id, date_added, size, name, api_resp, parent_id, file_path) values (?, ?, ?, ?, ?, ?, ?, ?)")
+	statement, err := tx.Prepare("insert into main.entry_mappings (id, retriever_id, date_added, size, name, api_resp, parent_id, file_path, file_node) values (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return fmt.Errorf("could not prepare entry mappings insert statement: %w", err)
 	}
@@ -74,7 +75,7 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 			if err != nil {
 				return fmt.Errorf("could not get size from entry for retriever (%+v): %w", retrieverInfo, err)
 			}
-			path, err := getPathFromEntry(entry)
+			path, node, err := getPathFromEntry(entry)
 			if err != nil {
 				return fmt.Errorf("could not get path from entry for retriever (%+v): %w", retrieverInfo, err)
 			}
@@ -87,7 +88,7 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 			if err != nil {
 				return fmt.Errorf("could not marshal entry for retriever (%+v): %w", retrieverInfo, err)
 			}
-			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp, parentId, path); err != nil {
+			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp, parentId, path, node); err != nil {
 				return fmt.Errorf("could not insert entry for retriever (%+v): %w", retrieverInfo, err)
 			}
 		}
@@ -147,15 +148,24 @@ func getParentIdFromEntry(entry common.Entry) (string, error) {
 	}
 }
 
-func getPathFromEntry(entry common.Entry) (string, error) {
+func getPathFromEntry(entry common.Entry) (string, uint64, error) {
+	var path string
 	switch entry.AdditionalData.(type) {
 	case arr_apps.ArrAppEntry:
-		return entry.AdditionalData.(arr_apps.ArrAppEntry).MediaFilePath, nil
+		path = entry.AdditionalData.(arr_apps.ArrAppEntry).MediaFilePath
 	case torrent_clients.TorrentClientEntry:
-		return entry.AdditionalData.(torrent_clients.TorrentClientEntry).DownloadFilePath, nil
+		path = entry.AdditionalData.(torrent_clients.TorrentClientEntry).DownloadFilePath
 	default:
-		return "", fmt.Errorf("could not get path from entry: unknown entry type %T", entry.AdditionalData)
+		return "", 0, fmt.Errorf("could not get path from entry: unknown entry type %T", entry.AdditionalData)
 	}
+
+	var stat unix.Stat_t
+	err := unix.Stat(path, &stat)
+	if err != nil {
+		return "", 0, fmt.Errorf("could not stat file file %s: %v", path, err)
+	}
+
+	return path, stat.Ino, nil
 }
 
 func (e *EntryMappingManager) updateRetrievers(tx *sql.Tx) error {
