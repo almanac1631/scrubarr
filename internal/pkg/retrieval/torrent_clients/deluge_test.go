@@ -1,12 +1,13 @@
 package torrent_clients
 
 import (
-	"github.com/almanac1631/scrubarr/internal/pkg/common"
-	delugeclient "github.com/gdm85/go-libdeluge"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/almanac1631/scrubarr/internal/pkg/common"
+	delugeclient "github.com/gdm85/go-libdeluge"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
@@ -34,7 +35,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					Ratio:            1.74,
 					SavePath:         "/home/someguy/downloads/deluge",
 					DownloadLocation: "/home/someguy/downloads/deluge",
-					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
+					Name:             "Some.Series.S03E19.1080p.H264",
 					SeedingTime:      751680, // 8.7 days
 					TrackerHost:      "sometrakkr.co.uk",
 					TrackerStatus:    "Okay",
@@ -51,7 +52,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					AdditionalData: TorrentClientEntry{
 						ID:                "somehash",
 						TorrentClientName: "deluge",
-						TorrentName:       "Family.Guy.S22E14.1080p.WEB.H264",
+						TorrentName:       "Some.Series.S03E19.1080p.H264",
 						DownloadFilePath:  "/home/someguy/downloads/deluge/Somesubfolder/series/Episode1.mkv",
 						DownloadedAt:      time.Date(2024, time.September, 4, 10, 8, 10, 0, time.UTC),
 						Ratio:             1.74,
@@ -73,7 +74,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					Ratio:            1.74,
 					SavePath:         "/home/someguy/downloads/deluge",
 					DownloadLocation: "/home/someguy/downloads/deluge",
-					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
+					Name:             "Some.Series.S03E19.1080p.H264",
 					SeedingTime:      751680, // 8.7 days
 					TrackerHost:      "sometrakkr.co.uk",
 					TrackerStatus:    "Error",
@@ -94,7 +95,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					AdditionalData: TorrentClientEntry{
 						ID:                "someotherhash",
 						TorrentClientName: "deluge",
-						TorrentName:       "Family.Guy.S22E14.1080p.WEB.H264",
+						TorrentName:       "Some.Series.S03E19.1080p.H264",
 						DownloadFilePath:  "/home/someguy/downloads/deluge/Somesubfolder/series/Episode2.mkv",
 						DownloadedAt:      time.Date(2024, time.September, 4, 10, 8, 10, 0, time.UTC),
 						Ratio:             1.74,
@@ -116,7 +117,7 @@ func TestDelugeEntryRetriever_parseDelugeTorrentStatus(t *testing.T) {
 					Ratio:            1.74,
 					SavePath:         "/home/someguy/downloads/deluge",
 					DownloadLocation: "/home/someguy/downloads/deluge",
-					Name:             "Family.Guy.S22E14.1080p.WEB.H264",
+					Name:             "Some.Series.S03E19.1080p.H264",
 					SeedingTime:      751680, // 8.7 days
 					TrackerHost:      "sometrakkr.co.uk",
 					Files:            []delugeclient.File{},
