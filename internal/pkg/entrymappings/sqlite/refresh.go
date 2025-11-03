@@ -11,7 +11,7 @@ import (
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/arr_apps"
 	"github.com/almanac1631/scrubarr/internal/pkg/retrieval/torrent_clients"
-	"golang.org/x/sys/unix"
+	"github.com/almanac1631/scrubarr/internal/pkg/utils"
 )
 
 func (e *EntryMappingManager) RefreshEntryMappings() (err error) {
@@ -140,7 +140,7 @@ func getParentIdFromEntry(entry common.Entry) (string, error) {
 	switch entry.AdditionalData.(type) {
 	case arr_apps.ArrAppEntry:
 		id := entry.AdditionalData.(arr_apps.ArrAppEntry).ParentId
-		return strconv.FormatInt(id, 10), nil
+		return id, nil
 	case torrent_clients.TorrentClientEntry:
 		return entry.AdditionalData.(torrent_clients.TorrentClientEntry).ID, nil
 	default:
@@ -159,13 +159,12 @@ func getPathFromEntry(entry common.Entry) (string, uint64, error) {
 		return "", 0, fmt.Errorf("could not get path from entry: unknown entry type %T", entry.AdditionalData)
 	}
 
-	var stat unix.Stat_t
-	err := unix.Stat(path, &stat)
+	inode, err := utils.GetFileInode(path)
 	if err != nil {
 		return "", 0, fmt.Errorf("could not stat file file %s: %v", path, err)
 	}
 
-	return path, stat.Ino, nil
+	return path, inode, nil
 }
 
 func (e *EntryMappingManager) updateRetrievers(tx *sql.Tx) error {

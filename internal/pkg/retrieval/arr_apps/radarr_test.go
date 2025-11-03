@@ -1,11 +1,12 @@
 package arr_apps
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/almanac1631/scrubarr/internal/pkg/common"
 	"github.com/almanac1631/scrubarr/internal/pkg/utils"
 	"golift.io/starr/radarr"
-	"reflect"
-	"testing"
 )
 
 func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
@@ -46,7 +47,7 @@ func TestRadarrMediaRetriever_getEntriesFromMovieFileList(t *testing.T) {
 						ID:            13371,
 						Type:          MediaTypeMovie,
 						ParentName:    "Some Cool Film yo",
-						ParentId:      1337,
+						ParentId:      "1337",
 						Monitored:     true,
 						MediaFilePath: "some/film/dir/Some Cool Film Name.mkv",
 						DateAdded:     utils.ParseTime("2025-02-18T13:29:48Z"),

@@ -13,7 +13,7 @@ type ArrAppEntry struct {
 	ID            int64
 	Type          MediaType
 	ParentName    string
-	ParentId      int64
+	ParentId      string
 	Monitored     bool
 	MediaFilePath string
 	DateAdded     time.Time

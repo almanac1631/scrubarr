@@ -58,7 +58,7 @@ func (s *SonarrMediaRetriever) parseSeriesEpisodeFile(series *sonarr.Series, epi
 			ID:            episodeFile.ID,
 			Type:          MediaTypeSeries,
 			ParentName:    series.Title,
-			ParentId:      series.ID,
+			ParentId:      fmt.Sprintf("%d/%d", series.ID, episodeFile.SeasonNumber),
 			Monitored:     monitored,
 			MediaFilePath: episodeFile.Path,
 			DateAdded:     episodeFile.DateAdded,
