@@ -130,7 +130,7 @@ const filterElemList = [
 
 const selectedFilter: Ref<DropdownOption | null> = ref(null);
 
-const selectedSortBy: Ref<GetEntryMappingsSortByEnum | undefined> = ref(undefined);
+const selectedSortBy: Ref<GetEntryMappingsSortByEnum | undefined> = ref(GetEntryMappingsSortByEnum.DateAddedAsc);
 
 function toggleSortBy(availableOptions: Array<GetEntryMappingsSortByEnum>) {
   if (selectedSortBy.value === undefined) {
