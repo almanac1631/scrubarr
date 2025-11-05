@@ -57,7 +57,7 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 	if _, err := tx.Exec("delete from main.entry_mappings;"); err != nil {
 		return fmt.Errorf("could not truncate entry_mappings table: %w", err)
 	}
-	statement, err := tx.Prepare("insert into main.entry_mappings (id, retriever_id, date_added, size, name, api_resp, parent_id, file_path, file_node) values (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	statement, err := tx.Prepare("insert into main.entry_mappings (id, retriever_id, date_added, size, name, api_resp, parent_id, file_path, file_node, parent_name) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return fmt.Errorf("could not prepare entry mappings insert statement: %w", err)
 	}
@@ -83,12 +83,16 @@ func (e *EntryMappingManager) updateEntryMappings(tx *sql.Tx, rawEntries map[com
 			if err != nil {
 				return fmt.Errorf("could not get parent id from entry for retriever (%+v): %w", retrieverInfo, err)
 			}
+			parentName, err := getParentNameFromEntry(entry)
+			if err != nil {
+				return fmt.Errorf("could not get parent name from entry for retriever (%+v): %w", retrieverInfo, err)
+			}
 			var apiResp any
 			apiResp, err = json.Marshal(entry.AdditionalData)
 			if err != nil {
 				return fmt.Errorf("could not marshal entry for retriever (%+v): %w", retrieverInfo, err)
 			}
-			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp, parentId, path, node); err != nil {
+			if _, err = statement.Exec(entryId, retrieverInfo.Id(), dateAdded, size, name, apiResp, parentId, path, node, parentName); err != nil {
 				return fmt.Errorf("could not insert entry for retriever (%+v): %w", retrieverInfo, err)
 			}
 		}
@@ -139,12 +143,22 @@ func getSizeFromEntry(entry common.Entry) (int64, error) {
 func getParentIdFromEntry(entry common.Entry) (string, error) {
 	switch entry.AdditionalData.(type) {
 	case arr_apps.ArrAppEntry:
-		id := entry.AdditionalData.(arr_apps.ArrAppEntry).ParentId
-		return id, nil
+		return entry.AdditionalData.(arr_apps.ArrAppEntry).ParentId, nil
 	case torrent_clients.TorrentClientEntry:
 		return entry.AdditionalData.(torrent_clients.TorrentClientEntry).ID, nil
 	default:
 		return "", fmt.Errorf("could not get parent id from entry: unknown entry type %T", entry.AdditionalData)
+	}
+}
+
+func getParentNameFromEntry(entry common.Entry) (string, error) {
+	switch entry.AdditionalData.(type) {
+	case arr_apps.ArrAppEntry:
+		return entry.AdditionalData.(arr_apps.ArrAppEntry).ParentName, nil
+	case torrent_clients.TorrentClientEntry:
+		return entry.AdditionalData.(torrent_clients.TorrentClientEntry).TorrentName, nil
+	default:
+		return "", fmt.Errorf("could not get parent name from entry: unknown entry type %T", entry.AdditionalData)
 	}
 }
 
