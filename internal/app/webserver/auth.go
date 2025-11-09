@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/argon2"
+	"io"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -18,17 +19,27 @@ import (
 func (a ApiEndpointHandler) Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error) {
 	username := request.Body.Username
 	slog.Debug("incoming login attempt", "username", username)
-	passwordRawActual := []byte(request.Body.Password)
-	passwordHashExpected := a.passwordRetriever()
-	incorrectUsername := a.username != username
-	if incorrectUsername || !checkPassword(passwordHashExpected, passwordRawActual, a.passwordSalt) {
-		return Login401JSONResponse{"login failed", "username and password combination does not match"}, nil
+
+	baseUrl := ""  // TODO config
+	serverId := "" // TODO config
+	jellyfinUser, err := LoginWithJellyfin(baseUrl, a.info.Version, serverId, username, request.Body.Password)
+
+	if err != nil {
+		slog.Warn("jellyfin auth error", "username", username, "err", err)
+		return createLoginFailedError(), nil
 	}
-	slog.Debug("successful log in", "username", username)
+
+	if jellyfinUser == "" {
+		slog.Warn("jellyfin auth invalid or not authorized")
+		return createLoginFailedError(), nil
+	}
+
+	slog.Debug("successful log in", "username", username, "jellyfin-user", jellyfinUser)
 	jwtStr, err := generateToken(a.jwtConfig.PrivateKey, username)
 	if err != nil {
 		return nil, err
 	}
+
 	return Login200JSONResponse{"Ok", jwtStr}, nil
 }
 
@@ -120,4 +131,62 @@ func validateToken(key *ecdsa.PublicKey, jwtStr string) (bool, error) {
 		jwt.WithExpirationRequired(),
 	).Validate(claims)
 	return true, nil
+}
+
+// TODO make private after testing
+func LoginWithJellyfin(baseUrl string, serverVersion string, serverId string, username string, password string) (string, error) {
+	url := baseUrl + "/Users/AuthenticateByName"
+	jsonData, _ := json.Marshal(map[string]string{
+		"Username": username,
+		"Pw":       password,
+	})
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Emby-Authorization", `MediaBrowser Client="Scrubarr", Device="Scrubarr", DeviceId="`+serverId+`", Version="`+serverVersion+`"`)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send auth request: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 401 {
+		return "", nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read auth response: %w", err)
+	}
+
+	var result JellyfinResponse
+	if err = json.Unmarshal(body, &result); err != nil {
+		return "", fmt.Errorf("failed to parse auth response: %w", err)
+	}
+
+	if result.AccessToken == "" {
+		return "", nil
+	}
+
+	if result.User.Policy.IsAdministrator {
+		return result.User.Name, nil
+	} else {
+		return "", nil
+	}
+}
+
+type JellyfinResponse struct {
+	User struct {
+		Name   string `json:"Name"`
+		Policy struct {
+			IsAdministrator bool `json:"IsAdministrator"`
+		} `json:"Policy"`
+	} `json:"User"`
+	AccessToken string `json:"AccessToken"`
+}
+
+func createLoginFailedError() Login401JSONResponse {
+	return Login401JSONResponse{"login failed", "username and password combination does not match"}
 }
