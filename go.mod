@@ -2,7 +2,7 @@ module github.com/almanac1631/scrubarr
 
 go 1.24.0
 
-toolchain go1.24.5
+toolchain go1.25.5
 
 require (
 	github.com/autobrr/go-rtorrent v1.12.0
