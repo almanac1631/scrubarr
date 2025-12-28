@@ -17,8 +17,7 @@
                 </th>
             </tr>
             </thead>
-            <tbody class="font-medium">
-            {{ template "media_entries" . }}
+            <tbody class="font-medium" hx-get="/media/entries?page=1" hx-swap="innerHTML" hx-trigger="load">
             </tbody>
         </table>
     </div>

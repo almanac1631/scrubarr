@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/inmemory"
 	"github.com/almanac1631/scrubarr/pkg/media"
 	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 	"github.com/knadh/koanf/v2"
@@ -14,9 +16,7 @@ import (
 type handler struct {
 	templateCache TemplateCache
 
-	radarrRetriever   *media.RadarrRetriever
-	delugeRetriever   *torrentclients.DelugeRetriever
-	rtorrentRetriever *torrentclients.RtorrentRetriever
+	manager common.Manager
 
 	jwtConfig         *JwtConfig
 	username          string
@@ -25,6 +25,8 @@ type handler struct {
 }
 
 func newHandler(config *koanf.Koanf, templateCache TemplateCache, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) (*handler, error) {
+	manager := inmemory.NewManager(radarrRetriever, delugeRetriever, rtorrentRetriever)
+
 	username := strings.ToLower(config.MustString("general.auth.username"))
 	loadByteValue := func(path string) ([]byte, error) {
 		value, err := hex.DecodeString(config.MustString(path))
@@ -56,9 +58,7 @@ func newHandler(config *koanf.Koanf, templateCache TemplateCache, radarrRetrieve
 	jwtConfig := &JwtConfig{privateKey, publicKey}
 	return &handler{
 		templateCache,
-		radarrRetriever,
-		delugeRetriever,
-		rtorrentRetriever,
+		manager,
 		jwtConfig, username,
 		passwordRetriever,
 		passwordSalt,

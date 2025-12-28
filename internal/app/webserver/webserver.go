@@ -27,11 +27,6 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-type MovieMapped struct {
-	media.Movie
-	ExistsInTorrentClient bool
-}
-
 func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
@@ -45,6 +40,7 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 		os.Exit(1)
 	}
 	router.HandleFunc("/media", handler.handleMediaEndpoint)
+	router.HandleFunc("/media/entries", handler.handleMediaEntriesEndpoint)
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/media", http.StatusSeeOther)
 	})

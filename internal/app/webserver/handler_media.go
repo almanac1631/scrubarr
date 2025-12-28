@@ -3,44 +3,21 @@ package webserver
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
+	"github.com/almanac1631/scrubarr/pkg/common"
 )
+
+type MappedMovie struct {
+	common.MovieInfo
+	NextPage int
+}
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
 	if !utils.IsHTMXRequest(request) {
 		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		movies, err := handler.radarrRetriever.GetMovies()
-		if err != nil {
-			slog.Error("failed to get movies from radarr", "err", err)
-			writer.WriteHeader(http.StatusInternalServerError)
-			_, _ = writer.Write([]byte("500 Internal Server Error"))
-			return
-		}
-		mappedMovies := make([]MovieMapped, 0, len(movies))
-		for _, movie := range movies {
-			exists, err := handler.delugeRetriever.SearchForMovie(movie.OriginalFilePath)
-			if err != nil {
-				slog.Error("failed to search for movie in deluge", "err", err)
-				writer.WriteHeader(http.StatusInternalServerError)
-				_, _ = writer.Write([]byte("500 Internal Server Error"))
-				return
-			}
-			if !exists {
-				exists, err = handler.rtorrentRetriever.SearchForMovie(movie.OriginalFilePath)
-				if err != nil {
-					slog.Error("failed to search for movie in rtorrent", "err", err)
-					writer.WriteHeader(http.StatusInternalServerError)
-					_, _ = writer.Write([]byte("500 Internal Server Error"))
-					return
-				}
-			}
-			mappedMovies = append(mappedMovies, MovieMapped{
-				Movie:                 movie,
-				ExistsInTorrentClient: exists,
-			})
-		}
-		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "index", mappedMovies); isErrAndNoBrokenPipe(err) {
+		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "index", nil); isErrAndNoBrokenPipe(err) {
 			slog.Error("failed to execute template", "err", err)
 			return
 		}
@@ -48,4 +25,41 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 	}
 	writer.WriteHeader(http.StatusNotFound)
 	_, _ = writer.Write([]byte("404 Not Found"))
+}
+
+func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, request *http.Request) {
+	if !utils.IsHTMXRequest(request) {
+		writer.WriteHeader(http.StatusNotFound)
+		_, _ = writer.Write([]byte("404 Not Found"))
+		return
+	}
+	pageRaw := request.URL.Query().Get("page")
+	page, _ := strconv.Atoi(pageRaw)
+	if page < 1 {
+		page = 1
+	}
+	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	movies, hasNext, err := handler.manager.GetMovieInfos(page)
+	if err != nil {
+		slog.Error("failed to get movie mapping", "err", err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		_, _ = writer.Write([]byte("500 Internal Server Error"))
+		return
+	}
+	mediaEntries := make([]MappedMovie, 0, len(movies))
+	for i, movie := range movies {
+		mappedMovie := &MappedMovie{
+			MovieInfo: movie,
+			NextPage:  -1,
+		}
+		if hasNext && i == len(movies)-1 {
+			mappedMovie.NextPage = page + 1
+		}
+		mediaEntries = append(mediaEntries, *mappedMovie)
+	}
+	if err = handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "media_entries", mediaEntries); isErrAndNoBrokenPipe(err) {
+		slog.Error("failed to execute template", "err", err)
+		return
+	}
+	return
 }
