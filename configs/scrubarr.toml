@@ -3,7 +3,6 @@ allowed_file_endings = [".mkv", ".avi", ".mp4"]
 listen_network = "tcp"
 listen_addr = ":8888"
 path_prefix = "/scrubarr"
-db_file = "./scrubarr.db"
 
 [general.auth]
 username = "blinks"
@@ -14,42 +13,28 @@ password_hash = ""
 private_key_path = ""
 public_key_path = ""
 
-[ultra-api]
-endpoint = ""
-api_key = ""
-
 [connections]
 
-[connections.sonarr.main]
+[connections.sonarr]
 enabled = true
 hostname = "https://somedomain.com/sonarr/"
 api_key = ""
 
 
-[connections.radarr.main]
+[connections.radarr]
 enabled = true
 hostname = "https://somedomain.com/radarr/"
 api_key = ""
 
-[connections.deluge.main]
+[connections.deluge]
 enabled = true
 hostname = "some.host.na.me"
 port = 16156
 username = "admin"
 password = ""
 
-[connections.rtorrent.main]
+[connections.rtorrent]
 enabled = true
 hostname = "https://somedomain.com/rtorrent/RPC2/"
 username = "admin"
 password = ""
-
-[connections.folder.media]
-enabled = false
-name = "media"
-path = "./media"
-
-[connections.folder.torrent_downloads]
-enabled = false
-name = "torrent_downloads"
-path = "./download"
