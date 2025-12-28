@@ -10,8 +10,8 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/almanac1631/scrubarr/internal/pkg/media"
-	"github.com/almanac1631/scrubarr/internal/pkg/torrentclients"
+	"github.com/almanac1631/scrubarr/pkg/media"
+	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 	internal "github.com/almanac1631/scrubarr/web"
 	"github.com/knadh/koanf/v2"
 )

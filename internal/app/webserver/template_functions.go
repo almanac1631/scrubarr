@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"time"
 
-	"github.com/almanac1631/scrubarr/internal/pkg/utils"
+	"github.com/almanac1631/scrubarr/internal/utils"
 )
 
 var templateFunctions = template.FuncMap{

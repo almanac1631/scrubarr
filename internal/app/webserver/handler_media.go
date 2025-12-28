@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/almanac1631/scrubarr/internal/pkg/utils"
+	"github.com/almanac1631/scrubarr/internal/utils"
 )
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {

@@ -10,8 +10,8 @@ import (
 	"os/signal"
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
-	"github.com/almanac1631/scrubarr/internal/pkg/media"
-	"github.com/almanac1631/scrubarr/internal/pkg/torrentclients"
+	"github.com/almanac1631/scrubarr/pkg/media"
+	torrentclients2 "github.com/almanac1631/scrubarr/pkg/torrentclients"
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
@@ -66,7 +66,7 @@ func StartApp() {
 		os.Exit(1)
 	}
 
-	delugeRetriever, err := torrentclients.NewDelugeRetriever(
+	delugeRetriever, err := torrentclients2.NewDelugeRetriever(
 		k.MustString("connections.deluge.hostname"),
 		uint(k.MustInt("connections.deluge.port")),
 		k.MustString("connections.deluge.username"),
@@ -77,7 +77,7 @@ func StartApp() {
 		os.Exit(1)
 	}
 
-	rtorrentRetriever, err := torrentclients.NewRtorrentRetriever(
+	rtorrentRetriever, err := torrentclients2.NewRtorrentRetriever(
 		k.MustString("connections.rtorrent.hostname"),
 		k.MustString("connections.rtorrent.username"),
 		k.MustString("connections.rtorrent.password"),

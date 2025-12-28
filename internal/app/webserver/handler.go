@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/almanac1631/scrubarr/internal/pkg/media"
-	"github.com/almanac1631/scrubarr/internal/pkg/torrentclients"
+	"github.com/almanac1631/scrubarr/pkg/media"
+	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 	"github.com/knadh/koanf/v2"
 )
 
