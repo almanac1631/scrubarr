@@ -40,7 +40,7 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 				ExistsInTorrentClient: exists,
 			})
 		}
-		if err := templates.ExecuteTemplate(writer, "index", mappedMovies); isErrAndNoBrokenPipe(err) {
+		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "index", mappedMovies); isErrAndNoBrokenPipe(err) {
 			slog.Error("failed to execute template", "err", err)
 			return
 		}

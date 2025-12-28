@@ -1,0 +1,25 @@
+{{ define "content" }}
+    <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow">
+        <table class="table-fixed w-full">
+            <thead class="border-gray-300 border-b-2 text-left">
+            <tr>
+                <th class="p-3">
+                    Name
+                </th>
+                <th class="p-3">
+                    Size
+                </th>
+                <th class="p-3">
+                    Added
+                </th>
+                <th class="p-3">
+                    Torrent Status
+                </th>
+            </tr>
+            </thead>
+            <tbody class="font-medium">
+            {{ template "media_entries" . }}
+            </tbody>
+        </table>
+    </div>
+{{ end }}

@@ -12,6 +12,8 @@ import (
 )
 
 type handler struct {
+	templateCache TemplateCache
+
 	radarrRetriever   *media.RadarrRetriever
 	delugeRetriever   *torrentclients.DelugeRetriever
 	rtorrentRetriever *torrentclients.RtorrentRetriever
@@ -22,7 +24,7 @@ type handler struct {
 	passwordSalt      []byte
 }
 
-func newHandler(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) (*handler, error) {
+func newHandler(config *koanf.Koanf, templateCache TemplateCache, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) (*handler, error) {
 	username := strings.ToLower(config.MustString("general.auth.username"))
 	loadByteValue := func(path string) ([]byte, error) {
 		value, err := hex.DecodeString(config.MustString(path))
@@ -53,6 +55,7 @@ func newHandler(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, del
 	}
 	jwtConfig := &JwtConfig{privateKey, publicKey}
 	return &handler{
+		templateCache,
 		radarrRetriever,
 		delugeRetriever,
 		rtorrentRetriever,

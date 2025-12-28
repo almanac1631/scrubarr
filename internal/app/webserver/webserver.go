@@ -9,15 +9,12 @@ import (
 	"net/http"
 	"os"
 	"syscall"
-	"text/template"
 
 	"github.com/almanac1631/scrubarr/internal/pkg/media"
 	"github.com/almanac1631/scrubarr/internal/pkg/torrentclients"
 	internal "github.com/almanac1631/scrubarr/web"
 	"github.com/knadh/koanf/v2"
 )
-
-var templates = template.Must(template.New("base").Funcs(templateFunctions).ParseFS(internal.Templates, "templates/*.gohtml"))
 
 func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	network := config.MustString("general.listen_network")
@@ -36,8 +33,13 @@ type MovieMapped struct {
 }
 
 func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) http.Handler {
+	templateCache, err := NewTemplateCache()
+	if err != nil {
+		slog.Error("could not create template cache", "error", err)
+		os.Exit(1)
+	}
+	handler, err := newHandler(config, templateCache, radarrRetriever, delugeRetriever, rtorrentRetriever)
 	router := http.NewServeMux()
-	handler, err := newHandler(config, radarrRetriever, delugeRetriever, rtorrentRetriever)
 	if err != nil {
 		slog.Error("could not create webserver handler", "error", err)
 		os.Exit(1)
