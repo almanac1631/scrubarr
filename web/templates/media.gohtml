@@ -79,8 +79,9 @@
             </thead>
             <tbody class="font-medium"
                    hx-get="/media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
-                   hx-swap="innerHTML" hx-trigger="load">
+                   hx-swap="innerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
             </tbody>
+            {{ template "media_loading_skeleton" }}
         </table>
     </div>
 {{ end }}
