@@ -21,16 +21,20 @@ func NewTemplateCache() (TemplateCache, error) {
 	for _, page := range pages {
 		name := filepath.Base(page)
 
-		if name == "base.html" {
+		baseContentTemplates := []string{"templates/base_content.gohtml"}
+		if name == "base.gohtml" {
 			continue
+		} else if name == "login.gohtml" {
+			baseContentTemplates = []string{}
 		}
 
-		ts, err := template.New(name).Funcs(templateFunctions).ParseFS(
-			internal.Templates,
+		patterns := append([]string{
 			"templates/base.gohtml",
 			"templates/subcontent/**/*.gohtml",
 			page,
-		)
+		}, baseContentTemplates...)
+
+		ts, err := template.New(name).Funcs(templateFunctions).ParseFS(internal.Templates, patterns...)
 
 		if err != nil {
 			return nil, err

@@ -39,12 +39,43 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 		slog.Error("could not create webserver handler", "error", err)
 		os.Exit(1)
 	}
-	router.HandleFunc("/media", handler.handleMediaEndpoint)
-	router.HandleFunc("/media/entries", handler.handleMediaEntriesEndpoint)
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/media", http.StatusSeeOther)
-	})
 	router.Handle("/assets/", http.FileServer(http.FS(internal.Assets)))
+	router.HandleFunc("/login", handler.handleLogin)
+	router.HandleFunc("POST /logout", handler.handleLogout)
+
+	authorizedRouter := http.NewServeMux()
+	authorizedRouter.HandleFunc("/media", handler.handleMediaEndpoint)
+	authorizedRouter.HandleFunc("/media/entries", handler.handleMediaEntriesEndpoint)
+	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/" {
+			http.NotFound(writer, request)
+			return
+		}
+		http.Redirect(writer, request, "/media", http.StatusSeeOther)
+	})
+
+	router.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		redirectToLogin := func(writer http.ResponseWriter) {
+			http.Redirect(writer, request, "/login", http.StatusSeeOther)
+		}
+
+		sessionCookie, err := request.Cookie(sessionCookieName)
+		if errors.Is(err, http.ErrNoCookie) || sessionCookie == nil || sessionCookie.Value == "" {
+			redirectToLogin(writer)
+			return
+		}
+		token := sessionCookie.Value
+		tokenOk, err := validateToken(handler.jwtConfig.PublicKey, token)
+		if !tokenOk {
+			if err != nil {
+				slog.Debug("Could not validate JWT", "error", err, "token", token)
+			}
+			redirectToLogin(writer)
+			return
+		}
+		authorizedRouter.ServeHTTP(writer, request)
+	}))
+
 	pathPrefix := config.String("general.path_prefix")
 	if pathPrefix != "" {
 		slog.Info("stripping path prefix", "path_prefix", pathPrefix)
