@@ -1,7 +1,11 @@
 package inmemory
 
 import (
+	"cmp"
 	"fmt"
+	"log/slog"
+	"slices"
+	"strings"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/media"
@@ -24,7 +28,7 @@ func NewManager(radarrRetriever *media.RadarrRetriever, delugeRetriever *torrent
 
 const pageSize = 10
 
-func (m *Manager) GetMovieInfos(page int) ([]common.MovieInfo, bool, error) {
+func (m *Manager) GetMovieInfos(page int, sortInfo common.SortInfo) ([]common.MovieInfo, bool, error) {
 	if m.mappedMoviesCache == nil {
 		radarrMovies, err := m.radarrRetriever.GetMovies()
 		if err != nil {
@@ -49,12 +53,47 @@ func (m *Manager) GetMovieInfos(page int) ([]common.MovieInfo, bool, error) {
 		}
 	}
 	hasNext := false
-	movies := make([]common.MovieInfo, 0, pageSize)
-	if pageSize*page < len(m.mappedMoviesCache) {
+	movies := make([]common.MovieInfo, len(m.mappedMoviesCache))
+	copy(movies, m.mappedMoviesCache)
+	slices.SortFunc(movies, func(a, b common.MovieInfo) int {
+		var result int
+		switch sortInfo.Key {
+		case common.SortKeyName:
+			result = strings.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title))
+			break
+		case common.SortKeySize:
+			result = cmp.Compare(a.Size, b.Size)
+			break
+		case common.SortKeyAdded:
+			result = cmp.Compare(a.Added.Unix(), b.Added.Unix())
+			break
+		case common.SortKeyTorrentStatus:
+			result = CompareBool(a.ExistsInTorrentClient, b.ExistsInTorrentClient)
+			break
+		default:
+			slog.Error("received unknown sort key", "sortKey", sortInfo.Key)
+			result = 0 // mark as incomparable
+		}
+		if sortInfo.Order == common.SortOrderDesc {
+			result = -result
+		}
+		return result
+	})
+	if pageSize*page < len(movies) {
 		hasNext = true
-		movies = m.mappedMoviesCache[pageSize*(page-1) : pageSize*page]
+		movies = movies[pageSize*(page-1) : pageSize*page]
 	} else {
-		movies = m.mappedMoviesCache[pageSize*(page-1):]
+		movies = movies[pageSize*(page-1):]
 	}
 	return movies, hasNext, nil
+}
+
+func CompareBool(a, b bool) int {
+	if a == b {
+		return 0
+	}
+	if a {
+		return 1
+	}
+	return -1
 }

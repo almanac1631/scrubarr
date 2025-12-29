@@ -3,11 +3,17 @@ package webserver
 import (
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
 	"github.com/almanac1631/scrubarr/pkg/common"
 )
+
+type mediaEndpointData struct {
+	Movies   []MappedMovie
+	SortInfo common.SortInfo
+}
 
 type MappedMovie struct {
 	common.MovieInfo
@@ -15,19 +21,27 @@ type MappedMovie struct {
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
-	if !utils.IsHTMXRequest(request) {
-		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "index", nil); isErrAndNoBrokenPipe(err) {
+	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
+	if utils.IsHTMXRequest(request) {
+		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "content", mediaEndpointData{
+			SortInfo: sortInfo,
+		}); isErrAndNoBrokenPipe(err) {
 			slog.Error("failed to execute template", "err", err)
 			return
 		}
-		return
+	} else {
+		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "index", mediaEndpointData{
+			SortInfo: sortInfo,
+		}); isErrAndNoBrokenPipe(err) {
+			slog.Error("failed to execute template", "err", err)
+			return
+		}
 	}
-	writer.WriteHeader(http.StatusNotFound)
-	_, _ = writer.Write([]byte("404 Not Found"))
 }
 
 func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, request *http.Request) {
+	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	if !utils.IsHTMXRequest(request) {
 		writer.WriteHeader(http.StatusNotFound)
 		_, _ = writer.Write([]byte("404 Not Found"))
@@ -39,7 +53,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		page = 1
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	movies, hasNext, err := handler.manager.GetMovieInfos(page)
+	movies, hasNext, err := handler.manager.GetMovieInfos(page, sortInfo)
 	if err != nil {
 		slog.Error("failed to get movie mapping", "err", err)
 		writer.WriteHeader(http.StatusInternalServerError)
@@ -57,9 +71,31 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		}
 		mediaEntries = append(mediaEntries, *mappedMovie)
 	}
-	if err = handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "media_entries", mediaEntries); isErrAndNoBrokenPipe(err) {
+	if err = handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "media_entries", mediaEndpointData{
+		Movies:   mediaEntries,
+		SortInfo: sortInfo,
+	}); isErrAndNoBrokenPipe(err) {
 		slog.Error("failed to execute template", "err", err)
 		return
 	}
 	return
+}
+
+func getSortInfoFromUrlQuery(values url.Values) common.SortInfo {
+	sortInfo := common.SortInfo{}
+	sortKeyRaw := values.Get("sortKey")
+	switch common.SortKey(sortKeyRaw) {
+	case common.SortKeyName, common.SortKeySize, common.SortKeyAdded, common.SortKeyTorrentStatus:
+		sortInfo.Key = common.SortKey(sortKeyRaw)
+	default:
+		sortInfo.Key = common.SortKeyName
+	}
+	sortOrderRaw := values.Get("sortOrder")
+	switch common.SortOrder(sortOrderRaw) {
+	case common.SortOrderAsc, common.SortOrderDesc:
+		sortInfo.Order = common.SortOrder(sortOrderRaw)
+	default:
+		sortInfo.Order = common.SortOrderAsc
+	}
+	return sortInfo
 }
