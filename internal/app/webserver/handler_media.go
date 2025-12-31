@@ -24,17 +24,17 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	if utils.IsHTMXRequest(request) {
-		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "content", mediaEndpointData{
+		if err := handler.ExecuteSubTemplate(writer, "media.gohtml", "content", mediaEndpointData{
 			SortInfo: sortInfo,
-		}); isErrAndNoBrokenPipe(err) {
-			slog.Error("failed to execute template", "err", err)
+		}); err != nil {
+			slog.Error(err.Error())
 			return
 		}
 	} else {
-		if err := handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "index", mediaEndpointData{
+		if err := handler.ExecuteRootTemplate(writer, "media.gohtml", mediaEndpointData{
 			SortInfo: sortInfo,
-		}); isErrAndNoBrokenPipe(err) {
-			slog.Error("failed to execute template", "err", err)
+		}); err != nil {
+			slog.Error(err.Error())
 			return
 		}
 	}
@@ -71,11 +71,11 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		}
 		mediaEntries = append(mediaEntries, *mappedMovie)
 	}
-	if err = handler.templateCache["media.gohtml"].ExecuteTemplate(writer, "media_entries", mediaEndpointData{
+	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
 		Movies:   mediaEntries,
 		SortInfo: sortInfo,
-	}); isErrAndNoBrokenPipe(err) {
-		slog.Error("failed to execute template", "err", err)
+	}); err != nil {
+		slog.Error(err.Error())
 		return
 	}
 	return
