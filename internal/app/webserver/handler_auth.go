@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
@@ -36,8 +37,8 @@ func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Re
 		if incorrectUsername || !checkPassword(passwordHashExpected, password, handler.passwordSalt) {
 			writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 			writer.WriteHeader(http.StatusUnauthorized)
-			if err := handler.templateCache["login.gohtml"].ExecuteTemplate(writer, "login_notification", nil); isErrAndNoBrokenPipe(err) {
-				slog.Error("failed to execute template", "err", err)
+			if err := handler.ExecuteSubTemplate(writer, "login.gohtml", "login_notification", nil); err != nil {
+				slog.Error(err.Error())
 				return
 			}
 			return
@@ -57,7 +58,7 @@ func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Re
 			Secure:   true,
 			SameSite: http.SameSiteStrictMode,
 		})
-		writer.Header().Set("Hx-Redirect", "/media")
+		writer.Header().Set("Hx-Redirect", path.Join(handler.pathPrefix, "/media"))
 		writer.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -67,15 +68,15 @@ func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Re
 		return
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := handler.templateCache["login.gohtml"].ExecuteTemplate(writer, "index", nil); isErrAndNoBrokenPipe(err) {
-		slog.Error("failed to execute template", "err", err)
+	if err := handler.ExecuteRootTemplate(writer, "login.gohtml", nil); err != nil {
+		slog.Error(err.Error())
 		return
 	}
 }
 
 func (handler *handler) handleLogout(writer http.ResponseWriter, request *http.Request) {
 	http.SetCookie(writer, &http.Cookie{Name: sessionCookieName, MaxAge: -1})
-	writer.Header().Set("Hx-Redirect", "/login")
+	writer.Header().Set("Hx-Redirect", path.Join(handler.pathPrefix, "/login"))
 	writer.WriteHeader(http.StatusNoContent)
 }
 

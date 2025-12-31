@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"syscall"
 
 	"github.com/almanac1631/scrubarr/pkg/media"
@@ -33,7 +34,8 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 		slog.Error("could not create template cache", "error", err)
 		os.Exit(1)
 	}
-	handler, err := newHandler(config, templateCache, radarrRetriever, delugeRetriever, rtorrentRetriever)
+	pathPrefix := config.String("general.path_prefix")
+	handler, err := newHandler(config, pathPrefix, templateCache, radarrRetriever, delugeRetriever, rtorrentRetriever)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("could not create webserver handler", "error", err)
@@ -51,12 +53,12 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 			http.NotFound(writer, request)
 			return
 		}
-		http.Redirect(writer, request, "/media", http.StatusSeeOther)
+		http.Redirect(writer, request, path.Join(handler.pathPrefix, "/media"), http.StatusSeeOther)
 	})
 
 	router.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		redirectToLogin := func(writer http.ResponseWriter) {
-			http.Redirect(writer, request, "/login", http.StatusSeeOther)
+			http.Redirect(writer, request, path.Join(handler.pathPrefix, "/login"), http.StatusSeeOther)
 		}
 
 		sessionCookie, err := request.Cookie(sessionCookieName)
@@ -76,7 +78,6 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 		authorizedRouter.ServeHTTP(writer, request)
 	}))
 
-	pathPrefix := config.String("general.path_prefix")
 	if pathPrefix != "" {
 		slog.Info("stripping path prefix", "path_prefix", pathPrefix)
 		return http.StripPrefix(pathPrefix, router)

@@ -6,7 +6,7 @@
                 <th class="p-3">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="/media?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-get="media?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                         Name
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -24,7 +24,7 @@
                 <th class="p-3">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="/media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-get="media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                         Size
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -42,7 +42,7 @@
                 <th class="p-3">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="/media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-get="media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                         Added
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -60,7 +60,7 @@
                 <th class="p-3">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="/media?sortKey=torrent_status&sortOrder={{ if checkCurrentSort "torrent_status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-get="media?sortKey=torrent_status&sortOrder={{ if checkCurrentSort "torrent_status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                         Torrent Status
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +78,7 @@
             </tr>
             </thead>
             <tbody class="font-medium"
-                   hx-get="/media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
+                   hx-get="media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
                    hx-swap="innerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
             </tbody>
             {{ template "media_loading_skeleton" }}

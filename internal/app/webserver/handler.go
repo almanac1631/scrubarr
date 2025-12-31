@@ -3,6 +3,7 @@ package webserver
 import (
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -18,13 +19,15 @@ type handler struct {
 
 	manager common.Manager
 
+	pathPrefix string
+
 	jwtConfig         *JwtConfig
 	username          string
 	passwordRetriever func() []byte
 	passwordSalt      []byte
 }
 
-func newHandler(config *koanf.Koanf, templateCache TemplateCache, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) (*handler, error) {
+func newHandler(config *koanf.Koanf, pathPrefix string, templateCache TemplateCache, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) (*handler, error) {
 	manager := inmemory.NewManager(radarrRetriever, delugeRetriever, rtorrentRetriever)
 
 	username := strings.ToLower(config.MustString("general.auth.username"))
@@ -59,8 +62,31 @@ func newHandler(config *koanf.Koanf, templateCache TemplateCache, radarrRetrieve
 	return &handler{
 		templateCache,
 		manager,
-		jwtConfig, username,
+		pathPrefix,
+		jwtConfig,
+		username,
 		passwordRetriever,
 		passwordSalt,
 	}, nil
+}
+
+func (handler *handler) ExecuteRootTemplate(writer http.ResponseWriter, fileName string, data any) error {
+	wrappedData := struct {
+		PathPrefix string
+		Data       any
+	}{
+		PathPrefix: handler.pathPrefix,
+		Data:       data,
+	}
+	if err := handler.templateCache[fileName].ExecuteTemplate(writer, "index", wrappedData); isErrAndNoBrokenPipe(err) {
+		return fmt.Errorf("failed to execute root template: %w", err)
+	}
+	return nil
+}
+
+func (handler *handler) ExecuteSubTemplate(writer http.ResponseWriter, fileName, templateName string, data any) error {
+	if err := handler.templateCache[fileName].ExecuteTemplate(writer, templateName, data); isErrAndNoBrokenPipe(err) {
+		return fmt.Errorf("failed to execute sub template: %w", err)
+	}
+	return nil
 }

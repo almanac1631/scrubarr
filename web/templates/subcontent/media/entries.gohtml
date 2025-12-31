@@ -1,6 +1,6 @@
 {{ define "media_entries" }}
     {{ range .Movies }}
-        <tr class="hover:bg-stone-100 border-t border-t-gray-200" {{ if ne .NextPage -1 }} hx-get="/media/entries?page={{ .NextPage }}&sortKey={{ $.SortInfo.Key }}&sortOrder={{ $.SortInfo.Order }}" hx-trigger="revealed" hx-swap="afterend" hx-indicator="#loading-skeleton"{{ end }}>
+        <tr class="hover:bg-stone-100 border-t border-t-gray-200" {{ if ne .NextPage -1 }} hx-get="media/entries?page={{ .NextPage }}&sortKey={{ $.SortInfo.Key }}&sortOrder={{ $.SortInfo.Order }}" hx-trigger="revealed" hx-swap="afterend" hx-indicator="#loading-skeleton"{{ end }}>
             <td class="p-3 truncate" title="{{ .Title }}">
                 {{ .Title }}
             </td>
