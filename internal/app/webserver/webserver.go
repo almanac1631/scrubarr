@@ -1,83 +1,20 @@
 package webserver
 
 import (
-	"embed"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/pkg/common"
-	"github.com/knadh/koanf/v2"
 	"io"
-	"io/fs"
 	"log/slog"
-	"mime"
 	"net"
 	"net/http"
 	"os"
-	"path"
-	"strings"
 	"syscall"
+
+	"github.com/almanac1631/scrubarr/pkg/media"
+	"github.com/almanac1631/scrubarr/pkg/torrentclients"
+	internal "github.com/almanac1631/scrubarr/web"
+	"github.com/knadh/koanf/v2"
 )
-
-//go:embed all:content
-var content embed.FS
-
-func SetupWebserver(config *koanf.Koanf, entryMappingManager common.EntryMappingManager, info Info) (http.Handler, error) {
-	// Create a new router & API
-	router := http.NewServeMux()
-	apiServer, err := NewApiEndpointHandler(entryMappingManager, config, info)
-	if err != nil {
-		return nil, fmt.Errorf("could not create api endpoint handler: %w", err)
-	}
-
-	errorHandlerFunc := func(isRequest bool) func(http.ResponseWriter, *http.Request, error) {
-		handler := func(w http.ResponseWriter, r *http.Request, err error) {
-			var errorStr string
-			var detail string
-			var formatErr *InvalidParamFormatError
-			if errors.As(err, &formatErr) {
-				errorStr = "request error"
-				detail = err.Error()
-			} else {
-				errorStr = "unknown error"
-				detail = "no description provided"
-				slog.Error("an unknown error occurred", "err", err, "errType", fmt.Sprintf("%T", err))
-			}
-			respBody, _ := json.Marshal(ErrorResponseBody{
-				Error:  errorStr,
-				Detail: detail,
-			})
-			header := http.StatusInternalServerError
-			if isRequest {
-				header = http.StatusBadRequest
-			}
-			w.WriteHeader(header)
-			_, _ = w.Write(respBody)
-		}
-		return handler
-	}
-
-	serverInterface := NewStrictHandlerWithOptions(apiServer, []StrictMiddlewareFunc{}, StrictHTTPServerOptions{
-		RequestErrorHandlerFunc:  errorHandlerFunc(true),
-		ResponseErrorHandlerFunc: errorHandlerFunc(false),
-	})
-
-	HandlerWithOptions(serverInterface, StdHTTPServerOptions{
-		BaseURL:    "/api",
-		BaseRouter: router,
-		Middlewares: []MiddlewareFunc{apiServer.AuthenticationMiddleware([]string{
-			"/api/login",
-			"/api/info",
-		})},
-	})
-	serveFrontendFiles(router)
-	pathPrefix := config.String("general.path_prefix")
-	if pathPrefix != "" {
-		slog.Info("stripping path prefix", "path_prefix", pathPrefix)
-		return http.StripPrefix(pathPrefix, router), nil
-	}
-	return router, nil
-}
 
 func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	network := config.MustString("general.listen_network")
@@ -90,41 +27,70 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func serveFrontendFiles(router *http.ServeMux) {
-	fsys, err := fs.Sub(content, "content")
+func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) http.Handler {
+	templateCache, err := NewTemplateCache()
 	if err != nil {
-		slog.Error("failed to load embedded embedded files", "err", err)
+		slog.Error("could not create template cache", "error", err)
 		os.Exit(1)
 	}
+	handler, err := newHandler(config, templateCache, radarrRetriever, delugeRetriever, rtorrentRetriever)
+	router := http.NewServeMux()
+	if err != nil {
+		slog.Error("could not create webserver handler", "error", err)
+		os.Exit(1)
+	}
+	router.Handle("/assets/", http.FileServer(http.FS(internal.Assets)))
+	router.HandleFunc("/login", handler.handleLogin)
+	router.HandleFunc("POST /logout", handler.handleLogout)
 
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		filePath := strings.TrimPrefix(r.URL.Path, "/")
-		if filePath == "" {
-			filePath = "index.html"
-		}
-		data, err := fs.ReadFile(fsys, filePath)
-		if err != nil {
-			http.NotFound(w, r)
+	authorizedRouter := http.NewServeMux()
+	authorizedRouter.HandleFunc("/media", handler.handleMediaEndpoint)
+	authorizedRouter.HandleFunc("/media/entries", handler.handleMediaEntriesEndpoint)
+	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/" {
+			http.NotFound(writer, request)
 			return
 		}
-
-		mimeType := mime.TypeByExtension(path.Ext(filePath))
-		if mimeType == "" {
-			mimeType = http.DetectContentType(data)
-		}
-		w.Header().Set("Content-Type", mimeType)
-
-		_, err = w.Write(data)
-		if err != nil && !isBrokenPipe(err) {
-			slog.Error("failed to write response", "err", err)
-		}
+		http.Redirect(writer, request, "/media", http.StatusSeeOther)
 	})
+
+	router.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		redirectToLogin := func(writer http.ResponseWriter) {
+			http.Redirect(writer, request, "/login", http.StatusSeeOther)
+		}
+
+		sessionCookie, err := request.Cookie(sessionCookieName)
+		if errors.Is(err, http.ErrNoCookie) || sessionCookie == nil || sessionCookie.Value == "" {
+			redirectToLogin(writer)
+			return
+		}
+		token := sessionCookie.Value
+		tokenOk, err := validateToken(handler.jwtConfig.PublicKey, token)
+		if !tokenOk {
+			if err != nil {
+				slog.Debug("Could not validate JWT", "error", err, "token", token)
+			}
+			redirectToLogin(writer)
+			return
+		}
+		authorizedRouter.ServeHTTP(writer, request)
+	}))
+
+	pathPrefix := config.String("general.path_prefix")
+	if pathPrefix != "" {
+		slog.Info("stripping path prefix", "path_prefix", pathPrefix)
+		return http.StripPrefix(pathPrefix, router)
+	}
+	return router
 }
 
-func isBrokenPipe(err error) bool {
+func isErrAndNoBrokenPipe(err error) bool {
+	if err == nil {
+		return false
+	}
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
-		return errors.Is(opErr.Err, syscall.EPIPE) || errors.Is(err, io.ErrClosedPipe)
+		return !errors.Is(opErr.Err, syscall.EPIPE) && !errors.Is(err, io.ErrClosedPipe)
 	}
-	return false
+	return true
 }

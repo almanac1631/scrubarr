@@ -2,9 +2,6 @@ name: CI/CD Pipeline
 
 on: [ push ]
 
-env:
-  FRONTEND_DIR: ./web/app
-
 permissions:
   contents: write
 
@@ -22,60 +19,13 @@ jobs:
         with:
           args: check
 
-  test-and-build-frontend:
-    name: Test and build Frontend
+  test-and-build:
+    name: Test and build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          package_json_file: ${{ env.FRONTEND_DIR }}/package.json
-      - name: Install Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: ${{ env.FRONTEND_DIR }}/.nvmrc
-          cache: 'pnpm'
-          cache-dependency-path: ${{ env.FRONTEND_DIR }}/pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: |
-          task frontend:deps
-
-      - name: Test
-        run: |
-          task frontend:test
-
-      - name: Build
-        run: |
-          task frontend:build
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: ${{ env.FRONTEND_DIR }}/dist/
-
-  test-and-build-backend:
-    name: Test and build Backend
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v5
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -88,32 +38,23 @@ jobs:
           install-only: true
 
       - name: Install dependencies
-        run: |
-          task backend:deps
+        run: go mod download
 
       - name: Test
-        run: |
-          task backend:test
+        run: go test ./...
 
       - name: Build
-        run: |
-          task backend:build-single-dev
+        run: goreleaser build --snapshot --clean --single-target
 
   package:
     name: Package Application
     needs:
-      - test-and-build-frontend
-      - test-and-build-backend
+      - test-and-build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -125,20 +66,8 @@ jobs:
         with:
           install-only: true
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v5
-        with:
-          name: frontend-build
-          path: ${{ env.FRONTEND_DIR }}/dist
-
-      - name: Build bundled backend application
-        if: "!startsWith(github.ref, 'refs/tags/')"
-        run: |
-          task embed-frontend-content backend:build-dev
-
       - name: Build and release bundled backend application
         if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          task embed-frontend-content backend:release
+        run: goreleaser release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

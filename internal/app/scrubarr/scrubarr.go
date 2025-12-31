@@ -3,18 +3,19 @@ package scrubarr
 import (
 	"errors"
 	"fmt"
-	"github.com/almanac1631/scrubarr/internal/app/webserver"
-	"github.com/almanac1631/scrubarr/internal/pkg/entrymappings/sqlite"
-	"github.com/almanac1631/scrubarr/internal/pkg/retriever_bundled/simple"
-	"github.com/knadh/koanf/parsers/toml/v2"
-	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/v2"
-	flag "github.com/spf13/pflag"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+
+	"github.com/almanac1631/scrubarr/internal/app/webserver"
+	"github.com/almanac1631/scrubarr/pkg/media"
+	torrentclients2 "github.com/almanac1631/scrubarr/pkg/torrentclients"
+	"github.com/knadh/koanf/parsers/toml/v2"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
+	flag "github.com/spf13/pflag"
 )
 
 var (
@@ -53,38 +54,40 @@ func StartApp() {
 
 	slog.Info("starting scrubarr...", "version", version, "commit", commit)
 
-	entryRetrievers, err := initializeEntryRetrievers(k)
-	if err != nil {
-		panic(err)
-	}
-
-	dbFile := k.MustString("general.db_file")
-	bundledEntryRetriever := simple.BundledEntryRetriever(k.MustStrings("general.allowed_file_endings"))
-	entryMappingManager, err := sqlite.NewEntryMappingManager(entryRetrievers, bundledEntryRetriever, dbFile)
-	if err != nil {
-		panic(err)
-	}
-
 	listener, err := webserver.SetupListener(k)
 	if err != nil {
 		slog.Error("could not setup web server listener", "error", err)
 		os.Exit(1)
 	}
-	router, err := webserver.SetupWebserver(k, entryMappingManager, webserver.Info{Commit: commit, Version: version})
+
+	radarrRetriever, err := media.NewRadarrRetriever(k.MustString("connections.radarr.hostname"), k.MustString("connections.radarr.api_key"))
 	if err != nil {
-		slog.Error("could not setup web server router", "error", err)
+		slog.Error("could not setup radarr retriever", "error", err)
 		os.Exit(1)
 	}
 
-	go func() {
-		slog.Info("refreshing entry mappings...")
-		err := entryMappingManager.RefreshEntryMappings()
-		if err != nil {
-			slog.Error("could not refresh entry mappings", "error", err)
-		} else {
-			slog.Info("refreshed entry mappings")
-		}
-	}()
+	delugeRetriever, err := torrentclients2.NewDelugeRetriever(
+		k.MustString("connections.deluge.hostname"),
+		uint(k.MustInt("connections.deluge.port")),
+		k.MustString("connections.deluge.username"),
+		k.MustString("connections.deluge.password"),
+	)
+	if err != nil {
+		slog.Error("could not setup deluge retriever", "error", err)
+		os.Exit(1)
+	}
+
+	rtorrentRetriever, err := torrentclients2.NewRtorrentRetriever(
+		k.MustString("connections.rtorrent.hostname"),
+		k.MustString("connections.rtorrent.username"),
+		k.MustString("connections.rtorrent.password"),
+	)
+	if err != nil {
+		slog.Error("could not setup rtorrent retriever", "error", err)
+		os.Exit(1)
+	}
+
+	router := webserver.SetupWebserver(k, radarrRetriever, delugeRetriever, rtorrentRetriever)
 
 	go func() {
 		exitChan := make(chan os.Signal, 1)

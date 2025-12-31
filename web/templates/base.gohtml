@@ -1,0 +1,19 @@
+{{ define "index" }}
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.7/htmx.min.js"
+                integrity="sha512-IisGoumHahmfNIhP4wUV3OhgQZaaDBuD6IG4XlyjT77IUkwreZL3T3afO4xXuDanSalZ57Un+UlAbarQjNZCTQ=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <link rel="stylesheet" type="text/css" href="assets/css/main.css"/>
+        <title>scrubarr</title>
+    </head>
+    <body>
+    {{ template "base_content" . }}
+    </body>
+    </html>
+{{ end }}

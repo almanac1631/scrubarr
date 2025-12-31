@@ -1,0 +1,87 @@
+{{ define "content" }}
+    <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow" id="media-table">
+        <table class="table-fixed w-full">
+            <thead class="border-gray-300 border-b-2 text-left">
+            <tr>
+                <th class="p-3">
+                    <button class="flex items-center"
+                            hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="/media?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Name
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "name" "asc" .SortInfo }}class="text-gray-900"{{ end }}
+                                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "name" "desc" .SortInfo }}class="text-gray-900"{{ end }}
+                                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+                <th class="p-3">
+                    <button class="flex items-center"
+                            hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="/media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Size
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "size" "asc" .SortInfo }}class="text-gray-900"{{ end }}
+                                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "size" "desc" .SortInfo }}class="text-gray-900"{{ end }}
+                                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+                <th class="p-3">
+                    <button class="flex items-center"
+                            hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="/media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Added
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "added" "asc" .SortInfo }}class="text-gray-900"{{ end }}
+                                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "added" "desc" .SortInfo }}class="text-gray-900"{{ end }}
+                                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+                <th class="p-3">
+                    <button class="flex items-center"
+                            hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="/media?sortKey=torrent_status&sortOrder={{ if checkCurrentSort "torrent_status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Torrent Status
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "torrent_status" "asc" .SortInfo }}class="text-gray-900"{{ end }}
+                                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "torrent_status" "desc" .SortInfo }}class="text-gray-900"{{ end }}
+                                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+            </tr>
+            </thead>
+            <tbody class="font-medium"
+                   hx-get="/media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
+                   hx-swap="innerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
+            </tbody>
+            {{ template "media_loading_skeleton" }}
+        </table>
+    </div>
+{{ end }}

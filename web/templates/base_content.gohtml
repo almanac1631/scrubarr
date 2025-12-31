@@ -1,0 +1,40 @@
+{{ define "base_content" }}
+    <div id="app" class="flex flex-col h-dvh">
+        <nav class="bg-gray-800">
+            <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+                <div class="relative flex h-16 items-center justify-between">
+                    <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+                        <div class="flex shrink-0 items-center text-gray-100">scrubarr</div>
+                        <div class="hidden sm:ml-6 sm:block">
+                            <div class="flex space-x-4">
+                                <a aria-current="true" href="/entry-mappings"
+                                   class="bg-gray-900 router-link-exact-active text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                                    Overview
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-4 items-end justify-center sm:items-stretch sm:justify-start">
+                        <div class="flex items-center">
+                            <button aria-current="true" hx-post="/logout"
+                                    class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <main class="bg-gray-100 grow relative">
+            <div class="py-2">
+                <div class="container mx-auto text-gray-900"><h1 class="text-3xl my-5">Overview</h1>
+                    {{ template "content" . }}
+                </div>
+            </div>
+            <div class="h-8"></div>
+            <div class="absolute bottom-2 w-full text-center"> Made with ❤️ by almanac1631 - scrubarr
+                0.0.20-SNAPSHOT-384f46b
+            </div>
+        </main>
+    </div>
+{{ end }}
