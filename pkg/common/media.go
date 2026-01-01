@@ -4,7 +4,14 @@ import (
 	"time"
 )
 
+type MediaType string
+
+const (
+	MediaTypeMovie MediaType = "movie"
+)
+
 type Media struct {
+	Type             MediaType
 	Title            string
 	Size             int64
 	Added            time.Time

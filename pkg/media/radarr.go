@@ -38,6 +38,7 @@ func (r RadarrRetriever) GetMovies() ([]common.Media, error) {
 			continue
 		}
 		mappedMovies = append(mappedMovies, common.Media{
+			Type:             common.MediaTypeMovie,
 			Title:            movie.Title,
 			Size:             movie.SizeOnDisk,
 			Added:            movie.Added,

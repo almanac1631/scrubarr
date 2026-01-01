@@ -3,7 +3,8 @@
         <table class="table-fixed w-full">
             <thead class="border-gray-300 border-b-2 text-left">
             <tr>
-                <th class="p-3">
+                <th class="py-3 px-1 w-12"></th>
+                <th class="py-3 px-1">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -21,7 +22,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="p-3">
+                <th class="py-3 px-1">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -39,7 +40,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="p-3">
+                <th class="py-3 px-1">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -57,7 +58,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="p-3">
+                <th class="py-3 px-1">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=torrent_status&sortOrder={{ if checkCurrentSort "torrent_status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -82,6 +83,19 @@
                    hx-swap="innerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
             </tbody>
             {{ template "media_loading_skeleton" }}
+            <svg style="display: none;">
+                <symbol id="icon-movie" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/>
+                    <path d="M8 4l0 16"/>
+                    <path d="M16 4l0 16"/>
+                    <path d="M4 8l4 0"/>
+                    <path d="M4 16l4 0"/>
+                    <path d="M4 12l16 0"/>
+                    <path d="M16 8l4 0"/>
+                    <path d="M16 16l4 0"/>
+                </symbol>
+            </svg>
         </table>
     </div>
 {{ end }}
