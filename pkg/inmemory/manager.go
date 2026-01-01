@@ -13,7 +13,7 @@ import (
 )
 
 type Manager struct {
-	mappedMoviesCache []common.MovieInfo
+	mappedMoviesCache []common.MediaInfo
 
 	radarrRetriever   *media.RadarrRetriever
 	delugeRetriever   *torrentclients.DelugeRetriever
@@ -28,20 +28,20 @@ func NewManager(radarrRetriever *media.RadarrRetriever, delugeRetriever *torrent
 
 const pageSize = 10
 
-func (m *Manager) GetMovieInfos(page int, sortInfo common.SortInfo) ([]common.MovieInfo, bool, error) {
+func (m *Manager) GetMediaInfos(page int, sortInfo common.SortInfo) ([]common.MediaInfo, bool, error) {
 	if m.mappedMoviesCache == nil {
 		radarrMovies, err := m.radarrRetriever.GetMovies()
 		if err != nil {
 			return nil, false, fmt.Errorf("failed to get movies from radarr: %w", err)
 		}
-		m.mappedMoviesCache = make([]common.MovieInfo, 0, len(radarrMovies))
+		m.mappedMoviesCache = make([]common.MediaInfo, 0, len(radarrMovies))
 		for _, movie := range radarrMovies {
-			finding, err := m.delugeRetriever.SearchForMovie(movie.OriginalFilePath)
+			finding, err := m.delugeRetriever.SearchForMedia(movie.OriginalFilePath)
 			if err != nil {
 				return nil, false, fmt.Errorf("failed to search for movie in deluge: %w", err)
 			}
 			if finding == nil {
-				finding, err = m.rtorrentRetriever.SearchForMovie(movie.OriginalFilePath)
+				finding, err = m.rtorrentRetriever.SearchForMedia(movie.OriginalFilePath)
 				if err != nil {
 					return nil, false, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
 				}
@@ -49,16 +49,16 @@ func (m *Manager) GetMovieInfos(page int, sortInfo common.SortInfo) ([]common.Mo
 			if finding != nil {
 				movie.Added = finding.Added
 			}
-			m.mappedMoviesCache = append(m.mappedMoviesCache, common.MovieInfo{
-				Movie:                 movie,
+			m.mappedMoviesCache = append(m.mappedMoviesCache, common.MediaInfo{
+				Media:                 movie,
 				ExistsInTorrentClient: finding != nil,
 			})
 		}
 	}
 	hasNext := false
-	movies := make([]common.MovieInfo, len(m.mappedMoviesCache))
+	movies := make([]common.MediaInfo, len(m.mappedMoviesCache))
 	copy(movies, m.mappedMoviesCache)
-	slices.SortFunc(movies, func(a, b common.MovieInfo) int {
+	slices.SortFunc(movies, func(a, b common.MediaInfo) int {
 		var result int
 		switch sortInfo.Key {
 		case common.SortKeyName:

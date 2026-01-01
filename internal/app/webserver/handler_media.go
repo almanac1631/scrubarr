@@ -16,7 +16,7 @@ type mediaEndpointData struct {
 }
 
 type MappedMovie struct {
-	common.MovieInfo
+	common.MediaInfo
 	NextPage int
 }
 
@@ -53,7 +53,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		page = 1
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	movies, hasNext, err := handler.manager.GetMovieInfos(page, sortInfo)
+	movies, hasNext, err := handler.manager.GetMediaInfos(page, sortInfo)
 	if err != nil {
 		slog.Error("failed to get movie mapping", "err", err)
 		writer.WriteHeader(http.StatusInternalServerError)
@@ -63,7 +63,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	mediaEntries := make([]MappedMovie, 0, len(movies))
 	for i, movie := range movies {
 		mappedMovie := &MappedMovie{
-			MovieInfo: movie,
+			MediaInfo: movie,
 			NextPage:  -1,
 		}
 		if hasNext && i == len(movies)-1 {

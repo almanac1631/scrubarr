@@ -27,7 +27,7 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	return &DelugeRetriever{client, nil}, nil
 }
 
-func (retriever *DelugeRetriever) SearchForMovie(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
+func (retriever *DelugeRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
 	if retriever.torrentListCache == nil {
 		var err error
 		retriever.torrentListCache, err = retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})

@@ -1,9 +1,19 @@
 package common
 
-import "github.com/almanac1631/scrubarr/pkg/media"
+import (
+	"time"
+)
 
-type MovieInfo struct {
-	media.Movie
+type Media struct {
+	Title            string
+	Size             int64
+	Added            time.Time
+	OriginalFilePath string
+	Url              string
+}
+
+type MediaInfo struct {
+	Media
 	ExistsInTorrentClient bool
 }
 
@@ -29,5 +39,5 @@ type SortInfo struct {
 }
 
 type Manager interface {
-	GetMovieInfos(page int, sortInfo SortInfo) (movies []MovieInfo, hasNext bool, err error)
+	GetMediaInfos(page int, sortInfo SortInfo) (medias []MediaInfo, hasNext bool, err error)
 }

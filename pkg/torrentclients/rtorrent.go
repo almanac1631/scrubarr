@@ -28,7 +28,7 @@ func NewRtorrentRetriever(hostname string, username string, password string) (*R
 	return &RtorrentRetriever{client, nil, map[string][]rtorrent.File{}}, nil
 }
 
-func (r *RtorrentRetriever) SearchForMovie(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
+func (r *RtorrentRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
 	if r.torrentListCache == nil {
 		var err error
 		r.torrentListCache, err = r.client.GetTorrents(context.Background(), rtorrent.ViewMain)
