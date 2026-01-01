@@ -36,19 +36,19 @@ func (m *Manager) GetMovieInfos(page int, sortInfo common.SortInfo) ([]common.Mo
 		}
 		m.mappedMoviesCache = make([]common.MovieInfo, 0, len(radarrMovies))
 		for _, movie := range radarrMovies {
-			exists, err := m.delugeRetriever.SearchForMovie(movie.OriginalFilePath)
+			finding, err := m.delugeRetriever.SearchForMovie(movie.OriginalFilePath)
 			if err != nil {
 				return nil, false, fmt.Errorf("failed to search for movie in deluge: %w", err)
 			}
-			if !exists {
-				exists, err = m.rtorrentRetriever.SearchForMovie(movie.OriginalFilePath)
+			if finding == nil {
+				finding, err = m.rtorrentRetriever.SearchForMovie(movie.OriginalFilePath)
 				if err != nil {
 					return nil, false, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
 				}
 			}
 			m.mappedMoviesCache = append(m.mappedMoviesCache, common.MovieInfo{
 				Movie:                 movie,
-				ExistsInTorrentClient: exists,
+				ExistsInTorrentClient: finding != nil,
 			})
 		}
 	}

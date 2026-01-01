@@ -2,7 +2,9 @@ package torrentclients
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/almanac1631/scrubarr/pkg/common"
 	delugeclient "github.com/gdm85/go-libdeluge"
 )
 
@@ -25,12 +27,12 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	return &DelugeRetriever{client, nil}, nil
 }
 
-func (retriever *DelugeRetriever) SearchForMovie(originalFilePath string) (bool, error) {
+func (retriever *DelugeRetriever) SearchForMovie(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
 	if retriever.torrentListCache == nil {
 		var err error
 		retriever.torrentListCache, err = retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
 		if err != nil {
-			return false, fmt.Errorf("could not get torrent list from deluge: %w", err)
+			return nil, fmt.Errorf("could not get torrent list from deluge: %w", err)
 		}
 	}
 	for _, torrent := range retriever.torrentListCache {
@@ -39,8 +41,10 @@ func (retriever *DelugeRetriever) SearchForMovie(originalFilePath string) (bool,
 		}
 		fileNameCmp := torrent.Files[0].Path
 		if fileNameCmp == originalFilePath {
-			return true, nil
+			return &common.TorrentClientFinding{
+				AddedOn: time.Unix(int64(torrent.TimeAdded), 0),
+			}, nil
 		}
 	}
-	return false, nil
+	return nil, nil
 }
