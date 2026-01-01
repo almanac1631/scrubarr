@@ -3,7 +3,7 @@ package common
 import "time"
 
 type TorrentClientFinding struct {
-	AddedOn time.Time
+	Added time.Time
 }
 
 type TorrentClientManager interface {

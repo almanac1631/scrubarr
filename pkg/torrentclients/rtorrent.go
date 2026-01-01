@@ -39,7 +39,7 @@ func (r *RtorrentRetriever) SearchForMovie(originalFilePath string) (finding *co
 	for _, torrent := range r.torrentListCache {
 		if torrent.Name == originalFilePath {
 			return &common.TorrentClientFinding{
-				AddedOn: torrent.Finished,
+				Added: torrent.Finished,
 			}, nil
 		}
 		torrentFiles, ok := r.torrentFileListCache[torrent.Hash]
@@ -55,7 +55,7 @@ func (r *RtorrentRetriever) SearchForMovie(originalFilePath string) (finding *co
 			fullFilePath := path.Join(torrent.Name, file.Path)
 			if fullFilePath == originalFilePath {
 				return &common.TorrentClientFinding{
-					AddedOn: torrent.Finished,
+					Added: torrent.Finished,
 				}, nil
 			}
 		}

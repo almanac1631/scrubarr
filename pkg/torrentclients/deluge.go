@@ -42,7 +42,7 @@ func (retriever *DelugeRetriever) SearchForMovie(originalFilePath string) (findi
 		fileNameCmp := torrent.Files[0].Path
 		if fileNameCmp == originalFilePath {
 			return &common.TorrentClientFinding{
-				AddedOn: time.Unix(int64(torrent.TimeAdded), 0),
+				Added: time.Unix(int64(torrent.TimeAdded), 0),
 			}, nil
 		}
 	}
