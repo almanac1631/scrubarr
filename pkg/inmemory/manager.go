@@ -46,6 +46,9 @@ func (m *Manager) GetMovieInfos(page int, sortInfo common.SortInfo) ([]common.Mo
 					return nil, false, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
 				}
 			}
+			if finding != nil {
+				movie.Added = finding.Added
+			}
 			m.mappedMoviesCache = append(m.mappedMoviesCache, common.MovieInfo{
 				Movie:                 movie,
 				ExistsInTorrentClient: finding != nil,
