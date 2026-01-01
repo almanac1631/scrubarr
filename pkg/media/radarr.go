@@ -2,6 +2,7 @@ package media
 
 import (
 	"fmt"
+	"path"
 	"time"
 
 	"golift.io/starr"
@@ -10,6 +11,7 @@ import (
 
 type RadarrRetriever struct {
 	client *radarr.Radarr
+	appUrl string
 }
 
 type Movie struct {
@@ -17,16 +19,17 @@ type Movie struct {
 	Size             int64
 	Added            time.Time
 	OriginalFilePath string
+	Url              string
 }
 
-func NewRadarrRetriever(hostname string, apiKey string) (*RadarrRetriever, error) {
-	starrConfig := starr.New(apiKey, hostname, 0)
+func NewRadarrRetriever(appUrl string, apiKey string) (*RadarrRetriever, error) {
+	starrConfig := starr.New(apiKey, appUrl, 0)
 	client := radarr.New(starrConfig)
 	_, err := client.GetSystemStatus()
 	if err != nil {
 		return nil, fmt.Errorf("could not get radarr system status: %w", err)
 	}
-	return &RadarrRetriever{client}, nil
+	return &RadarrRetriever{client, appUrl}, nil
 }
 
 func (r RadarrRetriever) GetMovies() ([]Movie, error) {
@@ -47,6 +50,7 @@ func (r RadarrRetriever) GetMovies() ([]Movie, error) {
 			Size:             movie.SizeOnDisk,
 			Added:            movie.Added,
 			OriginalFilePath: movie.MovieFile.OriginalFilePath,
+			Url:              path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
 		})
 	}
 	return mappedMovies, nil
