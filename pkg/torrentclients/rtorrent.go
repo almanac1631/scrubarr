@@ -2,7 +2,9 @@ package torrentclients
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"path/filepath"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -41,6 +43,25 @@ func (r *RtorrentRetriever) RefreshCache() error {
 		}
 		r.torrentFileListCache[torrent.Hash] = torrentFiles
 	}
+	return nil
+}
+
+type cacheWrapper struct {
+	TorrentList     []rtorrent.Torrent
+	TorrentFileList map[string][]rtorrent.File
+}
+
+func (r *RtorrentRetriever) SaveCache(writer io.Writer) error {
+	return json.NewEncoder(writer).Encode(cacheWrapper{r.torrentListCache, r.torrentFileListCache})
+}
+
+func (r *RtorrentRetriever) LoadCache(reader io.ReadSeeker) error {
+	wrapper := cacheWrapper{}
+	if err := json.NewDecoder(reader).Decode(&wrapper); err != nil {
+		return err
+	}
+	r.torrentListCache = wrapper.TorrentList
+	r.torrentFileListCache = wrapper.TorrentFileList
 	return nil
 }
 

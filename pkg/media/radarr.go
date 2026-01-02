@@ -1,7 +1,9 @@
 package media
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"path"
 	"path/filepath"
 
@@ -36,6 +38,15 @@ func (r *RadarrRetriever) RefreshCache() error {
 		return fmt.Errorf("could not get radarr movies: %w", err)
 	}
 	return nil
+}
+
+func (r *RadarrRetriever) SaveCache(writer io.Writer) error {
+	return json.NewEncoder(writer).Encode(r.moviesCache)
+}
+
+func (r *RadarrRetriever) LoadCache(reader io.ReadSeeker) error {
+	r.moviesCache = []*radarr.Movie{}
+	return json.NewDecoder(reader).Decode(&r.moviesCache)
 }
 
 func (r *RadarrRetriever) GetMovies() ([]common.Media, error) {

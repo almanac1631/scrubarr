@@ -1,7 +1,9 @@
 package media
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"path"
 	"path/filepath"
 
@@ -43,6 +45,25 @@ func (r *SonarrRetriever) RefreshCache() error {
 			return fmt.Errorf("could not get series episode files: %w", err)
 		}
 	}
+	return nil
+}
+
+type cacheWrapper struct {
+	Series             []*sonarr.Series
+	SeriesEpisodeFiles map[int64][]*sonarr.EpisodeFile
+}
+
+func (r *SonarrRetriever) SaveCache(writer io.Writer) error {
+	return json.NewEncoder(writer).Encode(cacheWrapper{r.seriesCache, r.seriesEpisodeFilesCache})
+}
+
+func (r *SonarrRetriever) LoadCache(reader io.ReadSeeker) error {
+	wrapper := cacheWrapper{}
+	if err := json.NewDecoder(reader).Decode(&wrapper); err != nil {
+		return err
+	}
+	r.seriesCache = wrapper.Series
+	r.seriesEpisodeFilesCache = wrapper.SeriesEpisodeFiles
 	return nil
 }
 

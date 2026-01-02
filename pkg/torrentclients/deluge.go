@@ -1,7 +1,9 @@
 package torrentclients
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"path/filepath"
 	"time"
 
@@ -35,6 +37,15 @@ func (retriever *DelugeRetriever) RefreshCache() error {
 		return fmt.Errorf("could not get torrent list from deluge: %w", err)
 	}
 	return nil
+}
+
+func (retriever *DelugeRetriever) SaveCache(writer io.Writer) error {
+	return json.NewEncoder(writer).Encode(retriever.torrentListCache)
+}
+
+func (retriever *DelugeRetriever) LoadCache(reader io.ReadSeeker) error {
+	retriever.torrentListCache = make(map[string]*delugeclient.TorrentStatus)
+	return json.NewDecoder(reader).Decode(&retriever.torrentListCache)
 }
 
 func (retriever *DelugeRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
