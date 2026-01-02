@@ -37,6 +37,12 @@ func (retriever *DelugeRetriever) SearchForMedia(originalFilePath string) (findi
 		}
 	}
 	for _, torrent := range retriever.torrentListCache {
+		torrentNameWithExt := torrent.Name + filepath.Ext(originalFilePath)
+		if torrent.Name == originalFilePath || torrentNameWithExt == originalFilePath {
+			return &common.TorrentClientFinding{
+				Added: time.Unix(int64(torrent.TimeAdded), 0),
+			}, nil
+		}
 		if len(torrent.Files) == 0 {
 			continue
 		}

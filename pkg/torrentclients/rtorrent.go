@@ -3,6 +3,7 @@ package torrentclients
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/autobrr/go-rtorrent"
@@ -36,7 +37,8 @@ func (r *RtorrentRetriever) SearchForMedia(originalFilePath string) (finding *co
 		}
 	}
 	for _, torrent := range r.torrentListCache {
-		if torrent.Name == originalFilePath {
+		torrentNameWithExt := torrent.Name + filepath.Ext(originalFilePath)
+		if torrent.Name == originalFilePath || torrentNameWithExt == originalFilePath {
 			return &common.TorrentClientFinding{
 				Added: torrent.Finished,
 			}, nil
