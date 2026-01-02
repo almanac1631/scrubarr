@@ -34,6 +34,8 @@ func StartApp() {
 	}
 	configPath := f.String("config", "./config.toml", "path to config file")
 	logLevel := f.String("level", "info", "log level to use")
+	saveCache := f.Bool("save-cache", false, "save cache for retriever responses")
+	useCache := f.Bool("use-cache", false, "use previously saved cache for retrievers")
 	err := f.Parse(os.Args[1:])
 	if err != nil {
 		panic(err)
@@ -93,7 +95,16 @@ func StartApp() {
 		os.Exit(1)
 	}
 
+	slog.Debug("Warming up retriever caches...")
+	if err = warmupCaches(*saveCache, *useCache, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever); err != nil {
+		slog.Error("could not setup retriever caches", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Refreshed retriever caches. Setting up webserver...")
+
 	router := webserver.SetupWebserver(k, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever)
+
+	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 
 	go func() {
 		exitChan := make(chan os.Signal, 1)

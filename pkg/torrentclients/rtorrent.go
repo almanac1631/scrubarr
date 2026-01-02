@@ -2,7 +2,9 @@ package torrentclients
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"path/filepath"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -28,12 +30,45 @@ func NewRtorrentRetriever(hostname string, username string, password string) (*R
 	return &RtorrentRetriever{client, nil, map[string][]rtorrent.File{}}, nil
 }
 
+func (r *RtorrentRetriever) RefreshCache() error {
+	var err error
+	r.torrentListCache, err = r.client.GetTorrents(context.Background(), rtorrent.ViewMain)
+	if err != nil {
+		return fmt.Errorf("could not get torrent list from rtorrent: %w", err)
+	}
+	for _, torrent := range r.torrentListCache {
+		torrentFiles, err := r.client.GetFiles(context.Background(), torrent)
+		if err != nil {
+			return fmt.Errorf("could not get torrent files from rtorrent: %w", err)
+		}
+		r.torrentFileListCache[torrent.Hash] = torrentFiles
+	}
+	return nil
+}
+
+type cacheWrapper struct {
+	TorrentList     []rtorrent.Torrent
+	TorrentFileList map[string][]rtorrent.File
+}
+
+func (r *RtorrentRetriever) SaveCache(writer io.Writer) error {
+	return json.NewEncoder(writer).Encode(cacheWrapper{r.torrentListCache, r.torrentFileListCache})
+}
+
+func (r *RtorrentRetriever) LoadCache(reader io.ReadSeeker) error {
+	wrapper := cacheWrapper{}
+	if err := json.NewDecoder(reader).Decode(&wrapper); err != nil {
+		return err
+	}
+	r.torrentListCache = wrapper.TorrentList
+	r.torrentFileListCache = wrapper.TorrentFileList
+	return nil
+}
+
 func (r *RtorrentRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
 	if r.torrentListCache == nil {
-		var err error
-		r.torrentListCache, err = r.client.GetTorrents(context.Background(), rtorrent.ViewMain)
-		if err != nil {
-			return nil, fmt.Errorf("could not get torrent list from rtorrent: %w", err)
+		if err := r.RefreshCache(); err != nil {
+			return nil, err
 		}
 	}
 	for _, torrent := range r.torrentListCache {
@@ -45,12 +80,7 @@ func (r *RtorrentRetriever) SearchForMedia(originalFilePath string) (finding *co
 		}
 		torrentFiles, ok := r.torrentFileListCache[torrent.Hash]
 		if !ok {
-			var err error
-			torrentFiles, err = r.client.GetFiles(context.Background(), torrent)
-			if err != nil {
-				return nil, fmt.Errorf("could not get torrent files from rtorrent: %w", err)
-			}
-			r.torrentFileListCache[torrent.Hash] = torrentFiles
+			return nil, fmt.Errorf("invalid state: rtorrent file list cache must contain torrent files for torrent: %q", torrent.Hash)
 		}
 		for _, file := range torrentFiles {
 			if file.Path == originalFilePath {
