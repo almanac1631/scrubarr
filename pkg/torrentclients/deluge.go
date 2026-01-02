@@ -28,12 +28,19 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	return &DelugeRetriever{client, nil}, nil
 }
 
+func (retriever *DelugeRetriever) RefreshCache() error {
+	var err error
+	retriever.torrentListCache, err = retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
+	if err != nil {
+		return fmt.Errorf("could not get torrent list from deluge: %w", err)
+	}
+	return nil
+}
+
 func (retriever *DelugeRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
 	if retriever.torrentListCache == nil {
-		var err error
-		retriever.torrentListCache, err = retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
-		if err != nil {
-			return nil, fmt.Errorf("could not get torrent list from deluge: %w", err)
+		if err := retriever.RefreshCache(); err != nil {
+			return nil, err
 		}
 	}
 	for _, torrent := range retriever.torrentListCache {

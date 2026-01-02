@@ -11,8 +11,9 @@ import (
 )
 
 type RadarrRetriever struct {
-	client *radarr.Radarr
-	appUrl string
+	moviesCache []*radarr.Movie
+	client      *radarr.Radarr
+	appUrl      string
 }
 
 func NewRadarrRetriever(appUrl string, apiKey string) (*RadarrRetriever, error) {
@@ -22,19 +23,29 @@ func NewRadarrRetriever(appUrl string, apiKey string) (*RadarrRetriever, error) 
 	if err != nil {
 		return nil, fmt.Errorf("could not get radarr system status: %w", err)
 	}
-	return &RadarrRetriever{client, appUrl}, nil
+	return &RadarrRetriever{nil, client, appUrl}, nil
 }
 
-func (r RadarrRetriever) GetMovies() ([]common.Media, error) {
-	movies, err := r.client.GetMovie(&radarr.GetMovie{
+func (r *RadarrRetriever) RefreshCache() error {
+	var err error
+	r.moviesCache, err = r.client.GetMovie(&radarr.GetMovie{
 		TMDBID:             0,
 		ExcludeLocalCovers: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("could not get movie list: %w", err)
+		return fmt.Errorf("could not get radarr movies: %w", err)
+	}
+	return nil
+}
+
+func (r *RadarrRetriever) GetMovies() ([]common.Media, error) {
+	if r.moviesCache == nil {
+		if err := r.RefreshCache(); err != nil {
+			return nil, err
+		}
 	}
 	var mappedMovies []common.Media
-	for _, movie := range movies {
+	for _, movie := range r.moviesCache {
 		if !movie.HasFile {
 			continue
 		}

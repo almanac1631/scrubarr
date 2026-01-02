@@ -93,7 +93,16 @@ func StartApp() {
 		os.Exit(1)
 	}
 
+	slog.Debug("Warming up retriever caches...")
+	if err := warmupCaches(radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever); err != nil {
+		slog.Error("could not setup retriever caches", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Refreshed retriever caches. Setting up webserver...")
+
 	router := webserver.SetupWebserver(k, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever)
+
+	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 
 	go func() {
 		exitChan := make(chan os.Signal, 1)
