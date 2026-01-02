@@ -1,12 +1,20 @@
 {{ define "media_entries" }}
-    {{ range .Movies }}
+    {{ range .MappedMedia }}
         <tr class="hover:bg-stone-100 border-t border-t-gray-200" {{ if ne .NextPage -1 }} hx-get="media/entries?page={{ .NextPage }}&sortKey={{ $.SortInfo.Key }}&sortOrder={{ $.SortInfo.Order }}" hx-trigger="revealed" hx-swap="afterend" hx-indicator="#loading-skeleton"{{ end }}>
             <td class="py-3 flex justify-center items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
                     {{ if eq .Type "movie" }}
                         <use href="#icon-movie"></use>
+                    {{ else if eq .Type "series" }}
+                        <use href="#icon-series"></use>
                     {{ else }}
-                        ?
+                        <text x="12" y="16"
+                              font-size="20"
+                              font-weight="bold"
+                              text-anchor="middle"
+                              font-family="sans-serif">
+                            ?
+                        </text>
                     {{ end }}
                 </svg>
             </td>

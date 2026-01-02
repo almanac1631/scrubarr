@@ -2,6 +2,7 @@ package torrentclients
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -39,11 +40,13 @@ func (retriever *DelugeRetriever) SearchForMedia(originalFilePath string) (findi
 		if len(torrent.Files) == 0 {
 			continue
 		}
-		fileNameCmp := torrent.Files[0].Path
-		if fileNameCmp == originalFilePath {
-			return &common.TorrentClientFinding{
-				Added: time.Unix(int64(torrent.TimeAdded), 0),
-			}, nil
+		for _, file := range torrent.Files {
+			fileNameCmp := filepath.Base(file.Path)
+			if fileNameCmp == originalFilePath {
+				return &common.TorrentClientFinding{
+					Added: time.Unix(int64(torrent.TimeAdded), 0),
+				}, nil
+			}
 		}
 	}
 	return nil, nil

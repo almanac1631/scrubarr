@@ -66,6 +66,12 @@ func StartApp() {
 		os.Exit(1)
 	}
 
+	sonarrRetriever, err := media.NewSonarrRetriever(k.MustString("connections.sonarr.hostname"), k.MustString("connections.sonarr.api_key"))
+	if err != nil {
+		slog.Error("could not setup sonarr retriever", "error", err)
+		os.Exit(1)
+	}
+
 	delugeRetriever, err := torrentclients2.NewDelugeRetriever(
 		k.MustString("connections.deluge.hostname"),
 		uint(k.MustInt("connections.deluge.port")),
@@ -87,7 +93,7 @@ func StartApp() {
 		os.Exit(1)
 	}
 
-	router := webserver.SetupWebserver(k, radarrRetriever, delugeRetriever, rtorrentRetriever)
+	router := webserver.SetupWebserver(k, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever)
 
 	go func() {
 		exitChan := make(chan os.Signal, 1)

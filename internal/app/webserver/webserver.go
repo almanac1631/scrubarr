@@ -28,14 +28,14 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) http.Handler {
+func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
 		slog.Error("could not create template cache", "error", err)
 		os.Exit(1)
 	}
 	pathPrefix := config.String("general.path_prefix")
-	handler, err := newHandler(config, pathPrefix, templateCache, radarrRetriever, delugeRetriever, rtorrentRetriever)
+	handler, err := newHandler(config, pathPrefix, templateCache, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("could not create webserver handler", "error", err)

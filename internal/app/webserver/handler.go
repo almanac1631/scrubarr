@@ -27,8 +27,8 @@ type handler struct {
 	passwordSalt      []byte
 }
 
-func newHandler(config *koanf.Koanf, pathPrefix string, templateCache TemplateCache, radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) (*handler, error) {
-	manager := inmemory.NewManager(radarrRetriever, delugeRetriever, rtorrentRetriever)
+func newHandler(config *koanf.Koanf, pathPrefix string, templateCache TemplateCache, radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) (*handler, error) {
+	manager := inmemory.NewManager(radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever)
 
 	username := strings.ToLower(config.MustString("general.auth.username"))
 	loadByteValue := func(path string) ([]byte, error) {

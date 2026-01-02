@@ -7,21 +7,36 @@ import (
 type MediaType string
 
 const (
-	MediaTypeMovie MediaType = "movie"
+	MediaTypeMovie  MediaType = "movie"
+	MediaTypeSeries MediaType = "series"
 )
 
-type Media struct {
-	Type             MediaType
-	Title            string
-	Size             int64
-	Added            time.Time
-	OriginalFilePath string
-	Url              string
+type MediaMetadata struct {
+	Type  MediaType
+	Title string
+	Url   string
+	Added time.Time
 }
 
-type MediaInfo struct {
-	Media
+type MediaPart struct {
+	Season           int
+	OriginalFilePath string
+	Size             int64
+}
+
+type Media struct {
+	MediaMetadata
+	Parts []MediaPart
+}
+
+type MatchedMediaPart struct {
+	MediaPart
 	ExistsInTorrentClient bool
+}
+
+type MatchedMedia struct {
+	MediaMetadata
+	Parts []MatchedMediaPart
 }
 
 type SortKey string
@@ -46,5 +61,5 @@ type SortInfo struct {
 }
 
 type Manager interface {
-	GetMediaInfos(page int, sortInfo SortInfo) (medias []MediaInfo, hasNext bool, err error)
+	GetMatchedMedia(page int, sortInfo SortInfo) (medias []MatchedMedia, hasNext bool, err error)
 }

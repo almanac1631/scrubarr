@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
@@ -11,13 +12,15 @@ import (
 )
 
 type mediaEndpointData struct {
-	Movies   []MappedMovie
-	SortInfo common.SortInfo
+	MappedMedia []MappedMedia
+	SortInfo    common.SortInfo
 }
 
-type MappedMovie struct {
-	common.MediaInfo
-	NextPage int
+type MappedMedia struct {
+	common.MatchedMedia
+	ExistsInTorrentClient bool
+	Size                  int64
+	NextPage              int
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
@@ -53,27 +56,36 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		page = 1
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	movies, hasNext, err := handler.manager.GetMediaInfos(page, sortInfo)
+	matchedMediaList, hasNext, err := handler.manager.GetMatchedMedia(page, sortInfo)
 	if err != nil {
 		slog.Error("failed to get movie mapping", "err", err)
 		writer.WriteHeader(http.StatusInternalServerError)
 		_, _ = writer.Write([]byte("500 Internal Server Error"))
 		return
 	}
-	mediaEntries := make([]MappedMovie, 0, len(movies))
-	for i, movie := range movies {
-		mappedMovie := &MappedMovie{
-			MediaInfo: movie,
-			NextPage:  -1,
+	mediaEntries := make([]MappedMedia, 0, len(matchedMediaList))
+	for i, matchedMedia := range matchedMediaList {
+		totalSize := int64(0)
+		for _, part := range matchedMedia.Parts {
+			totalSize += part.Size
 		}
-		if hasNext && i == len(movies)-1 {
-			mappedMovie.NextPage = page + 1
+		nextPage := -1
+		if hasNext && i == len(matchedMediaList)-1 {
+			nextPage = page + 1
 		}
-		mediaEntries = append(mediaEntries, *mappedMovie)
+		mediaEntries = append(mediaEntries, MappedMedia{
+			MatchedMedia: matchedMedia,
+			ExistsInTorrentClient: !slices.ContainsFunc(matchedMedia.Parts, func(part common.MatchedMediaPart) bool {
+				doesNotExist := !part.ExistsInTorrentClient
+				return doesNotExist
+			}),
+			Size:     totalSize,
+			NextPage: nextPage,
+		})
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
-		Movies:   mediaEntries,
-		SortInfo: sortInfo,
+		MappedMedia: mediaEntries,
+		SortInfo:    sortInfo,
 	}); err != nil {
 		slog.Error(err.Error())
 		return

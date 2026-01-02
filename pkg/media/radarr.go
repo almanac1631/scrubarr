@@ -3,6 +3,7 @@ package media
 import (
 	"fmt"
 	"path"
+	"path/filepath"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"golift.io/starr"
@@ -38,12 +39,18 @@ func (r RadarrRetriever) GetMovies() ([]common.Media, error) {
 			continue
 		}
 		mappedMovies = append(mappedMovies, common.Media{
-			Type:             common.MediaTypeMovie,
-			Title:            movie.Title,
-			Size:             movie.SizeOnDisk,
-			Added:            movie.Added,
-			OriginalFilePath: movie.MovieFile.OriginalFilePath,
-			Url:              path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
+			MediaMetadata: common.MediaMetadata{
+				Type:  common.MediaTypeMovie,
+				Title: movie.Title,
+				Url:   path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
+				Added: movie.Added,
+			},
+			Parts: []common.MediaPart{
+				{
+					OriginalFilePath: filepath.Base(movie.MovieFile.OriginalFilePath),
+					Size:             movie.SizeOnDisk,
+				},
+			},
 		})
 	}
 	return mappedMovies, nil
