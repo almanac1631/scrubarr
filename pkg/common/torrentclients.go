@@ -7,5 +7,5 @@ type TorrentClientFinding struct {
 }
 
 type TorrentClientManager interface {
-	SearchForMovie(originalFilePath string) (finding *TorrentClientFinding, err error)
+	SearchForMedia(originalFilePath string) (finding *TorrentClientFinding, err error)
 }

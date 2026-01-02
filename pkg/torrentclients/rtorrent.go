@@ -3,7 +3,7 @@ package torrentclients
 import (
 	"context"
 	"fmt"
-	"path"
+	"path/filepath"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/autobrr/go-rtorrent"
@@ -28,7 +28,7 @@ func NewRtorrentRetriever(hostname string, username string, password string) (*R
 	return &RtorrentRetriever{client, nil, map[string][]rtorrent.File{}}, nil
 }
 
-func (r *RtorrentRetriever) SearchForMovie(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
+func (r *RtorrentRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
 	if r.torrentListCache == nil {
 		var err error
 		r.torrentListCache, err = r.client.GetTorrents(context.Background(), rtorrent.ViewMain)
@@ -37,7 +37,8 @@ func (r *RtorrentRetriever) SearchForMovie(originalFilePath string) (finding *co
 		}
 	}
 	for _, torrent := range r.torrentListCache {
-		if torrent.Name == originalFilePath {
+		torrentNameWithExt := torrent.Name + filepath.Ext(originalFilePath)
+		if torrent.Name == originalFilePath || torrentNameWithExt == originalFilePath {
 			return &common.TorrentClientFinding{
 				Added: torrent.Finished,
 			}, nil
@@ -52,8 +53,7 @@ func (r *RtorrentRetriever) SearchForMovie(originalFilePath string) (finding *co
 			r.torrentFileListCache[torrent.Hash] = torrentFiles
 		}
 		for _, file := range torrentFiles {
-			fullFilePath := path.Join(torrent.Name, file.Path)
-			if fullFilePath == originalFilePath {
+			if file.Path == originalFilePath {
 				return &common.TorrentClientFinding{
 					Added: torrent.Finished,
 				}, nil

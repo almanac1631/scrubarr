@@ -1,10 +1,42 @@
 package common
 
-import "github.com/almanac1631/scrubarr/pkg/media"
+import (
+	"time"
+)
 
-type MovieInfo struct {
-	media.Movie
+type MediaType string
+
+const (
+	MediaTypeMovie  MediaType = "movie"
+	MediaTypeSeries MediaType = "series"
+)
+
+type MediaMetadata struct {
+	Type  MediaType
+	Title string
+	Url   string
+	Added time.Time
+}
+
+type MediaPart struct {
+	Season           int
+	OriginalFilePath string
+	Size             int64
+}
+
+type Media struct {
+	MediaMetadata
+	Parts []MediaPart
+}
+
+type MatchedMediaPart struct {
+	MediaPart
 	ExistsInTorrentClient bool
+}
+
+type MatchedMedia struct {
+	MediaMetadata
+	Parts []MatchedMediaPart
 }
 
 type SortKey string
@@ -29,5 +61,5 @@ type SortInfo struct {
 }
 
 type Manager interface {
-	GetMovieInfos(page int, sortInfo SortInfo) (movies []MovieInfo, hasNext bool, err error)
+	GetMatchedMedia(page int, sortInfo SortInfo) (medias []MatchedMedia, hasNext bool, err error)
 }

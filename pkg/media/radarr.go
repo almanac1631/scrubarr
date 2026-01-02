@@ -3,8 +3,9 @@ package media
 import (
 	"fmt"
 	"path"
-	"time"
+	"path/filepath"
 
+	"github.com/almanac1631/scrubarr/pkg/common"
 	"golift.io/starr"
 	"golift.io/starr/radarr"
 )
@@ -12,14 +13,6 @@ import (
 type RadarrRetriever struct {
 	client *radarr.Radarr
 	appUrl string
-}
-
-type Movie struct {
-	Title            string
-	Size             int64
-	Added            time.Time
-	OriginalFilePath string
-	Url              string
 }
 
 func NewRadarrRetriever(appUrl string, apiKey string) (*RadarrRetriever, error) {
@@ -32,7 +25,7 @@ func NewRadarrRetriever(appUrl string, apiKey string) (*RadarrRetriever, error) 
 	return &RadarrRetriever{client, appUrl}, nil
 }
 
-func (r RadarrRetriever) GetMovies() ([]Movie, error) {
+func (r RadarrRetriever) GetMovies() ([]common.Media, error) {
 	movies, err := r.client.GetMovie(&radarr.GetMovie{
 		TMDBID:             0,
 		ExcludeLocalCovers: true,
@@ -40,17 +33,24 @@ func (r RadarrRetriever) GetMovies() ([]Movie, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not get movie list: %w", err)
 	}
-	var mappedMovies []Movie
+	var mappedMovies []common.Media
 	for _, movie := range movies {
 		if !movie.HasFile {
 			continue
 		}
-		mappedMovies = append(mappedMovies, Movie{
-			Title:            movie.Title,
-			Size:             movie.SizeOnDisk,
-			Added:            movie.Added,
-			OriginalFilePath: movie.MovieFile.OriginalFilePath,
-			Url:              path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
+		mappedMovies = append(mappedMovies, common.Media{
+			MediaMetadata: common.MediaMetadata{
+				Type:  common.MediaTypeMovie,
+				Title: movie.Title,
+				Url:   path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
+				Added: movie.Added,
+			},
+			Parts: []common.MediaPart{
+				{
+					OriginalFilePath: filepath.Base(movie.MovieFile.OriginalFilePath),
+					Size:             movie.SizeOnDisk,
+				},
+			},
 		})
 	}
 	return mappedMovies, nil

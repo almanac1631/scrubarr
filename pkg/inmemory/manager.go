@@ -13,65 +13,127 @@ import (
 )
 
 type Manager struct {
-	mappedMoviesCache []common.MovieInfo
+	matchedMediaCache []common.MatchedMedia
 
-	radarrRetriever   *media.RadarrRetriever
+	radarrRetriever *media.RadarrRetriever
+	sonarrRetriever *media.SonarrRetriever
+
 	delugeRetriever   *torrentclients.DelugeRetriever
 	rtorrentRetriever *torrentclients.RtorrentRetriever
 }
 
-func NewManager(radarrRetriever *media.RadarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) *Manager {
+func NewManager(radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) *Manager {
 	return &Manager{
-		nil, radarrRetriever, delugeRetriever, rtorrentRetriever,
+		nil, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever,
 	}
 }
 
 const pageSize = 10
 
-func (m *Manager) GetMovieInfos(page int, sortInfo common.SortInfo) ([]common.MovieInfo, bool, error) {
-	if m.mappedMoviesCache == nil {
+func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.MatchedMedia, bool, error) {
+	searchForMedia := func(originalFilePath string) (*common.TorrentClientFinding, error) {
+		finding, err := m.delugeRetriever.SearchForMedia(originalFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to search for movie in deluge: %w", err)
+		}
+		if finding == nil {
+			finding, err = m.rtorrentRetriever.SearchForMedia(originalFilePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
+			}
+		}
+		return finding, nil
+	}
+
+	if m.matchedMediaCache == nil {
 		radarrMovies, err := m.radarrRetriever.GetMovies()
 		if err != nil {
 			return nil, false, fmt.Errorf("failed to get movies from radarr: %w", err)
 		}
-		m.mappedMoviesCache = make([]common.MovieInfo, 0, len(radarrMovies))
+		m.matchedMediaCache = make([]common.MatchedMedia, 0, len(radarrMovies))
 		for _, movie := range radarrMovies {
-			finding, err := m.delugeRetriever.SearchForMovie(movie.OriginalFilePath)
+			originalFilePath := movie.Parts[0].OriginalFilePath
+			finding, err := searchForMedia(originalFilePath)
 			if err != nil {
-				return nil, false, fmt.Errorf("failed to search for movie in deluge: %w", err)
-			}
-			if finding == nil {
-				finding, err = m.rtorrentRetriever.SearchForMovie(movie.OriginalFilePath)
-				if err != nil {
-					return nil, false, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
-				}
+				return nil, false, err
 			}
 			if finding != nil {
 				movie.Added = finding.Added
 			}
-			m.mappedMoviesCache = append(m.mappedMoviesCache, common.MovieInfo{
-				Movie:                 movie,
-				ExistsInTorrentClient: finding != nil,
+			m.matchedMediaCache = append(m.matchedMediaCache, common.MatchedMedia{
+				MediaMetadata: movie.MediaMetadata,
+				Parts: []common.MatchedMediaPart{{
+					MediaPart:             movie.Parts[0],
+					ExistsInTorrentClient: finding != nil,
+				}},
 			})
+		}
+		sonarrSeries, err := m.sonarrRetriever.GetMedia()
+		for _, mediaEntry := range sonarrSeries {
+			parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.Parts))
+			added := mediaEntry.Added
+			for _, part := range mediaEntry.Parts {
+				finding, err := searchForMedia(part.OriginalFilePath)
+				if err != nil {
+					return nil, false, err
+				}
+				if finding != nil && !finding.Added.IsZero() && finding.Added.Before(added) {
+					added = finding.Added
+				}
+				parts = append(parts, common.MatchedMediaPart{
+					MediaPart:             part,
+					ExistsInTorrentClient: finding != nil,
+				})
+			}
+			matchedMedia := common.MatchedMedia{
+				MediaMetadata: mediaEntry.MediaMetadata,
+				Parts:         parts,
+			}
+			matchedMedia.Added = added
+			m.matchedMediaCache = append(m.matchedMediaCache, matchedMedia)
 		}
 	}
 	hasNext := false
-	movies := make([]common.MovieInfo, len(m.mappedMoviesCache))
-	copy(movies, m.mappedMoviesCache)
-	slices.SortFunc(movies, func(a, b common.MovieInfo) int {
+	movies := make([]common.MatchedMedia, len(m.matchedMediaCache))
+	copy(movies, m.matchedMediaCache)
+
+	totalSizeCache := map[string]int64{}
+	totalSize := func(matchedMedia common.MatchedMedia) int64 {
+		if _, ok := totalSizeCache[matchedMedia.Url]; !ok {
+			totalSizeCalc := int64(0)
+			for _, part := range matchedMedia.Parts {
+				totalSizeCalc += part.Size
+			}
+			totalSizeCache[matchedMedia.Url] = totalSizeCalc
+		}
+		return totalSizeCache[matchedMedia.Url]
+	}
+
+	existsInTorrentClientCache := map[string]bool{}
+	existsInTorrentClient := func(matchedMedia common.MatchedMedia) bool {
+		if _, ok := existsInTorrentClientCache[matchedMedia.Url]; !ok {
+			existsInTorrentClientCache[matchedMedia.Url] = !slices.ContainsFunc(matchedMedia.Parts, func(part common.MatchedMediaPart) bool {
+				doesNotExist := !part.ExistsInTorrentClient
+				return doesNotExist
+			})
+		}
+		return existsInTorrentClientCache[matchedMedia.Url]
+	}
+
+	slices.SortFunc(movies, func(a, b common.MatchedMedia) int {
 		var result int
 		switch sortInfo.Key {
 		case common.SortKeyName:
 			result = strings.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title))
 			break
 		case common.SortKeySize:
-			result = cmp.Compare(a.Size, b.Size)
+			result = cmp.Compare(totalSize(a), totalSize(b))
 			break
 		case common.SortKeyAdded:
 			result = cmp.Compare(a.Added.Unix(), b.Added.Unix())
 			break
 		case common.SortKeyTorrentStatus:
-			result = CompareBool(a.ExistsInTorrentClient, b.ExistsInTorrentClient)
+			result = CompareBool(existsInTorrentClient(a), existsInTorrentClient(b))
 			break
 		default:
 			slog.Error("received unknown sort key", "sortKey", sortInfo.Key)

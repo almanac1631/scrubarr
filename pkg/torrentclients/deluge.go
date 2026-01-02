@@ -2,6 +2,7 @@ package torrentclients
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -27,7 +28,7 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	return &DelugeRetriever{client, nil}, nil
 }
 
-func (retriever *DelugeRetriever) SearchForMovie(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
+func (retriever *DelugeRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
 	if retriever.torrentListCache == nil {
 		var err error
 		retriever.torrentListCache, err = retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
@@ -36,14 +37,22 @@ func (retriever *DelugeRetriever) SearchForMovie(originalFilePath string) (findi
 		}
 	}
 	for _, torrent := range retriever.torrentListCache {
-		if len(torrent.Files) == 0 {
-			continue
-		}
-		fileNameCmp := torrent.Files[0].Path
-		if fileNameCmp == originalFilePath {
+		torrentNameWithExt := torrent.Name + filepath.Ext(originalFilePath)
+		if torrent.Name == originalFilePath || torrentNameWithExt == originalFilePath {
 			return &common.TorrentClientFinding{
 				Added: time.Unix(int64(torrent.TimeAdded), 0),
 			}, nil
+		}
+		if len(torrent.Files) == 0 {
+			continue
+		}
+		for _, file := range torrent.Files {
+			fileNameCmp := filepath.Base(file.Path)
+			if fileNameCmp == originalFilePath {
+				return &common.TorrentClientFinding{
+					Added: time.Unix(int64(torrent.TimeAdded), 0),
+				}, nil
+			}
 		}
 	}
 	return nil, nil
