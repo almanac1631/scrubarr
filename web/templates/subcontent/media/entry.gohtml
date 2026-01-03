@@ -10,7 +10,8 @@
                 </div>
             {{ else if eq .Type "series" }}
                 <div class="flex justify-center items-center cursor-pointer"
-                     hx-get="/media/series/{{.Id}}{{ if gt (len .Parts) 0 }}?collapsed=true{{ end }}" hx-swap="outerHTML" hx-target="#{{ .Type }}-{{ .Id }}">
+                     hx-get="/media/series/{{.Id}}{{ if gt (len .Parts) 0 }}?collapsed=true{{ end }}"
+                     hx-swap="outerHTML" hx-target="#{{ .Type }}-{{ .Id }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
                         <use href="#icon-series"></use>
                     </svg>
@@ -29,10 +30,14 @@
             {{ .Added | formatDate }}
         </td>
         <td class="py-3 px-1">
-            {{ if .ExistsInTorrentClient }}
+            {{ if eq .TorrentStatus "present" }}
                 <span class="text-green-600 font-semibold">Present</span>
-            {{ else }}
+            {{ else if eq .TorrentStatus "missing" }}
                 <span class="text-red-600 font-semibold">Missing</span>
+            {{ else if eq .TorrentStatus "incomplete" }}
+                <span class="text-yellow-600 font-semibold">Incomplete</span>
+            {{ else }}
+                ???
             {{ end }}
         </td>
     </tr>

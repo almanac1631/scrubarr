@@ -4,11 +4,18 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
 	"github.com/almanac1631/scrubarr/pkg/common"
+)
+
+type TorrentStatus string
+
+const (
+	TorrentStatusMissing    TorrentStatus = "missing"
+	TorrentStatusPresent    TorrentStatus = "present"
+	TorrentStatusIncomplete TorrentStatus = "incomplete"
 )
 
 type mediaEndpointData struct {
@@ -19,8 +26,8 @@ type mediaEndpointData struct {
 
 type MappedMedia struct {
 	common.MatchedMedia
-	ExistsInTorrentClient bool
-	Size                  int64
+	TorrentStatus TorrentStatus
+	Size          int64
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
@@ -86,16 +93,25 @@ func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMed
 	mediaEntries := make([]*MappedMedia, 0, len(matchedMediaList))
 	for _, matchedMedia := range matchedMediaList {
 		totalSize := int64(0)
+		missingTorrents := 0
 		for _, part := range matchedMedia.Parts {
 			totalSize += part.Size
+			if !part.ExistsInTorrentClient {
+				missingTorrents++
+			}
+		}
+		var torrentStatus TorrentStatus
+		if missingTorrents == 0 {
+			torrentStatus = TorrentStatusPresent
+		} else if missingTorrents == len(matchedMedia.Parts) {
+			torrentStatus = TorrentStatusMissing
+		} else {
+			torrentStatus = TorrentStatusIncomplete
 		}
 		mediaEntries = append(mediaEntries, &MappedMedia{
-			MatchedMedia: matchedMedia,
-			ExistsInTorrentClient: !slices.ContainsFunc(matchedMedia.Parts, func(part common.MatchedMediaPart) bool {
-				doesNotExist := !part.ExistsInTorrentClient
-				return doesNotExist
-			}),
-			Size: totalSize,
+			MatchedMedia:  matchedMedia,
+			TorrentStatus: torrentStatus,
+			Size:          totalSize,
 		})
 	}
 	return mediaEntries
