@@ -22,7 +22,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="py-3 px-1">
+                <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -40,7 +40,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="py-3 px-1">
+                <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -58,7 +58,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="py-3 px-1">
+                <th class="py-3 px-1 w-36">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=torrent_status&sortOrder={{ if checkCurrentSort "torrent_status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -80,7 +80,7 @@
             </thead>
             <tbody class="font-medium"
                    hx-get="media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
-                   hx-swap="innerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
+                   hx-swap="outerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
             </tbody>
             {{ template "media_loading_skeleton" }}
             <svg style="display: none;">
@@ -101,6 +101,13 @@
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                     <path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"/>
                     <path d="M16 3l-4 4l-4 -4"/>
+                </symbol>
+            </svg>
+            <svg style="display: none;">
+                <symbol id="icon-expand" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
+                        stroke-width="1.5">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M6 10l6 6l6 -6h-12"/>
                 </symbol>
             </svg>
         </table>

@@ -4,23 +4,30 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
 	"github.com/almanac1631/scrubarr/pkg/common"
 )
 
+type TorrentStatus string
+
+const (
+	TorrentStatusMissing    TorrentStatus = "missing"
+	TorrentStatusPresent    TorrentStatus = "present"
+	TorrentStatusIncomplete TorrentStatus = "incomplete"
+)
+
 type mediaEndpointData struct {
-	MappedMedia []MappedMedia
+	MappedMedia []*MappedMedia
 	SortInfo    common.SortInfo
+	NextPage    int
 }
 
 type MappedMedia struct {
 	common.MatchedMedia
-	ExistsInTorrentClient bool
-	Size                  int64
-	NextPage              int
+	TorrentStatus TorrentStatus
+	Size          int64
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
@@ -63,34 +70,51 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		_, _ = writer.Write([]byte("500 Internal Server Error"))
 		return
 	}
-	mediaEntries := make([]MappedMedia, 0, len(matchedMediaList))
-	for i, matchedMedia := range matchedMediaList {
-		totalSize := int64(0)
-		for _, part := range matchedMedia.Parts {
-			totalSize += part.Size
-		}
-		nextPage := -1
-		if hasNext && i == len(matchedMediaList)-1 {
-			nextPage = page + 1
-		}
-		mediaEntries = append(mediaEntries, MappedMedia{
-			MatchedMedia: matchedMedia,
-			ExistsInTorrentClient: !slices.ContainsFunc(matchedMedia.Parts, func(part common.MatchedMediaPart) bool {
-				doesNotExist := !part.ExistsInTorrentClient
-				return doesNotExist
-			}),
-			Size:     totalSize,
-			NextPage: nextPage,
-		})
+	nextPage := -1
+	if hasNext {
+		nextPage = page + 1
+	}
+	mediaEntries := handler.getMatchedMediaList(matchedMediaList)
+	for _, mediaEntry := range mediaEntries {
+		mediaEntry.Parts = []common.MatchedMediaPart{}
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
 		MappedMedia: mediaEntries,
 		SortInfo:    sortInfo,
+		NextPage:    nextPage,
 	}); err != nil {
 		slog.Error(err.Error())
 		return
 	}
 	return
+}
+
+func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMedia) []*MappedMedia {
+	mediaEntries := make([]*MappedMedia, 0, len(matchedMediaList))
+	for _, matchedMedia := range matchedMediaList {
+		totalSize := int64(0)
+		missingTorrents := 0
+		for _, part := range matchedMedia.Parts {
+			totalSize += part.Size
+			if !part.ExistsInTorrentClient {
+				missingTorrents++
+			}
+		}
+		var torrentStatus TorrentStatus
+		if missingTorrents == 0 {
+			torrentStatus = TorrentStatusPresent
+		} else if missingTorrents == len(matchedMedia.Parts) {
+			torrentStatus = TorrentStatusMissing
+		} else {
+			torrentStatus = TorrentStatusIncomplete
+		}
+		mediaEntries = append(mediaEntries, &MappedMedia{
+			MatchedMedia:  matchedMedia,
+			TorrentStatus: torrentStatus,
+			Size:          totalSize,
+		})
+	}
+	return mediaEntries
 }
 
 func getSortInfoFromUrlQuery(values url.Values) common.SortInfo {
@@ -110,4 +134,29 @@ func getSortInfoFromUrlQuery(values url.Values) common.SortInfo {
 		sortInfo.Order = common.SortOrderAsc
 	}
 	return sortInfo
+}
+
+func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, request *http.Request) {
+	if !utils.IsHTMXRequest(request) {
+		http.Error(writer, "404 Not Found", http.StatusNotFound)
+		return
+	}
+	collapsed := request.URL.Query().Get("collapsed") == "true"
+	idString := request.PathValue("id")
+	seriesId, _ := strconv.ParseInt(idString, 10, 64)
+	media, err := handler.manager.GetMatchedMediaBySeriesId(seriesId)
+	if err != nil {
+		slog.Error(err.Error())
+		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	mappedMedia := handler.getMatchedMediaList(media)[0]
+	if collapsed {
+		mappedMedia.Parts = []common.MatchedMediaPart{}
+	}
+	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entry", mappedMedia); err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	return
 }

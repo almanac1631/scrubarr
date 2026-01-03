@@ -41,13 +41,14 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 		slog.Error("could not create webserver handler", "error", err)
 		os.Exit(1)
 	}
-	router.Handle("/assets/", http.FileServer(http.FS(internal.Assets)))
+	router.Handle("GET /assets/", http.FileServer(http.FS(internal.Assets)))
 	router.HandleFunc("/login", handler.handleLogin)
 	router.HandleFunc("POST /logout", handler.handleLogout)
 
 	authorizedRouter := http.NewServeMux()
-	authorizedRouter.HandleFunc("/media", handler.handleMediaEndpoint)
-	authorizedRouter.HandleFunc("/media/entries", handler.handleMediaEntriesEndpoint)
+	authorizedRouter.HandleFunc("GET /media", handler.handleMediaEndpoint)
+	authorizedRouter.HandleFunc("GET /media/entries", handler.handleMediaEntriesEndpoint)
+	authorizedRouter.HandleFunc("GET /media/series/{id}", handler.handleMediaSeriesEndpoint)
 	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/" {
 			http.NotFound(writer, request)

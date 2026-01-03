@@ -62,6 +62,7 @@ func (r *RadarrRetriever) GetMovies() ([]common.Media, error) {
 		}
 		mappedMovies = append(mappedMovies, common.Media{
 			MediaMetadata: common.MediaMetadata{
+				Id:    movie.ID,
 				Type:  common.MediaTypeMovie,
 				Title: movie.Title,
 				Url:   path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
