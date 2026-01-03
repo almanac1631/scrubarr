@@ -54,7 +54,7 @@ func matches(entry *common.TorrentEntry, originalFilePath string) bool {
 			return true
 		}
 		fileNameCmp := filepath.Base(file.Path)
-		if fileNameCmp == torrentNameWithExt {
+		if fileNameCmp == originalFilePath {
 			return true
 		}
 	}
