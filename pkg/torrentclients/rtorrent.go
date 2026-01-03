@@ -2,19 +2,14 @@ package torrentclients
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"path/filepath"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/autobrr/go-rtorrent"
 )
 
 type RtorrentRetriever struct {
-	client               *rtorrent.Client
-	torrentListCache     []rtorrent.Torrent
-	torrentFileListCache map[string][]rtorrent.File
+	client *rtorrent.Client
 }
 
 func NewRtorrentRetriever(hostname string, username string, password string) (*RtorrentRetriever, error) {
@@ -27,68 +22,37 @@ func NewRtorrentRetriever(hostname string, username string, password string) (*R
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to remote rtorrent rpc api: %w", err)
 	}
-	return &RtorrentRetriever{client, nil, map[string][]rtorrent.File{}}, nil
+	return &RtorrentRetriever{client}, nil
 }
 
-func (r *RtorrentRetriever) RefreshCache() error {
-	var err error
-	r.torrentListCache, err = r.client.GetTorrents(context.Background(), rtorrent.ViewMain)
+func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry, error) {
+	torrentList, err := retriever.client.GetTorrents(context.Background(), rtorrent.ViewMain)
 	if err != nil {
-		return fmt.Errorf("could not get torrent list from rtorrent: %w", err)
+		return nil, fmt.Errorf("could not get torrent list from rtorrent: %w", err)
 	}
-	for _, torrent := range r.torrentListCache {
-		torrentFiles, err := r.client.GetFiles(context.Background(), torrent)
+	torrentEntries := make([]*common.TorrentEntry, 0, len(torrentList))
+	for _, torrent := range torrentList {
+		torrentEntry := &common.TorrentEntry{
+			Client: retriever.Name(),
+			Id:     torrent.Hash,
+			Name:   torrent.Name,
+			Added:  torrent.Finished,
+			Files:  []*common.TorrentFile{},
+		}
+		torrentFiles, err := retriever.client.GetFiles(context.Background(), torrent)
 		if err != nil {
-			return fmt.Errorf("could not get torrent files from rtorrent: %w", err)
+			return nil, fmt.Errorf("could not get torrent files from rtorrent: %w", err)
 		}
-		r.torrentFileListCache[torrent.Hash] = torrentFiles
+		for _, torrentFile := range torrentFiles {
+			torrentEntry.Files = append(torrentEntry.Files, &common.TorrentFile{
+				Path: torrentFile.Path,
+			})
+		}
+		torrentEntries = append(torrentEntries, torrentEntry)
 	}
-	return nil
+	return torrentEntries, nil
 }
 
-type cacheWrapper struct {
-	TorrentList     []rtorrent.Torrent
-	TorrentFileList map[string][]rtorrent.File
-}
-
-func (r *RtorrentRetriever) SaveCache(writer io.Writer) error {
-	return json.NewEncoder(writer).Encode(cacheWrapper{r.torrentListCache, r.torrentFileListCache})
-}
-
-func (r *RtorrentRetriever) LoadCache(reader io.ReadSeeker) error {
-	wrapper := cacheWrapper{}
-	if err := json.NewDecoder(reader).Decode(&wrapper); err != nil {
-		return err
-	}
-	r.torrentListCache = wrapper.TorrentList
-	r.torrentFileListCache = wrapper.TorrentFileList
-	return nil
-}
-
-func (r *RtorrentRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
-	if r.torrentListCache == nil {
-		if err := r.RefreshCache(); err != nil {
-			return nil, err
-		}
-	}
-	for _, torrent := range r.torrentListCache {
-		torrentNameWithExt := torrent.Name + filepath.Ext(originalFilePath)
-		if torrent.Name == originalFilePath || torrentNameWithExt == originalFilePath {
-			return &common.TorrentClientFinding{
-				Added: torrent.Finished,
-			}, nil
-		}
-		torrentFiles, ok := r.torrentFileListCache[torrent.Hash]
-		if !ok {
-			return nil, fmt.Errorf("invalid state: rtorrent file list cache must contain torrent files for torrent: %q", torrent.Hash)
-		}
-		for _, file := range torrentFiles {
-			if file.Path == originalFilePath {
-				return &common.TorrentClientFinding{
-					Added: torrent.Finished,
-				}, nil
-			}
-		}
-	}
-	return nil, nil
+func (retriever *RtorrentRetriever) Name() string {
+	return "rtorrent"
 }
