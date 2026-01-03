@@ -9,11 +9,15 @@
                     </svg>
                 </div>
             {{ else if eq .Type "series" }}
-                <div class="flex justify-center items-center cursor-pointer"
+                <div class="flex justify-center items-center cursor-pointer relative"
                      hx-get="/media/series/{{.Id}}{{ if gt (len .Parts) 0 }}?collapsed=true{{ end }}"
                      hx-swap="outerHTML" hx-target="#{{ .Type }}-{{ .Id }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
                         <use href="#icon-series"></use>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="w-5 h-5 absolute -bottom-1.5 right-1.5 text-red-500 {{ if eq (len .Parts) 0}}-rotate-90{{ end }}">
+                        <use href="#icon-expand"></use>
                     </svg>
                 </div>
             {{ else }}
