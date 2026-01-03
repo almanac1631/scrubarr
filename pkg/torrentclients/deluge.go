@@ -43,6 +43,7 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, e
 		for _, file := range torrent.Files {
 			torrentEntry.Files = append(torrentEntry.Files, &common.TorrentFile{
 				Path: file.Path,
+				Size: file.Size,
 			})
 		}
 		torrentEntries = append(torrentEntries, torrentEntry)

@@ -36,7 +36,7 @@ func (m *Manager) refreshCache() error {
 	m.matchedMediaCache = make([]common.MatchedMedia, 0, len(radarrMovies))
 	for _, movie := range radarrMovies {
 		originalFilePath := movie.Parts[0].OriginalFilePath
-		finding, err := m.torrentManager.SearchForMedia(originalFilePath)
+		finding, err := m.torrentManager.SearchForMedia(originalFilePath, movie.Parts[0].Size)
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func (m *Manager) refreshCache() error {
 		parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.Parts))
 		added := mediaEntry.Added
 		for _, part := range mediaEntry.Parts {
-			finding, err := m.torrentManager.SearchForMedia(part.OriginalFilePath)
+			finding, err := m.torrentManager.SearchForMedia(part.OriginalFilePath, part.Size)
 			if err != nil {
 				return err
 			}

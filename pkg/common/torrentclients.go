@@ -8,6 +8,7 @@ type TorrentClientFinding struct {
 
 type TorrentFile struct {
 	Path string
+	Size int64
 }
 
 type TorrentEntry struct {
@@ -19,7 +20,7 @@ type TorrentEntry struct {
 }
 
 type TorrentClientManager interface {
-	SearchForMedia(originalFilePath string) (finding *TorrentClientFinding, err error)
+	SearchForMedia(originalFilePath string, size int64) (finding *TorrentClientFinding, err error)
 }
 
 type TorrentClientRetriever interface {

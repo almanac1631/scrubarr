@@ -46,6 +46,7 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 		for _, torrentFile := range torrentFiles {
 			torrentEntry.Files = append(torrentEntry.Files, &common.TorrentFile{
 				Path: torrentFile.Path,
+				Size: int64(torrentFile.Size),
 			})
 		}
 		torrentEntries = append(torrentEntries, torrentEntry)

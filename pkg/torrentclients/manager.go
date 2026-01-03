@@ -28,10 +28,10 @@ func NewDefaultTorrentManager(retrievers ...common.TorrentClientRetriever) *Defa
 	return manager
 }
 
-func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
+func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string, size int64) (finding *common.TorrentClientFinding, err error) {
 	for _, entries := range manager.Entries {
 		for _, entry := range entries {
-			if matches(entry, originalFilePath) {
+			if matches(entry, originalFilePath, size) {
 				return &common.TorrentClientFinding{
 					Added: entry.Added,
 				}, nil
@@ -41,7 +41,7 @@ func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string) (f
 	return nil, err
 }
 
-func matches(entry *common.TorrentEntry, originalFilePath string) bool {
+func matches(entry *common.TorrentEntry, originalFilePath string, size int64) bool {
 	if entry.Name == originalFilePath {
 		return true
 	}
@@ -50,6 +50,9 @@ func matches(entry *common.TorrentEntry, originalFilePath string) bool {
 		return true
 	}
 	for _, file := range entry.Files {
+		if file.Size != size {
+			continue
+		}
 		if file.Path == originalFilePath {
 			return true
 		}
