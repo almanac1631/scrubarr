@@ -22,7 +22,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="py-3 px-1">
+                <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -40,7 +40,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="py-3 px-1">
+                <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -58,7 +58,7 @@
                         </span>
                     </button>
                 </th>
-                <th class="py-3 px-1">
+                <th class="py-3 px-1 w-36">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
                             hx-get="media?sortKey=torrent_status&sortOrder={{ if checkCurrentSort "torrent_status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
@@ -80,7 +80,7 @@
             </thead>
             <tbody class="font-medium"
                    hx-get="media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
-                   hx-swap="innerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
+                   hx-swap="outerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
             </tbody>
             {{ template "media_loading_skeleton" }}
             <svg style="display: none;">

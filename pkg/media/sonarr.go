@@ -89,6 +89,7 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 		}
 		media := common.Media{
 			MediaMetadata: common.MediaMetadata{
+				Id:    series.ID,
 				Type:  common.MediaTypeSeries,
 				Title: series.Title,
 				Url:   path.Join(r.appUrl, fmt.Sprintf("series/%s", series.TitleSlug)),

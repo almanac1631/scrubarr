@@ -12,6 +12,7 @@ const (
 )
 
 type MediaMetadata struct {
+	Id    int64
 	Type  MediaType
 	Title string
 	Url   string
@@ -61,5 +62,7 @@ type SortInfo struct {
 }
 
 type Manager interface {
-	GetMatchedMedia(page int, sortInfo SortInfo) (medias []MatchedMedia, hasNext bool, err error)
+	GetMatchedMedia(page int, sortInfo SortInfo) (media []MatchedMedia, hasNext bool, err error)
+
+	GetMatchedMediaBySeriesId(seriesId int64) (media []MatchedMedia, err error)
 }

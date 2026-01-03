@@ -30,67 +30,74 @@ func NewManager(radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.S
 
 const pageSize = 10
 
-func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.MatchedMedia, bool, error) {
-	searchForMedia := func(originalFilePath string) (*common.TorrentClientFinding, error) {
-		finding, err := m.delugeRetriever.SearchForMedia(originalFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to search for movie in deluge: %w", err)
-		}
-		if finding == nil {
-			finding, err = m.rtorrentRetriever.SearchForMedia(originalFilePath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
-			}
-		}
-		return finding, nil
+func (m *Manager) searchForMedia(originalFilePath string) (*common.TorrentClientFinding, error) {
+	finding, err := m.delugeRetriever.SearchForMedia(originalFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search for movie in deluge: %w", err)
 	}
-
-	if m.matchedMediaCache == nil {
-		radarrMovies, err := m.radarrRetriever.GetMovies()
+	if finding == nil {
+		finding, err = m.rtorrentRetriever.SearchForMedia(originalFilePath)
 		if err != nil {
-			return nil, false, fmt.Errorf("failed to get movies from radarr: %w", err)
+			return nil, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
 		}
-		m.matchedMediaCache = make([]common.MatchedMedia, 0, len(radarrMovies))
-		for _, movie := range radarrMovies {
-			originalFilePath := movie.Parts[0].OriginalFilePath
-			finding, err := searchForMedia(originalFilePath)
+	}
+	return finding, nil
+}
+
+func (m *Manager) refreshCache() error {
+	radarrMovies, err := m.radarrRetriever.GetMovies()
+	if err != nil {
+		return fmt.Errorf("failed to get movies from radarr: %w", err)
+	}
+	m.matchedMediaCache = make([]common.MatchedMedia, 0, len(radarrMovies))
+	for _, movie := range radarrMovies {
+		originalFilePath := movie.Parts[0].OriginalFilePath
+		finding, err := m.searchForMedia(originalFilePath)
+		if err != nil {
+			return err
+		}
+		if finding != nil {
+			movie.Added = finding.Added
+		}
+		m.matchedMediaCache = append(m.matchedMediaCache, common.MatchedMedia{
+			MediaMetadata: movie.MediaMetadata,
+			Parts: []common.MatchedMediaPart{{
+				MediaPart:             movie.Parts[0],
+				ExistsInTorrentClient: finding != nil,
+			}},
+		})
+	}
+	sonarrSeries, err := m.sonarrRetriever.GetMedia()
+	for _, mediaEntry := range sonarrSeries {
+		parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.Parts))
+		added := mediaEntry.Added
+		for _, part := range mediaEntry.Parts {
+			finding, err := m.searchForMedia(part.OriginalFilePath)
 			if err != nil {
-				return nil, false, err
+				return err
 			}
-			if finding != nil {
-				movie.Added = finding.Added
+			if finding != nil && !finding.Added.IsZero() && finding.Added.Before(added) {
+				added = finding.Added
 			}
-			m.matchedMediaCache = append(m.matchedMediaCache, common.MatchedMedia{
-				MediaMetadata: movie.MediaMetadata,
-				Parts: []common.MatchedMediaPart{{
-					MediaPart:             movie.Parts[0],
-					ExistsInTorrentClient: finding != nil,
-				}},
+			parts = append(parts, common.MatchedMediaPart{
+				MediaPart:             part,
+				ExistsInTorrentClient: finding != nil,
 			})
 		}
-		sonarrSeries, err := m.sonarrRetriever.GetMedia()
-		for _, mediaEntry := range sonarrSeries {
-			parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.Parts))
-			added := mediaEntry.Added
-			for _, part := range mediaEntry.Parts {
-				finding, err := searchForMedia(part.OriginalFilePath)
-				if err != nil {
-					return nil, false, err
-				}
-				if finding != nil && !finding.Added.IsZero() && finding.Added.Before(added) {
-					added = finding.Added
-				}
-				parts = append(parts, common.MatchedMediaPart{
-					MediaPart:             part,
-					ExistsInTorrentClient: finding != nil,
-				})
-			}
-			matchedMedia := common.MatchedMedia{
-				MediaMetadata: mediaEntry.MediaMetadata,
-				Parts:         parts,
-			}
-			matchedMedia.Added = added
-			m.matchedMediaCache = append(m.matchedMediaCache, matchedMedia)
+		matchedMedia := common.MatchedMedia{
+			MediaMetadata: mediaEntry.MediaMetadata,
+			Parts:         parts,
+		}
+		matchedMedia.Added = added
+		m.matchedMediaCache = append(m.matchedMediaCache, matchedMedia)
+	}
+	return nil
+}
+
+func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.MatchedMedia, bool, error) {
+	if m.matchedMediaCache == nil {
+		if err := m.refreshCache(); err != nil {
+			return nil, false, err
 		}
 	}
 	hasNext := false
@@ -151,6 +158,22 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.
 		movies = movies[pageSize*(page-1):]
 	}
 	return movies, hasNext, nil
+}
+
+func (m *Manager) GetMatchedMediaBySeriesId(seriesId int64) (media []common.MatchedMedia, err error) {
+	if m.matchedMediaCache == nil {
+		if err := m.refreshCache(); err != nil {
+			return nil, err
+		}
+	}
+	filteredMediaList := make([]common.MatchedMedia, 0)
+	for _, mediaEntry := range m.matchedMediaCache {
+		if mediaEntry.Type != common.MediaTypeSeries || mediaEntry.Id != seriesId {
+			continue
+		}
+		filteredMediaList = append(filteredMediaList, mediaEntry)
+	}
+	return filteredMediaList, nil
 }
 
 func CompareBool(a, b bool) int {

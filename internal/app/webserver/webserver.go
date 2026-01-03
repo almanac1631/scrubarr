@@ -48,6 +48,7 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 	authorizedRouter := http.NewServeMux()
 	authorizedRouter.HandleFunc("/media", handler.handleMediaEndpoint)
 	authorizedRouter.HandleFunc("/media/entries", handler.handleMediaEntriesEndpoint)
+	authorizedRouter.HandleFunc("GET /media/series/{id}", handler.handleMediaSeriesEndpoint)
 	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/" {
 			http.NotFound(writer, request)

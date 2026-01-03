@@ -1,0 +1,62 @@
+{{ define "media_entry" }}
+    <tbody id="{{ .Type }}-{{ .Id }}">
+    <tr class="hover:bg-stone-100 border-t border-t-gray-200">
+        <td class="py-3">
+            {{ if eq .Type "movie" }}
+                <div class="flex justify-center items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+                        <use href="#icon-movie"></use>
+                    </svg>
+                </div>
+            {{ else if eq .Type "series" }}
+                <div class="flex justify-center items-center cursor-pointer"
+                     hx-get="/media/series/{{.Id}}{{ if gt (len .Parts) 0 }}?collapsed=true{{ end }}" hx-swap="outerHTML" hx-target="#{{ .Type }}-{{ .Id }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+                        <use href="#icon-series"></use>
+                    </svg>
+                </div>
+            {{ else }}
+                ?
+            {{ end }}
+        </td>
+        <td class="py-3 px-1 truncate" title="{{ .Title }}">
+            <a href="{{ .Url }}" target="_blank">{{ .Title }}</a>
+        </td>
+        <td class="py-3 px-1">
+            {{ .Size | formatBytes }}
+        </td>
+        <td class="py-3 px-1">
+            {{ .Added | formatDate }}
+        </td>
+        <td class="py-3 px-1">
+            {{ if .ExistsInTorrentClient }}
+                <span class="text-green-600 font-semibold">Present</span>
+            {{ else }}
+                <span class="text-red-600 font-semibold">Missing</span>
+            {{ end }}
+        </td>
+    </tr>
+    {{ if gt (len .Parts) 0 }}
+        {{ range .Parts }}
+            <tr class="text-xs">
+                <td></td>
+                <td class="py-3 px-1 truncate" title="{{ .OriginalFilePath }}">
+                    S{{ .Season }} {{ .OriginalFilePath }}
+                </td>
+                <td class="py-3 px-1">
+                    {{ .Size | formatBytes }}
+                </td>
+                <td class="py-3 px-1">
+                </td>
+                <td class="py-3 px-1">
+                    {{ if .ExistsInTorrentClient }}
+                        <span class="text-green-600 font-semibold">Present</span>
+                    {{ else }}
+                        <span class="text-red-600 font-semibold">Missing</span>
+                    {{ end }}
+                </td>
+            </tr>
+        {{ end }}
+    {{ end }}
+    </tbody>
+{{ end }}
