@@ -11,7 +11,7 @@ import (
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
 	"github.com/almanac1631/scrubarr/pkg/media"
-	torrentclients2 "github.com/almanac1631/scrubarr/pkg/torrentclients"
+	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
@@ -74,7 +74,7 @@ func StartApp() {
 		os.Exit(1)
 	}
 
-	delugeRetriever, err := torrentclients2.NewDelugeRetriever(
+	delugeRetriever, err := torrentclients.NewDelugeRetriever(
 		k.MustString("connections.deluge.hostname"),
 		uint(k.MustInt("connections.deluge.port")),
 		k.MustString("connections.deluge.username"),
@@ -85,7 +85,7 @@ func StartApp() {
 		os.Exit(1)
 	}
 
-	rtorrentRetriever, err := torrentclients2.NewRtorrentRetriever(
+	rtorrentRetriever, err := torrentclients.NewRtorrentRetriever(
 		k.MustString("connections.rtorrent.hostname"),
 		k.MustString("connections.rtorrent.username"),
 		k.MustString("connections.rtorrent.password"),
@@ -95,14 +95,16 @@ func StartApp() {
 		os.Exit(1)
 	}
 
+	torrentManager := torrentclients.NewDefaultTorrentManager(delugeRetriever, rtorrentRetriever)
+
 	slog.Debug("Warming up retriever caches...")
-	if err = warmupCaches(*saveCache, *useCache, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever); err != nil {
+	if err = warmupCaches(*saveCache, *useCache, radarrRetriever, sonarrRetriever, torrentManager); err != nil {
 		slog.Error("could not setup retriever caches", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever)
+	router := webserver.SetupWebserver(k, radarrRetriever, sonarrRetriever, torrentManager)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 

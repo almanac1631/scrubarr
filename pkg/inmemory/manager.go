@@ -9,7 +9,6 @@ import (
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/media"
-	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 )
 
 type Manager struct {
@@ -18,31 +17,16 @@ type Manager struct {
 	radarrRetriever *media.RadarrRetriever
 	sonarrRetriever *media.SonarrRetriever
 
-	delugeRetriever   *torrentclients.DelugeRetriever
-	rtorrentRetriever *torrentclients.RtorrentRetriever
+	torrentManager common.TorrentClientManager
 }
 
-func NewManager(radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) *Manager {
+func NewManager(radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, torrentManager common.TorrentClientManager) *Manager {
 	return &Manager{
-		nil, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever,
+		nil, radarrRetriever, sonarrRetriever, torrentManager,
 	}
 }
 
 const pageSize = 10
-
-func (m *Manager) searchForMedia(originalFilePath string) (*common.TorrentClientFinding, error) {
-	finding, err := m.delugeRetriever.SearchForMedia(originalFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to search for movie in deluge: %w", err)
-	}
-	if finding == nil {
-		finding, err = m.rtorrentRetriever.SearchForMedia(originalFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to search for movie in rtorrent: %w", err)
-		}
-	}
-	return finding, nil
-}
 
 func (m *Manager) refreshCache() error {
 	radarrMovies, err := m.radarrRetriever.GetMovies()
@@ -52,7 +36,7 @@ func (m *Manager) refreshCache() error {
 	m.matchedMediaCache = make([]common.MatchedMedia, 0, len(radarrMovies))
 	for _, movie := range radarrMovies {
 		originalFilePath := movie.Parts[0].OriginalFilePath
-		finding, err := m.searchForMedia(originalFilePath)
+		finding, err := m.torrentManager.SearchForMedia(originalFilePath, movie.Parts[0].Size)
 		if err != nil {
 			return err
 		}
@@ -72,7 +56,7 @@ func (m *Manager) refreshCache() error {
 		parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.Parts))
 		added := mediaEntry.Added
 		for _, part := range mediaEntry.Parts {
-			finding, err := m.searchForMedia(part.OriginalFilePath)
+			finding, err := m.torrentManager.SearchForMedia(part.OriginalFilePath, part.Size)
 			if err != nil {
 				return err
 			}

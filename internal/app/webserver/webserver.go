@@ -11,8 +11,8 @@ import (
 	"path"
 	"syscall"
 
+	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/media"
-	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 	internal "github.com/almanac1631/scrubarr/web"
 	"github.com/knadh/koanf/v2"
 )
@@ -28,14 +28,14 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, delugeRetriever *torrentclients.DelugeRetriever, rtorrentRetriever *torrentclients.RtorrentRetriever) http.Handler {
+func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, torrentManager common.TorrentClientManager) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
 		slog.Error("could not create template cache", "error", err)
 		os.Exit(1)
 	}
 	pathPrefix := config.String("general.path_prefix")
-	handler, err := newHandler(config, pathPrefix, templateCache, radarrRetriever, sonarrRetriever, delugeRetriever, rtorrentRetriever)
+	handler, err := newHandler(config, pathPrefix, templateCache, radarrRetriever, sonarrRetriever, torrentManager)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("could not create webserver handler", "error", err)

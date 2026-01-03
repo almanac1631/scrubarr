@@ -1,10 +1,7 @@
 package torrentclients
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"path/filepath"
 	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -12,8 +9,7 @@ import (
 )
 
 type DelugeRetriever struct {
-	client           *delugeclient.ClientV2
-	torrentListCache map[string]*delugeclient.TorrentStatus
+	client *delugeclient.ClientV2
 }
 
 func NewDelugeRetriever(hostname string, port uint, username string, password string) (*DelugeRetriever, error) {
@@ -27,51 +23,34 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to remote deluge rpc api: %w", err)
 	}
-	return &DelugeRetriever{client, nil}, nil
+	return &DelugeRetriever{client}, nil
 }
 
-func (retriever *DelugeRetriever) RefreshCache() error {
-	var err error
-	retriever.torrentListCache, err = retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
+func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, error) {
+	torrentList, err := retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
 	if err != nil {
-		return fmt.Errorf("could not get torrent list from deluge: %w", err)
+		return nil, fmt.Errorf("could not get torrent list from deluge rpc api: %w", err)
 	}
-	return nil
-}
-
-func (retriever *DelugeRetriever) SaveCache(writer io.Writer) error {
-	return json.NewEncoder(writer).Encode(retriever.torrentListCache)
-}
-
-func (retriever *DelugeRetriever) LoadCache(reader io.ReadSeeker) error {
-	retriever.torrentListCache = make(map[string]*delugeclient.TorrentStatus)
-	return json.NewDecoder(reader).Decode(&retriever.torrentListCache)
-}
-
-func (retriever *DelugeRetriever) SearchForMedia(originalFilePath string) (finding *common.TorrentClientFinding, err error) {
-	if retriever.torrentListCache == nil {
-		if err := retriever.RefreshCache(); err != nil {
-			return nil, err
-		}
-	}
-	for _, torrent := range retriever.torrentListCache {
-		torrentNameWithExt := torrent.Name + filepath.Ext(originalFilePath)
-		if torrent.Name == originalFilePath || torrentNameWithExt == originalFilePath {
-			return &common.TorrentClientFinding{
-				Added: time.Unix(int64(torrent.TimeAdded), 0),
-			}, nil
-		}
-		if len(torrent.Files) == 0 {
-			continue
+	torrentEntries := make([]*common.TorrentEntry, 0, len(torrentList))
+	for hash, torrent := range torrentList {
+		torrentEntry := &common.TorrentEntry{
+			Client: retriever.Name(),
+			Id:     hash,
+			Name:   torrent.Name,
+			Added:  time.Unix(int64(torrent.TimeAdded), 0),
+			Files:  []*common.TorrentFile{},
 		}
 		for _, file := range torrent.Files {
-			fileNameCmp := filepath.Base(file.Path)
-			if fileNameCmp == originalFilePath {
-				return &common.TorrentClientFinding{
-					Added: time.Unix(int64(torrent.TimeAdded), 0),
-				}, nil
-			}
+			torrentEntry.Files = append(torrentEntry.Files, &common.TorrentFile{
+				Path: file.Path,
+				Size: file.Size,
+			})
 		}
+		torrentEntries = append(torrentEntries, torrentEntry)
 	}
-	return nil, nil
+	return torrentEntries, nil
+}
+
+func (retriever *DelugeRetriever) Name() string {
+	return "deluge"
 }
