@@ -12,6 +12,8 @@ import (
 	"golift.io/starr/sonarr"
 )
 
+var _ common.MediaRetriever = (*SonarrRetriever)(nil)
+
 type SonarrRetriever struct {
 	seriesCache             []*sonarr.Series
 	seriesEpisodeFilesCache map[int64][]*sonarr.EpisodeFile
@@ -100,4 +102,15 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 		mediaList = append(mediaList, media)
 	}
 	return mediaList, nil
+}
+
+func (r *SonarrRetriever) DeleteMedia(id int64) error {
+	if err := r.client.DeleteSeries(int(id), true, false); err != nil {
+		return fmt.Errorf("could not delete series: %d from sonarr %w", id, err)
+	}
+	return nil
+}
+
+func (r *SonarrRetriever) SupportedMediaType() common.MediaType {
+	return common.MediaTypeSeries
 }

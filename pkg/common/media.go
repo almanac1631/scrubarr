@@ -68,3 +68,9 @@ type Manager interface {
 
 	DeleteMedia(mediaType MediaType, id int64) error
 }
+
+type MediaRetriever interface {
+	GetMedia() ([]Media, error)
+	SupportedMediaType() MediaType
+	DeleteMedia(id int64) error
+}
