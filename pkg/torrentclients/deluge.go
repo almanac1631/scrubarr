@@ -40,7 +40,7 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, e
 			Client: retriever.Name(),
 			Id:     hash,
 			Name:   torrent.Name,
-			Added:  time.Unix(int64(torrent.TimeAdded), 0),
+			Added:  time.Unix(torrent.CompletedTime, 0).In(time.UTC),
 			Files:  []*common.TorrentFile{},
 		}
 		for _, file := range torrent.Files {
