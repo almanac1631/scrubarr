@@ -6,10 +6,13 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/media"
 )
+
+var _ common.Manager = (*Manager)(nil)
 
 type Manager struct {
 	matchedMediaCache []common.MatchedMedia
@@ -168,4 +171,10 @@ func CompareBool(a, b bool) int {
 		return 1
 	}
 	return -1
+}
+
+func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
+	time.Sleep(time.Second * 3)
+	slog.Info("would delete media", "type", mediaType, "id", id)
+	return nil
 }
