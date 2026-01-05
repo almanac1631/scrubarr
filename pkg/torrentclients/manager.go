@@ -6,6 +6,8 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
+	"slices"
+	"sync"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 )
@@ -15,12 +17,14 @@ var _ common.CachedRetriever = (*DefaultTorrentManager)(nil)
 
 type DefaultTorrentManager struct {
 	Entries    map[string][]*common.TorrentEntry
+	entryLock  *sync.Mutex
 	retrievers map[string]common.TorrentClientRetriever
 }
 
 func NewDefaultTorrentManager(retrievers ...common.TorrentClientRetriever) *DefaultTorrentManager {
 	manager := &DefaultTorrentManager{
 		retrievers: make(map[string]common.TorrentClientRetriever),
+		entryLock:  new(sync.Mutex),
 	}
 	for _, retriever := range retrievers {
 		manager.retrievers[retriever.Name()] = retriever
@@ -28,13 +32,11 @@ func NewDefaultTorrentManager(retrievers ...common.TorrentClientRetriever) *Defa
 	return manager
 }
 
-func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string, size int64) (finding *common.TorrentClientFinding, err error) {
+func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string, size int64) (finding *common.TorrentEntry, err error) {
 	for _, entries := range manager.Entries {
 		for _, entry := range entries {
 			if matches(entry, originalFilePath, size) {
-				return &common.TorrentClientFinding{
-					Added: entry.Added,
-				}, nil
+				return entry, nil
 			}
 		}
 	}
@@ -64,7 +66,25 @@ func matches(entry *common.TorrentEntry, originalFilePath string, size int64) bo
 	return false
 }
 
+func (manager *DefaultTorrentManager) DeleteFinding(client, id string) error {
+	manager.entryLock.Lock()
+	defer manager.entryLock.Unlock()
+	retriever, ok := manager.retrievers[client]
+	if !ok {
+		return fmt.Errorf("could not find retriever for %q", client)
+	}
+	if err := retriever.DeleteTorrent(id); err != nil {
+		return fmt.Errorf("could not delete torrent %q from client %q: %w", id, client, err)
+	}
+	manager.Entries[client] = slices.DeleteFunc(manager.Entries[client], func(entrySearch *common.TorrentEntry) bool {
+		return entrySearch.Id == id
+	})
+	return nil
+}
+
 func (manager *DefaultTorrentManager) RefreshCache() error {
+	manager.entryLock.Lock()
+	defer manager.entryLock.Unlock()
 	manager.Entries = make(map[string][]*common.TorrentEntry)
 	for name, retriever := range manager.retrievers {
 		slog.Debug("Refreshing torrent cache...", "client", name)

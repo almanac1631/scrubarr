@@ -3,10 +3,13 @@ package torrentclients
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/autobrr/go-rtorrent"
 )
+
+var _ common.TorrentClientRetriever = (*RtorrentRetriever)(nil)
 
 type RtorrentRetriever struct {
 	client *rtorrent.Client
@@ -52,6 +55,25 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 		torrentEntries = append(torrentEntries, torrentEntry)
 	}
 	return torrentEntries, nil
+}
+
+func (retriever *RtorrentRetriever) DeleteTorrent(id string) error {
+	hash := id
+	torrent := rtorrent.Torrent{Hash: hash}
+	if err := retriever.client.SetForceDelete(context.Background(), torrent, true); err != nil {
+		errString := err.Error()
+		if strings.Contains(errString, "Could not find info-hash") || strings.Contains(errString, "info-hash not found") {
+			return common.ErrTorrentNotFound
+		}
+		return fmt.Errorf("could not force deletion for torrent %q: %w", hash, err)
+	}
+	if err := retriever.client.DeleteTied(context.Background(), torrent); err != nil {
+		return fmt.Errorf("could not delete tied files for torrent %q: %w", hash, err)
+	}
+	if err := retriever.client.Delete(context.Background(), torrent); err != nil {
+		return fmt.Errorf("could not delete files for torrent %q: %w", hash, err)
+	}
+	return nil
 }
 
 func (retriever *RtorrentRetriever) Name() string {

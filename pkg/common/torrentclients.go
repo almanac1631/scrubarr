@@ -1,10 +1,11 @@
 package common
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
-type TorrentClientFinding struct {
-	Added time.Time
-}
+var ErrTorrentNotFound = errors.New("torrent not found")
 
 type TorrentFile struct {
 	Path string
@@ -20,10 +21,12 @@ type TorrentEntry struct {
 }
 
 type TorrentClientManager interface {
-	SearchForMedia(originalFilePath string, size int64) (finding *TorrentClientFinding, err error)
+	SearchForMedia(originalFilePath string, size int64) (finding *TorrentEntry, err error)
+	DeleteFinding(client string, id string) error
 }
 
 type TorrentClientRetriever interface {
 	GetTorrentEntries() ([]*TorrentEntry, error)
+	DeleteTorrent(id string) error
 	Name() string
 }

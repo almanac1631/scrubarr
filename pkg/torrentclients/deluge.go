@@ -1,12 +1,15 @@
 package torrentclients
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	delugeclient "github.com/gdm85/go-libdeluge"
 )
+
+var _ common.TorrentClientRetriever = (*DelugeRetriever)(nil)
 
 type DelugeRetriever struct {
 	client *delugeclient.ClientV2
@@ -49,6 +52,20 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, e
 		torrentEntries = append(torrentEntries, torrentEntry)
 	}
 	return torrentEntries, nil
+}
+
+func (retriever *DelugeRetriever) DeleteTorrent(id string) error {
+	ok, err := retriever.client.RemoveTorrent(id, true)
+	if err != nil {
+		var wrappedErr delugeclient.RPCError
+		if errors.As(err, &wrappedErr) && wrappedErr.ExceptionType == "InvalidTorrentError" {
+			return common.ErrTorrentNotFound
+		}
+		return fmt.Errorf("could not remove torrent from deluge rpc api: %w", err)
+	} else if !ok {
+		return fmt.Errorf("could not remove torrent from deluge rpc api but no error was thrown")
+	}
+	return nil
 }
 
 func (retriever *DelugeRetriever) Name() string {
