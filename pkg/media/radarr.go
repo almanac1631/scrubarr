@@ -12,6 +12,8 @@ import (
 	"golift.io/starr/radarr"
 )
 
+var _ common.MediaRetriever = (*RadarrRetriever)(nil)
+
 type RadarrRetriever struct {
 	moviesCache []*radarr.Movie
 	client      *radarr.Radarr
@@ -49,7 +51,7 @@ func (r *RadarrRetriever) LoadCache(reader io.ReadSeeker) error {
 	return json.NewDecoder(reader).Decode(&r.moviesCache)
 }
 
-func (r *RadarrRetriever) GetMovies() ([]common.Media, error) {
+func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
 	if r.moviesCache == nil {
 		if err := r.RefreshCache(); err != nil {
 			return nil, err
@@ -77,4 +79,14 @@ func (r *RadarrRetriever) GetMovies() ([]common.Media, error) {
 		})
 	}
 	return mappedMovies, nil
+}
+func (r *RadarrRetriever) DeleteMedia(id int64) error {
+	if err := r.client.DeleteMovie(id, true, false); err != nil {
+		return fmt.Errorf("could not delete movie %d from radarr: %w", id, err)
+	}
+	return nil
+}
+
+func (r *RadarrRetriever) SupportedMediaType() common.MediaType {
+	return common.MediaTypeMovie
 }

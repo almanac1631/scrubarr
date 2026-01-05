@@ -32,7 +32,7 @@ type Media struct {
 
 type MatchedMediaPart struct {
 	MediaPart
-	ExistsInTorrentClient bool
+	TorrentFinding *TorrentEntry
 }
 
 type MatchedMedia struct {
@@ -65,4 +65,12 @@ type Manager interface {
 	GetMatchedMedia(page int, sortInfo SortInfo) (media []MatchedMedia, hasNext bool, err error)
 
 	GetMatchedMediaBySeriesId(seriesId int64) (media []MatchedMedia, err error)
+
+	DeleteMedia(mediaType MediaType, id int64) error
+}
+
+type MediaRetriever interface {
+	GetMedia() ([]Media, error)
+	SupportedMediaType() MediaType
+	DeleteMedia(id int64) error
 }

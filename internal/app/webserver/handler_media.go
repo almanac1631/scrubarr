@@ -96,7 +96,7 @@ func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMed
 		missingTorrents := 0
 		for _, part := range matchedMedia.Parts {
 			totalSize += part.Size
-			if !part.ExistsInTorrentClient {
+			if part.TorrentFinding == nil {
 				missingTorrents++
 			}
 		}
@@ -159,4 +159,26 @@ func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, re
 		return
 	}
 	return
+}
+
+func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		if !utils.IsHTMXRequest(request) {
+			http.Error(writer, "404 Not Found", http.StatusNotFound)
+			return
+		}
+		idStr := request.PathValue("id")
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			http.Error(writer, "400 Bad Request", http.StatusBadRequest)
+			return
+		}
+		if err := handler.manager.DeleteMedia(mediaType, id); err != nil {
+			slog.Error(err.Error())
+			http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+		return
+	}
 }
