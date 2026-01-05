@@ -32,7 +32,7 @@ type Media struct {
 
 type MatchedMediaPart struct {
 	MediaPart
-	ExistsInTorrentClient bool
+	TorrentFinding *TorrentEntry
 }
 
 type MatchedMedia struct {

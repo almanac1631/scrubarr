@@ -96,7 +96,7 @@ func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMed
 		missingTorrents := 0
 		for _, part := range matchedMedia.Parts {
 			totalSize += part.Size
-			if !part.ExistsInTorrentClient {
+			if part.TorrentFinding == nil {
 				missingTorrents++
 			}
 		}

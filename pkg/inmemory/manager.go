@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/media"
@@ -49,8 +48,8 @@ func (m *Manager) refreshCache() error {
 		m.matchedMediaCache = append(m.matchedMediaCache, common.MatchedMedia{
 			MediaMetadata: movie.MediaMetadata,
 			Parts: []common.MatchedMediaPart{{
-				MediaPart:             movie.Parts[0],
-				ExistsInTorrentClient: finding != nil,
+				MediaPart:      movie.Parts[0],
+				TorrentFinding: finding,
 			}},
 		})
 	}
@@ -66,10 +65,11 @@ func (m *Manager) refreshCache() error {
 			if finding != nil && !finding.Added.IsZero() && finding.Added.Before(added) {
 				added = finding.Added
 			}
-			parts = append(parts, common.MatchedMediaPart{
-				MediaPart:             part,
-				ExistsInTorrentClient: finding != nil,
-			})
+			mediaPart := common.MatchedMediaPart{
+				MediaPart:      part,
+				TorrentFinding: finding,
+			}
+			parts = append(parts, mediaPart)
 		}
 		matchedMedia := common.MatchedMedia{
 			MediaMetadata: mediaEntry.MediaMetadata,
@@ -107,8 +107,7 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.
 	existsInTorrentClient := func(matchedMedia common.MatchedMedia) bool {
 		if _, ok := existsInTorrentClientCache[matchedMedia.Url]; !ok {
 			existsInTorrentClientCache[matchedMedia.Url] = !slices.ContainsFunc(matchedMedia.Parts, func(part common.MatchedMediaPart) bool {
-				doesNotExist := !part.ExistsInTorrentClient
-				return doesNotExist
+				return part.TorrentFinding == nil
 			})
 		}
 		return existsInTorrentClientCache[matchedMedia.Url]
@@ -148,6 +147,10 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.
 }
 
 func (m *Manager) GetMatchedMediaBySeriesId(seriesId int64) (media []common.MatchedMedia, err error) {
+	return m.getFilteredMatchedMedia(common.MediaTypeSeries, seriesId)
+}
+
+func (m *Manager) getFilteredMatchedMedia(mediaType common.MediaType, id int64) (media []common.MatchedMedia, err error) {
 	if m.matchedMediaCache == nil {
 		if err := m.refreshCache(); err != nil {
 			return nil, err
@@ -155,7 +158,7 @@ func (m *Manager) GetMatchedMediaBySeriesId(seriesId int64) (media []common.Matc
 	}
 	filteredMediaList := make([]common.MatchedMedia, 0)
 	for _, mediaEntry := range m.matchedMediaCache {
-		if mediaEntry.Type != common.MediaTypeSeries || mediaEntry.Id != seriesId {
+		if mediaEntry.Type != mediaType || mediaEntry.Id != id {
 			continue
 		}
 		filteredMediaList = append(filteredMediaList, mediaEntry)
@@ -174,7 +177,40 @@ func CompareBool(a, b bool) int {
 }
 
 func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
-	time.Sleep(time.Second * 3)
-	slog.Info("would delete media", "type", mediaType, "id", id)
+	filteredMatchedMedia, err := m.getFilteredMatchedMedia(mediaType, id)
+	if err != nil {
+		return err
+	}
+	type torrent struct {
+		client string
+		id     string
+	}
+	torrentsToDelete := make([]torrent, 0)
+	for _, matchedMedia := range filteredMatchedMedia {
+		for _, part := range matchedMedia.Parts {
+			if part.TorrentFinding == nil {
+				continue
+			}
+			partTorrent := torrent{
+				client: part.TorrentFinding.Client,
+				id:     part.TorrentFinding.Id,
+			}
+			if !slices.ContainsFunc(torrentsToDelete, func(compareTorrent torrent) bool {
+				if part.TorrentFinding == nil {
+					return false
+				}
+				return partTorrent.client == compareTorrent.client && partTorrent.id == compareTorrent.id
+			}) {
+				torrentsToDelete = append(torrentsToDelete, partTorrent)
+			}
+		}
+	}
+	for _, torrentToDelete := range torrentsToDelete {
+		//if err = m.torrentManager.DeleteFinding(torrentToDelete.client, torrentToDelete.id); err != nil {
+		//	return fmt.Errorf("could not delete %s with id %d from torrent client %q (torrent id: %q): %w",
+		//		mediaType, id, torrentToDelete.client, torrentToDelete.id, err)
+		//}
+		slog.Info("would delete torrent", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
+	}
 	return nil
 }
