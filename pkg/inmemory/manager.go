@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
-	"github.com/almanac1631/scrubarr/pkg/media"
 )
 
 var _ common.Manager = (*Manager)(nil)
@@ -16,67 +15,50 @@ var _ common.Manager = (*Manager)(nil)
 type Manager struct {
 	matchedMediaCache []common.MatchedMedia
 
-	radarrRetriever *media.RadarrRetriever
-	sonarrRetriever *media.SonarrRetriever
+	mediaRetrievers []common.MediaRetriever
 
 	torrentManager common.TorrentClientManager
 }
 
-func NewManager(radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, torrentManager common.TorrentClientManager) *Manager {
+func NewManager(mediaRetrievers []common.MediaRetriever, torrentManager common.TorrentClientManager) *Manager {
 	return &Manager{
-		nil, radarrRetriever, sonarrRetriever, torrentManager,
+		nil, mediaRetrievers, torrentManager,
 	}
 }
 
 const pageSize = 10
 
 func (m *Manager) refreshCache() error {
-	radarrMovies, err := m.radarrRetriever.GetMovies()
-	if err != nil {
-		return fmt.Errorf("failed to get movies from radarr: %w", err)
-	}
-	m.matchedMediaCache = make([]common.MatchedMedia, 0, len(radarrMovies))
-	for _, movie := range radarrMovies {
-		originalFilePath := movie.Parts[0].OriginalFilePath
-		finding, err := m.torrentManager.SearchForMedia(originalFilePath, movie.Parts[0].Size)
+	m.matchedMediaCache = make([]common.MatchedMedia, 0)
+	for _, retriever := range m.mediaRetrievers {
+		medias, err := retriever.GetMedia()
 		if err != nil {
-			return err
+			return fmt.Errorf("could not retrieve %s media from retriever: %w", retriever.SupportedMediaType(), err)
 		}
-		if finding != nil {
-			movie.Added = finding.Added
-		}
-		m.matchedMediaCache = append(m.matchedMediaCache, common.MatchedMedia{
-			MediaMetadata: movie.MediaMetadata,
-			Parts: []common.MatchedMediaPart{{
-				MediaPart:      movie.Parts[0],
-				TorrentFinding: finding,
-			}},
-		})
-	}
-	sonarrSeries, err := m.sonarrRetriever.GetMedia()
-	for _, mediaEntry := range sonarrSeries {
-		parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.Parts))
-		added := mediaEntry.Added
-		for _, part := range mediaEntry.Parts {
-			finding, err := m.torrentManager.SearchForMedia(part.OriginalFilePath, part.Size)
-			if err != nil {
-				return err
+		for _, mediaEntry := range medias {
+			parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.Parts))
+			added := mediaEntry.Added
+			for _, part := range mediaEntry.Parts {
+				finding, err := m.torrentManager.SearchForMedia(part.OriginalFilePath, part.Size)
+				if err != nil {
+					return err
+				}
+				if finding != nil && !finding.Added.IsZero() && finding.Added.After(added) {
+					added = finding.Added
+				}
+				mediaPart := common.MatchedMediaPart{
+					MediaPart:      part,
+					TorrentFinding: finding,
+				}
+				parts = append(parts, mediaPart)
 			}
-			if finding != nil && !finding.Added.IsZero() && finding.Added.Before(added) {
-				added = finding.Added
+			matchedMedia := common.MatchedMedia{
+				MediaMetadata: mediaEntry.MediaMetadata,
+				Parts:         parts,
 			}
-			mediaPart := common.MatchedMediaPart{
-				MediaPart:      part,
-				TorrentFinding: finding,
-			}
-			parts = append(parts, mediaPart)
+			matchedMedia.Added = added
+			m.matchedMediaCache = append(m.matchedMediaCache, matchedMedia)
 		}
-		matchedMedia := common.MatchedMedia{
-			MediaMetadata: mediaEntry.MediaMetadata,
-			Parts:         parts,
-		}
-		matchedMedia.Added = added
-		m.matchedMediaCache = append(m.matchedMediaCache, matchedMedia)
 	}
 	return nil
 }
@@ -206,11 +188,25 @@ func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
 		}
 	}
 	for _, torrentToDelete := range torrentsToDelete {
-		//if err = m.torrentManager.DeleteFinding(torrentToDelete.client, torrentToDelete.id); err != nil {
-		//	return fmt.Errorf("could not delete %s with id %d from torrent client %q (torrent id: %q): %w",
-		//		mediaType, id, torrentToDelete.client, torrentToDelete.id, err)
-		//}
-		slog.Info("would delete torrent", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
+		slog.Info("delete torrent", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
+		if err = m.torrentManager.DeleteFinding(torrentToDelete.client, torrentToDelete.id); err != nil {
+			return fmt.Errorf("could not delete %s with id %d from torrent client %q (torrent id: %q): %w",
+				mediaType, id, torrentToDelete.client, torrentToDelete.id, err)
+		}
 	}
+	index := slices.IndexFunc(m.mediaRetrievers, func(retriever common.MediaRetriever) bool {
+		return retriever.SupportedMediaType() == mediaType
+	})
+	if index == -1 {
+		return fmt.Errorf("could not find matching media retriever for media type %q", mediaType)
+	}
+	retriever := m.mediaRetrievers[index]
+	if err = retriever.DeleteMedia(id); err != nil {
+		return err
+	}
+	slog.Info("delete media", "retriever", fmt.Sprintf("%T", retriever))
+	m.matchedMediaCache = slices.DeleteFunc(m.matchedMediaCache, func(media common.MatchedMedia) bool {
+		return media.Type == mediaType && media.Id == id
+	})
 	return nil
 }
