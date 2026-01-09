@@ -54,12 +54,13 @@
             </button>
         </td>
     </tr>
-    {{ if gt (len .Parts) 0 }}
-        {{ range .Parts }}
-            <tr class="text-xs">
+    {{ if and (eq .Type "series") (gt (len .Parts) 0) }}
+        {{ $series := . | getSeasonGroupedParts }}
+        {{ range $series.Seasons }}
+            <tr class="text-sm">
                 <td></td>
-                <td class="py-3 px-1 truncate" title="{{ .OriginalFilePath }}">
-                    S{{ .Season }} {{ .OriginalFilePath }}
+                <td class="py-3 px-1 truncate" title="Season {{ .Season }}">
+                    Season {{ .Season }}
                 </td>
                 <td class="py-3 px-1">
                     {{ .Size | formatBytes }}
@@ -67,13 +68,37 @@
                 <td class="py-3 px-1">
                 </td>
                 <td class="py-3 px-1">
-                    {{ if .TorrentFinding }}
+                    {{ if eq .TorrentStatus "present" }}
                         <span class="text-green-600 font-semibold">Present</span>
-                    {{ else }}
+                    {{ else if eq .TorrentStatus "missing" }}
                         <span class="text-red-600 font-semibold">Missing</span>
+                    {{ else if eq .TorrentStatus "incomplete" }}
+                        <span class="text-yellow-600 font-semibold">Incomplete</span>
+                    {{ else }}
+                        ???
                     {{ end }}
                 </td>
             </tr>
+            {{ range .Parts }}
+                <tr class="text-xs">
+                    <td></td>
+                    <td class="py-3 px-1 truncate" title="{{ .OriginalFilePath }}">
+                        {{ .OriginalFilePath }}
+                    </td>
+                    <td class="py-3 px-1">
+                        {{ .Size | formatBytes }}
+                    </td>
+                    <td class="py-3 px-1">
+                    </td>
+                    <td class="py-3 px-1">
+                        {{ if .TorrentFinding }}
+                            <span class="text-green-600 font-semibold">Present</span>
+                        {{ else }}
+                            <span class="text-red-600 font-semibold">Missing</span>
+                        {{ end }}
+                    </td>
+                </tr>
+            {{ end }}
         {{ end }}
     {{ end }}
     </tbody>

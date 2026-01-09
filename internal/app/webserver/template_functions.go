@@ -17,4 +17,5 @@ var templateFunctions = template.FuncMap{
 	"checkCurrentSort": func(sortKey common.SortKey, sortOrder common.SortOrder, currentSortInfo common.SortInfo) bool {
 		return currentSortInfo.Key == sortKey && currentSortInfo.Order == sortOrder
 	},
+	"getSeasonGroupedParts": getSeasonGroupedParts,
 }
