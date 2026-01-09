@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
@@ -28,6 +29,18 @@ type MappedMedia struct {
 	common.MatchedMedia
 	TorrentStatus TorrentStatus
 	Size          int64
+}
+
+type MappedMediaSeason struct {
+	Season        int
+	Size          int64
+	TorrentStatus TorrentStatus
+	Parts         []common.MatchedMediaPart
+}
+
+type MappedMediaSeries struct {
+	*MappedMedia
+	Seasons []*MappedMediaSeason
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
@@ -92,22 +105,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMedia) []*MappedMedia {
 	mediaEntries := make([]*MappedMedia, 0, len(matchedMediaList))
 	for _, matchedMedia := range matchedMediaList {
-		totalSize := int64(0)
-		missingTorrents := 0
-		for _, part := range matchedMedia.Parts {
-			totalSize += part.Size
-			if part.TorrentFinding == nil {
-				missingTorrents++
-			}
-		}
-		var torrentStatus TorrentStatus
-		if missingTorrents == 0 {
-			torrentStatus = TorrentStatusPresent
-		} else if missingTorrents == len(matchedMedia.Parts) {
-			torrentStatus = TorrentStatusMissing
-		} else {
-			torrentStatus = TorrentStatusIncomplete
-		}
+		totalSize, torrentStatus := getStatusFromParts(matchedMedia.Parts)
 		mediaEntries = append(mediaEntries, &MappedMedia{
 			MatchedMedia:  matchedMedia,
 			TorrentStatus: torrentStatus,
@@ -115,6 +113,24 @@ func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMed
 		})
 	}
 	return mediaEntries
+}
+
+func getStatusFromParts(parts []common.MatchedMediaPart) (totalSize int64, torrentStatus TorrentStatus) {
+	missingTorrents := 0
+	for _, part := range parts {
+		totalSize += part.Size
+		if part.TorrentFinding == nil {
+			missingTorrents++
+		}
+	}
+	if missingTorrents == 0 {
+		torrentStatus = TorrentStatusPresent
+	} else if missingTorrents == len(parts) {
+		torrentStatus = TorrentStatusMissing
+	} else {
+		torrentStatus = TorrentStatusIncomplete
+	}
+	return totalSize, torrentStatus
 }
 
 func getSortInfoFromUrlQuery(values url.Values) common.SortInfo {
@@ -159,6 +175,40 @@ func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, re
 		return
 	}
 	return
+}
+
+func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
+	mappedSeries := MappedMediaSeries{
+		MappedMedia: mappedMedia,
+		Seasons:     make([]*MappedMediaSeason, 0),
+	}
+	partsNoSeason := make([]common.MatchedMediaPart, 0)
+	for _, part := range mappedMedia.Parts {
+		seasonNumber := part.Season
+		if seasonNumber == 0 {
+			partsNoSeason = append(partsNoSeason, part)
+			continue
+		}
+		index := slices.IndexFunc(mappedSeries.Seasons, func(season *MappedMediaSeason) bool {
+			return season.Season == seasonNumber
+		})
+		var seasonObj *MappedMediaSeason
+		if index == -1 {
+			seasonObj = &MappedMediaSeason{
+				Season: seasonNumber,
+				Parts:  []common.MatchedMediaPart{part},
+			}
+			mappedSeries.Seasons = append(mappedSeries.Seasons, seasonObj)
+		} else {
+			seasonObj = mappedSeries.Seasons[index]
+			seasonObj.Parts = append(seasonObj.Parts, part)
+		}
+	}
+	for _, season := range mappedSeries.Seasons {
+		season.Size, season.TorrentStatus = getStatusFromParts(season.Parts)
+	}
+	mappedMedia.Parts = partsNoSeason
+	return mappedSeries
 }
 
 func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http.HandlerFunc {
