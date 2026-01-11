@@ -65,7 +65,7 @@ type SortInfo struct {
 type Manager interface {
 	GetMatchedMedia(page int, sortInfo SortInfo) (media []MatchedMedia, hasNext bool, err error)
 
-	GetMatchedMediaBySeriesId(seriesId int64) (media []MatchedMedia, err error)
+	GetMatchedMediaBySeriesId(seriesId int64) (media MatchedMedia, err error)
 
 	DeleteMedia(mediaType MediaType, id int64) error
 
@@ -75,7 +75,5 @@ type Manager interface {
 type MediaRetriever interface {
 	GetMedia() ([]Media, error)
 	SupportedMediaType() MediaType
-	// todo: remove function and only use DeleteMediaFiles
-	DeleteMedia(id int64) error
 	DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error
 }

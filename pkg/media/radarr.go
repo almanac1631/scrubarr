@@ -82,12 +82,6 @@ func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
 	}
 	return mappedMovies, nil
 }
-func (r *RadarrRetriever) DeleteMedia(id int64) error {
-	if err := r.client.DeleteMovie(id, true, false); err != nil {
-		return fmt.Errorf("could not delete movie %d from radarr: %w", id, err)
-	}
-	return nil
-}
 
 func (r *RadarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
 	movieFiles, err := r.client.GetMovieFiles(fileIds)

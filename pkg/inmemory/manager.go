@@ -129,14 +129,23 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.
 	return movies, hasNext, nil
 }
 
-func (m *Manager) GetMatchedMediaBySeriesId(seriesId int64) (media []common.MatchedMedia, err error) {
-	return m.getFilteredMatchedMedia(common.MediaTypeSeries, seriesId)
+func (m *Manager) GetMatchedMediaBySeriesId(seriesId int64) (media common.MatchedMedia, err error) {
+	return m.getSingleMatchedMediaEntry(common.MediaTypeSeries, seriesId)
 }
 
-func (m *Manager) getFilteredMatchedMedia(mediaType common.MediaType, id int64) (media []common.MatchedMedia, err error) {
-	return m.getFilteredMatchedMediaFunc(func(media common.MatchedMedia) bool {
+func (m *Manager) getSingleMatchedMediaEntry(mediaType common.MediaType, id int64) (media common.MatchedMedia, err error) {
+	matchedMediaList, err := m.getFilteredMatchedMediaFunc(func(media common.MatchedMedia) bool {
 		return media.Type == mediaType && media.Id == id
 	})
+	if err != nil {
+		return common.MatchedMedia{}, err
+	}
+	if len(matchedMediaList) == 0 {
+		return common.MatchedMedia{}, fmt.Errorf("no matched media found with type %s and id %d", mediaType, id)
+	} else if len(matchedMediaList) > 1 {
+		return common.MatchedMedia{}, fmt.Errorf("multiple matched media found with type %s and id %d", mediaType, id)
+	}
+	return matchedMediaList[0], nil
 }
 
 func (m *Manager) getFilteredMatchedMediaFunc(filterFunc func(media common.MatchedMedia) bool) (media []common.MatchedMedia, err error) {
@@ -165,53 +174,11 @@ func CompareBool(a, b bool) int {
 }
 
 func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
-	filteredMatchedMedia, err := m.getFilteredMatchedMedia(mediaType, id)
+	matchedMedia, err := m.getSingleMatchedMediaEntry(mediaType, id)
 	if err != nil {
 		return err
 	}
-	type torrent struct {
-		client string
-		id     string
-	}
-	torrentsToDelete := make([]torrent, 0)
-	for _, matchedMedia := range filteredMatchedMedia {
-		for _, part := range matchedMedia.Parts {
-			if part.TorrentFinding == nil {
-				continue
-			}
-			partTorrent := torrent{
-				client: part.TorrentFinding.Client,
-				id:     part.TorrentFinding.Id,
-			}
-			if !slices.ContainsFunc(torrentsToDelete, func(compareTorrent torrent) bool {
-				if part.TorrentFinding == nil {
-					return false
-				}
-				return partTorrent.client == compareTorrent.client && partTorrent.id == compareTorrent.id
-			}) {
-				torrentsToDelete = append(torrentsToDelete, partTorrent)
-			}
-		}
-	}
-	for _, torrentToDelete := range torrentsToDelete {
-		slog.Info("delete torrent", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
-		if err = m.torrentManager.DeleteFinding(torrentToDelete.client, torrentToDelete.id); err != nil {
-			return fmt.Errorf("could not delete %s with id %d from torrent client %q (torrent id: %q): %w",
-				mediaType, id, torrentToDelete.client, torrentToDelete.id, err)
-		}
-	}
-	retriever, err := m.getRetriever(mediaType)
-	if err != nil {
-		return err
-	}
-	if err = retriever.DeleteMedia(id); err != nil {
-		return err
-	}
-	slog.Info("delete media", "retriever", fmt.Sprintf("%T", retriever))
-	m.matchedMediaCache = slices.DeleteFunc(m.matchedMediaCache, func(media common.MatchedMedia) bool {
-		return media.Type == mediaType && media.Id == id
-	})
-	return nil
+	return m.deleteMediaParts(id, mediaType, matchedMedia.Parts)
 }
 
 func (m *Manager) DeleteSeason(id int64, season int) error {

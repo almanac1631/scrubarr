@@ -111,13 +111,6 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 	return mediaList, nil
 }
 
-func (r *SonarrRetriever) DeleteMedia(id int64) error {
-	if err := r.client.DeleteSeries(int(id), true, false); err != nil {
-		return fmt.Errorf("could not delete series: %d from sonarr %w", id, err)
-	}
-	return nil
-}
-
 func (r *SonarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
 	episodeFiles, err := r.client.GetEpisodeFiles(fileIds...)
 	if err != nil {

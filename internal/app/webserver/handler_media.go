@@ -170,13 +170,13 @@ func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, series
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	mappedMedias := handler.getMatchedMediaList(media)
+	mappedMedias := handler.getMatchedMediaList([]common.MatchedMedia{media})
 	if len(mappedMedias) == 0 {
 		// write 200 because of HTMX request
 		writer.WriteHeader(http.StatusOK)
 		return
 	}
-	mappedMedia := handler.getMatchedMediaList(media)[0]
+	mappedMedia := mappedMedias[0]
 	if collapsed {
 		mappedMedia.Parts = []common.MatchedMediaPart{}
 	}
