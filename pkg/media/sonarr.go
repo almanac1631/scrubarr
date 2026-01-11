@@ -1,11 +1,15 @@
 package media
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"path"
 	"path/filepath"
+	"slices"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"golift.io/starr"
@@ -20,6 +24,8 @@ type SonarrRetriever struct {
 	client                  *sonarr.Sonarr
 	appUrl                  string
 }
+
+const sonarrEpisodeFileBulkDeleteEndpoint = sonarr.APIver + "/episodeFile/bulk"
 
 func NewSonarrRetriever(appUrl string, apiKey string) (*SonarrRetriever, error) {
 	config := starr.New(apiKey, appUrl, 0)
@@ -84,6 +90,7 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 		parts := make([]common.MediaPart, 0, len(seriesEpisodeFiles))
 		for _, seriesEpisodeFile := range seriesEpisodeFiles {
 			parts = append(parts, common.MediaPart{
+				Id:               seriesEpisodeFile.ID,
 				Season:           seriesEpisodeFile.SeasonNumber,
 				OriginalFilePath: filepath.Base(seriesEpisodeFile.RelativePath),
 				Size:             seriesEpisodeFile.Size,
@@ -107,6 +114,63 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 func (r *SonarrRetriever) DeleteMedia(id int64) error {
 	if err := r.client.DeleteSeries(int(id), true, false); err != nil {
 		return fmt.Errorf("could not delete series: %d from sonarr %w", id, err)
+	}
+	return nil
+}
+
+func (r *SonarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
+	episodeFiles, err := r.client.GetEpisodeFiles(fileIds...)
+	if err != nil {
+		return fmt.Errorf("could not get sonarr episode files: %w", err)
+	}
+	var seriesSeasonMap map[int64][]int
+	if stopParentMonitoring {
+		for _, episodeFile := range episodeFiles {
+			seasonList, ok := seriesSeasonMap[episodeFile.SeriesID]
+			if !ok {
+				seasonList = []int{episodeFile.SeasonNumber}
+			} else if !slices.Contains(seasonList, episodeFile.SeasonNumber) {
+				seasonList = append(seasonList, episodeFile.SeasonNumber)
+			}
+			seriesSeasonMap[episodeFile.SeriesID] = seasonList
+		}
+	}
+	payload := struct {
+		EpisodeFileIds []int64 `json:"episodeFileIds"`
+	}{
+		EpisodeFileIds: fileIds,
+	}
+	payloadEncoded, err := json.Marshal(&payload)
+	if err != nil {
+		return fmt.Errorf("could not encode sonarr episode file bulk delete payload: %w", err)
+	}
+	req := starr.Request{URI: sonarrEpisodeFileBulkDeleteEndpoint, Body: bytes.NewReader(payloadEncoded)}
+	if err = r.client.DeleteAny(context.Background(), req); err != nil {
+		return fmt.Errorf("could not bulkd delete episode files from sonarr: %w",
+			fmt.Errorf("api.Delete(%s): %w", &req, err))
+	}
+	monitoringUpdateErrors := make([]error, 0)
+	if stopParentMonitoring {
+		for seriesId, seasonList := range seriesSeasonMap {
+			seasons := make([]*sonarr.Season, len(seasonList))
+			for _, season := range seasonList {
+				seasons = append(seasons, &sonarr.Season{
+					Monitored:    false,
+					SeasonNumber: season,
+				})
+			}
+			_, err = r.client.UpdateSeries(&sonarr.AddSeriesInput{
+				ID:      seriesId,
+				Seasons: seasons,
+			}, false)
+			if err != nil {
+				monitoringUpdateErrors = append(monitoringUpdateErrors,
+					fmt.Errorf("could not update monitoring status of series %d: %w", seriesId, err))
+			}
+		}
+	}
+	if len(monitoringUpdateErrors) > 0 {
+		return errors.Join(monitoringUpdateErrors...)
 	}
 	return nil
 }

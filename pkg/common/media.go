@@ -20,6 +20,7 @@ type MediaMetadata struct {
 }
 
 type MediaPart struct {
+	Id               int64
 	Season           int
 	OriginalFilePath string
 	Size             int64
@@ -67,10 +68,14 @@ type Manager interface {
 	GetMatchedMediaBySeriesId(seriesId int64) (media []MatchedMedia, err error)
 
 	DeleteMedia(mediaType MediaType, id int64) error
+
+	DeleteSeason(id int64, season int) error
 }
 
 type MediaRetriever interface {
 	GetMedia() ([]Media, error)
 	SupportedMediaType() MediaType
+	// todo: remove function and only use DeleteMediaFiles
 	DeleteMedia(id int64) error
+	DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error
 }

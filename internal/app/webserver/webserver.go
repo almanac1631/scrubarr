@@ -50,6 +50,7 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 	authorizedRouter.HandleFunc("GET /media/entries", handler.handleMediaEntriesEndpoint)
 	authorizedRouter.HandleFunc("GET /media/series/{id}", handler.handleMediaSeriesEndpoint)
 	authorizedRouter.HandleFunc("DELETE /media/series/{id}", handler.getMediaDeletionHandler(common.MediaTypeSeries))
+	authorizedRouter.HandleFunc("DELETE /media/series/{id}/season/{season}", handler.getMediaSeasonDeletionHandler())
 	authorizedRouter.HandleFunc("DELETE /media/movie/{id}", handler.getMediaDeletionHandler(common.MediaTypeMovie))
 	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/" {

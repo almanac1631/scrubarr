@@ -2,6 +2,7 @@ package media
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -72,6 +73,7 @@ func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
 			},
 			Parts: []common.MediaPart{
 				{
+					Id:               movie.MovieFile.ID,
 					OriginalFilePath: filepath.Base(movie.MovieFile.OriginalFilePath),
 					Size:             movie.SizeOnDisk,
 				},
@@ -83,6 +85,40 @@ func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
 func (r *RadarrRetriever) DeleteMedia(id int64) error {
 	if err := r.client.DeleteMovie(id, true, false); err != nil {
 		return fmt.Errorf("could not delete movie %d from radarr: %w", id, err)
+	}
+	return nil
+}
+
+func (r *RadarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
+	movieFiles, err := r.client.GetMovieFiles(fileIds)
+	if err != nil {
+		return fmt.Errorf("could not get radarr movie files: %w", err)
+	}
+	var movies map[int64]struct{}
+	if stopParentMonitoring {
+		for _, movieFile := range movieFiles {
+			if _, ok := movies[movieFile.MovieID]; ok {
+				continue
+			}
+			movies[movieFile.MovieID] = struct{}{}
+		}
+	}
+	if err = r.client.DeleteMovieFiles(fileIds...); err != nil {
+		return fmt.Errorf("could not bulk delete movie files: %w", err)
+	}
+	monitoringUpdateErrors := make([]error, 0)
+	if stopParentMonitoring {
+		for movieId, _ := range movies {
+			if _, err = r.client.UpdateMovie(movieId, &radarr.Movie{
+				ID:        movieId,
+				Monitored: false,
+			}, false); err != nil {
+				monitoringUpdateErrors = append(monitoringUpdateErrors, err)
+			}
+		}
+	}
+	if len(monitoringUpdateErrors) > 0 {
+		return errors.Join(monitoringUpdateErrors...)
 	}
 	return nil
 }

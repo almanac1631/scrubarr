@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"log/slog"
+	"maps"
 	"slices"
 	"strings"
 
@@ -133,6 +134,12 @@ func (m *Manager) GetMatchedMediaBySeriesId(seriesId int64) (media []common.Matc
 }
 
 func (m *Manager) getFilteredMatchedMedia(mediaType common.MediaType, id int64) (media []common.MatchedMedia, err error) {
+	return m.getFilteredMatchedMediaFunc(func(media common.MatchedMedia) bool {
+		return media.Type == mediaType && media.Id == id
+	})
+}
+
+func (m *Manager) getFilteredMatchedMediaFunc(filterFunc func(media common.MatchedMedia) bool) (media []common.MatchedMedia, err error) {
 	if m.matchedMediaCache == nil {
 		if err := m.refreshCache(); err != nil {
 			return nil, err
@@ -140,10 +147,9 @@ func (m *Manager) getFilteredMatchedMedia(mediaType common.MediaType, id int64) 
 	}
 	filteredMediaList := make([]common.MatchedMedia, 0)
 	for _, mediaEntry := range m.matchedMediaCache {
-		if mediaEntry.Type != mediaType || mediaEntry.Id != id {
-			continue
+		if filterFunc(mediaEntry) {
+			filteredMediaList = append(filteredMediaList, mediaEntry)
 		}
-		filteredMediaList = append(filteredMediaList, mediaEntry)
 	}
 	return filteredMediaList, nil
 }
@@ -194,13 +200,10 @@ func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
 				mediaType, id, torrentToDelete.client, torrentToDelete.id, err)
 		}
 	}
-	index := slices.IndexFunc(m.mediaRetrievers, func(retriever common.MediaRetriever) bool {
-		return retriever.SupportedMediaType() == mediaType
-	})
-	if index == -1 {
-		return fmt.Errorf("could not find matching media retriever for media type %q", mediaType)
+	retriever, err := m.getRetriever(mediaType)
+	if err != nil {
+		return err
 	}
-	retriever := m.mediaRetrievers[index]
 	if err = retriever.DeleteMedia(id); err != nil {
 		return err
 	}
@@ -209,4 +212,99 @@ func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
 		return media.Type == mediaType && media.Id == id
 	})
 	return nil
+}
+
+func (m *Manager) DeleteSeason(id int64, season int) error {
+	// todo: simplify logic and reduce for loops
+	filteredMatchedMedia, err := m.getFilteredMatchedMediaFunc(func(media common.MatchedMedia) bool {
+		return media.Type == common.MediaTypeSeries && media.Id == id
+	})
+	if err != nil {
+		return err
+	}
+	seasonParts := make([]common.MatchedMediaPart, 0)
+	for _, media := range filteredMatchedMedia {
+		for _, part := range media.Parts {
+			if part.Season != season {
+				continue
+			}
+			seasonParts = append(seasonParts, part)
+		}
+	}
+	return m.deleteMediaParts(id, common.MediaTypeSeries, seasonParts)
+}
+
+func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, parts []common.MatchedMediaPart) error {
+	type torrent struct {
+		client string
+		id     string
+	}
+	torrentsToDelete := make([]torrent, 0)
+	fileIdsToDelete := make(map[int64]struct{})
+	for _, part := range parts {
+		if _, ok := fileIdsToDelete[part.Id]; !ok {
+			fileIdsToDelete[part.Id] = struct{}{}
+		}
+		if part.TorrentFinding == nil {
+			continue
+		}
+		partTorrent := torrent{
+			client: part.TorrentFinding.Client,
+			id:     part.TorrentFinding.Id,
+		}
+		if !slices.ContainsFunc(torrentsToDelete, func(compareTorrent torrent) bool {
+			if part.TorrentFinding == nil {
+				return false
+			}
+			return partTorrent.client == compareTorrent.client && partTorrent.id == compareTorrent.id
+		}) {
+			torrentsToDelete = append(torrentsToDelete, partTorrent)
+		}
+	}
+	for _, torrentToDelete := range torrentsToDelete {
+		slog.Info("delete torrent", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
+		if err := m.torrentManager.DeleteFinding(torrentToDelete.client, torrentToDelete.id); err != nil {
+			return fmt.Errorf("could not delete %s (id: %d) from torrent client %q (torrent id: %q): %w",
+				mediaType, mediaId, torrentToDelete.client, torrentToDelete.id, err)
+		}
+	}
+	retriever, err := m.getRetriever(mediaType)
+	if err != nil {
+		return err
+	}
+	if err = retriever.DeleteMediaFiles(slices.Collect(maps.Keys(fileIdsToDelete)), true); err != nil {
+		return err
+	}
+	slog.Info("Successfully deleted delete media files", "retriever", fmt.Sprintf("%T", retriever), "mediaId")
+	mediaIndex := slices.IndexFunc(m.matchedMediaCache, func(media common.MatchedMedia) bool {
+		return media.Type == mediaType && media.Id == mediaId
+	})
+	if mediaIndex == -1 {
+		slog.Warn("no matched media found for this media", "mediaType", mediaType, "mediaId", mediaId)
+		return nil
+	}
+	mediaEntry := m.matchedMediaCache[mediaIndex]
+	for _, part := range parts {
+		mediaEntry.Parts = slices.DeleteFunc(mediaEntry.Parts, func(mediaPart common.MatchedMediaPart) bool {
+			return mediaPart.Id == part.Id
+		})
+	}
+	if len(mediaEntry.Parts) > 0 {
+		m.matchedMediaCache[mediaIndex] = mediaEntry
+	} else {
+		slices.DeleteFunc(m.matchedMediaCache, func(matchedMedia common.MatchedMedia) bool {
+			return matchedMedia.Id == mediaId
+		})
+	}
+	return nil
+}
+
+func (m *Manager) getRetriever(mediaType common.MediaType) (common.MediaRetriever, error) {
+	index := slices.IndexFunc(m.mediaRetrievers, func(retriever common.MediaRetriever) bool {
+		return retriever.SupportedMediaType() == mediaType
+	})
+	if index == -1 {
+		return nil, fmt.Errorf("could not find matching media retriever for media type %q", mediaType)
+	}
+	return m.mediaRetrievers[index], nil
 }
