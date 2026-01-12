@@ -180,21 +180,16 @@ func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
 }
 
 func (m *Manager) DeleteSeason(id int64, season int) error {
-	// todo: simplify logic and reduce for loops
-	filteredMatchedMedia, err := m.getFilteredMatchedMediaFunc(func(media common.MatchedMedia) bool {
-		return media.Type == common.MediaTypeSeries && media.Id == id
-	})
+	filteredMatchedMedia, err := m.GetMatchedMediaBySeriesId(id)
 	if err != nil {
 		return err
 	}
 	seasonParts := make([]common.MatchedMediaPart, 0)
-	for _, media := range filteredMatchedMedia {
-		for _, part := range media.Parts {
-			if part.Season != season {
-				continue
-			}
-			seasonParts = append(seasonParts, part)
+	for _, part := range filteredMatchedMedia.Parts {
+		if part.Season != season {
+			continue
 		}
+		seasonParts = append(seasonParts, part)
 	}
 	return m.deleteMediaParts(id, common.MediaTypeSeries, seasonParts)
 }
@@ -258,9 +253,7 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 	if len(mediaEntry.Parts) > 0 {
 		m.matchedMediaCache[mediaIndex] = mediaEntry
 	} else {
-		m.matchedMediaCache = slices.DeleteFunc(m.matchedMediaCache, func(matchedMedia common.MatchedMedia) bool {
-			return matchedMedia.Id == mediaId
-		})
+		m.matchedMediaCache = append(m.matchedMediaCache[:mediaIndex], m.matchedMediaCache[mediaIndex+1:]...)
 	}
 	return nil
 }

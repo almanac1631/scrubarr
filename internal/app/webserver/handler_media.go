@@ -248,7 +248,6 @@ func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http
 }
 
 func (handler *handler) getMediaSeasonDeletionHandler() http.HandlerFunc {
-	// todo: bundle with getMediaDeletionHandler
 	return func(writer http.ResponseWriter, request *http.Request) {
 		if !utils.IsHTMXRequest(request) {
 			http.Error(writer, "404 Not Found", http.StatusNotFound)
