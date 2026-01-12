@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -160,13 +161,26 @@ func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, re
 	collapsed := request.URL.Query().Get("collapsed") == "true"
 	idString := request.PathValue("id")
 	seriesId, _ := strconv.ParseInt(idString, 10, 64)
+	handler.serveMediaSeriesEntry(writer, request, seriesId, collapsed)
+}
+
+func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, request *http.Request, seriesId int64, collapsed bool) {
 	media, err := handler.manager.GetMatchedMediaBySeriesId(seriesId)
-	if err != nil {
+	if errors.Is(err, common.ErrMediaNotFound) {
+		// write 200 because of HTMX request
+		writer.WriteHeader(http.StatusOK)
+		return
+	} else if err != nil {
 		slog.Error(err.Error())
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	mappedMedia := handler.getMatchedMediaList(media)[0]
+	mappedMedias := handler.getMatchedMediaList([]common.MatchedMedia{media})
+	if len(mappedMedias) == 0 {
+		http.NotFound(writer, request)
+		return
+	}
+	mappedMedia := mappedMedias[0]
 	if collapsed {
 		mappedMedia.Parts = []common.MatchedMediaPart{}
 	}
@@ -230,5 +244,32 @@ func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http
 		}
 		writer.WriteHeader(http.StatusOK)
 		return
+	}
+}
+
+func (handler *handler) getMediaSeasonDeletionHandler() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		if !utils.IsHTMXRequest(request) {
+			http.Error(writer, "404 Not Found", http.StatusNotFound)
+			return
+		}
+		idStr := request.PathValue("id")
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			http.Error(writer, "400 Bad Request", http.StatusBadRequest)
+			return
+		}
+		seasonStr := request.PathValue("season")
+		season, err := strconv.Atoi(seasonStr)
+		if err != nil {
+			http.Error(writer, "400 Bad Request", http.StatusBadRequest)
+			return
+		}
+		if err = handler.manager.DeleteSeason(id, season); err != nil {
+			slog.Error(err.Error())
+			http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		handler.serveMediaSeriesEntry(writer, request, id, false)
 	}
 }

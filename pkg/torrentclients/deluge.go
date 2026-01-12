@@ -3,6 +3,7 @@ package torrentclients
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -13,9 +14,10 @@ var _ common.TorrentClientRetriever = (*DelugeRetriever)(nil)
 
 type DelugeRetriever struct {
 	client *delugeclient.ClientV2
+	dryRun bool
 }
 
-func NewDelugeRetriever(hostname string, port uint, username string, password string) (*DelugeRetriever, error) {
+func NewDelugeRetriever(hostname string, port uint, username string, password string, dryRun bool) (*DelugeRetriever, error) {
 	client := delugeclient.NewV2(delugeclient.Settings{
 		Hostname: hostname,
 		Port:     port,
@@ -26,7 +28,7 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to remote deluge rpc api: %w", err)
 	}
-	return &DelugeRetriever{client}, nil
+	return &DelugeRetriever{client, dryRun}, nil
 }
 
 func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, error) {
@@ -55,6 +57,10 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, e
 }
 
 func (retriever *DelugeRetriever) DeleteTorrent(id string) error {
+	if retriever.dryRun {
+		slog.Info("[DRY RUN] Skipping Deluge torrent deletion.", "id", id)
+		return nil
+	}
 	ok, err := retriever.client.RemoveTorrent(id, true)
 	if err != nil {
 		var wrappedErr delugeclient.RPCError

@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
-	"github.com/almanac1631/scrubarr/pkg/media"
 	internal "github.com/almanac1631/scrubarr/web"
 	"github.com/knadh/koanf/v2"
 )
@@ -28,14 +27,14 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, torrentManager common.TorrentClientManager) http.Handler {
+func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
 		slog.Error("could not create template cache", "error", err)
 		os.Exit(1)
 	}
 	pathPrefix := config.String("general.path_prefix")
-	handler, err := newHandler(config, pathPrefix, templateCache, radarrRetriever, sonarrRetriever, torrentManager)
+	handler, err := newHandler(config, pathPrefix, templateCache, mediaManager, torrentManager)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("could not create webserver handler", "error", err)
@@ -50,6 +49,7 @@ func SetupWebserver(config *koanf.Koanf, radarrRetriever *media.RadarrRetriever,
 	authorizedRouter.HandleFunc("GET /media/entries", handler.handleMediaEntriesEndpoint)
 	authorizedRouter.HandleFunc("GET /media/series/{id}", handler.handleMediaSeriesEndpoint)
 	authorizedRouter.HandleFunc("DELETE /media/series/{id}", handler.getMediaDeletionHandler(common.MediaTypeSeries))
+	authorizedRouter.HandleFunc("DELETE /media/series/{id}/season/{season}", handler.getMediaSeasonDeletionHandler())
 	authorizedRouter.HandleFunc("DELETE /media/movie/{id}", handler.getMediaDeletionHandler(common.MediaTypeMovie))
 	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/" {

@@ -9,7 +9,6 @@ import (
 
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/inmemory"
-	"github.com/almanac1631/scrubarr/pkg/media"
 	"github.com/knadh/koanf/v2"
 )
 
@@ -26,8 +25,8 @@ type handler struct {
 	passwordSalt      []byte
 }
 
-func newHandler(config *koanf.Koanf, pathPrefix string, templateCache TemplateCache, radarrRetriever *media.RadarrRetriever, sonarrRetriever *media.SonarrRetriever, torrentManager common.TorrentClientManager) (*handler, error) {
-	manager := inmemory.NewManager([]common.MediaRetriever{radarrRetriever, sonarrRetriever}, torrentManager)
+func newHandler(config *koanf.Koanf, pathPrefix string, templateCache TemplateCache, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) (*handler, error) {
+	manager := inmemory.NewManager(mediaManager, torrentManager)
 
 	username := strings.ToLower(config.MustString("general.auth.username"))
 	loadByteValue := func(path string) ([]byte, error) {

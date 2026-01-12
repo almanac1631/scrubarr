@@ -36,6 +36,7 @@ func StartApp() {
 	logLevel := f.String("level", "info", "log level to use")
 	saveCache := f.Bool("save-cache", false, "save cache for retriever responses")
 	useCache := f.Bool("use-cache", false, "use previously saved cache for retrievers")
+	dryRun := f.Bool("dry-run", true, "enable dry run mode to prevent actual file/torrent deletion")
 	err := f.Parse(os.Args[1:])
 	if err != nil {
 		panic(err)
@@ -56,29 +57,36 @@ func StartApp() {
 
 	slog.Info("starting scrubarr...", "version", version, "commit", commit)
 
+	if *dryRun {
+		slog.Info("Running in dry run mode. No files nor torrents will be deleted.")
+	}
+
 	listener, err := webserver.SetupListener(k)
 	if err != nil {
 		slog.Error("could not setup web server listener", "error", err)
 		os.Exit(1)
 	}
 
-	radarrRetriever, err := media.NewRadarrRetriever(k.MustString("connections.radarr.hostname"), k.MustString("connections.radarr.api_key"))
+	radarrRetriever, err := media.NewRadarrRetriever(k.MustString("connections.radarr.hostname"), k.MustString("connections.radarr.api_key"), *dryRun)
 	if err != nil {
 		slog.Error("could not setup radarr retriever", "error", err)
 		os.Exit(1)
 	}
 
-	sonarrRetriever, err := media.NewSonarrRetriever(k.MustString("connections.sonarr.hostname"), k.MustString("connections.sonarr.api_key"))
+	sonarrRetriever, err := media.NewSonarrRetriever(k.MustString("connections.sonarr.hostname"), k.MustString("connections.sonarr.api_key"), *dryRun)
 	if err != nil {
 		slog.Error("could not setup sonarr retriever", "error", err)
 		os.Exit(1)
 	}
+
+	mediaManager := media.NewDefaultMediaManager(radarrRetriever, sonarrRetriever)
 
 	delugeRetriever, err := torrentclients.NewDelugeRetriever(
 		k.MustString("connections.deluge.hostname"),
 		uint(k.MustInt("connections.deluge.port")),
 		k.MustString("connections.deluge.username"),
 		k.MustString("connections.deluge.password"),
+		*dryRun,
 	)
 	if err != nil {
 		slog.Error("could not setup deluge retriever", "error", err)
@@ -89,6 +97,7 @@ func StartApp() {
 		k.MustString("connections.rtorrent.hostname"),
 		k.MustString("connections.rtorrent.username"),
 		k.MustString("connections.rtorrent.password"),
+		*dryRun,
 	)
 	if err != nil {
 		slog.Error("could not setup rtorrent retriever", "error", err)
@@ -98,13 +107,13 @@ func StartApp() {
 	torrentManager := torrentclients.NewDefaultTorrentManager(delugeRetriever, rtorrentRetriever)
 
 	slog.Debug("Warming up retriever caches...")
-	if err = warmupCaches(*saveCache, *useCache, radarrRetriever, sonarrRetriever, torrentManager); err != nil {
+	if err = warmupCaches(*saveCache, *useCache, mediaManager, torrentManager); err != nil {
 		slog.Error("could not setup retriever caches", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, radarrRetriever, sonarrRetriever, torrentManager)
+	router := webserver.SetupWebserver(k, mediaManager, torrentManager)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 
