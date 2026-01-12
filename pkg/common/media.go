@@ -1,8 +1,11 @@
 package common
 
 import (
+	"errors"
 	"time"
 )
+
+var ErrMediaNotFound = errors.New("media not found")
 
 type MediaType string
 

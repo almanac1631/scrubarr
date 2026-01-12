@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"path"
 	"path/filepath"
 
@@ -19,16 +20,17 @@ type RadarrRetriever struct {
 	moviesCache []*radarr.Movie
 	client      *radarr.Radarr
 	appUrl      string
+	dryRun      bool
 }
 
-func NewRadarrRetriever(appUrl string, apiKey string) (*RadarrRetriever, error) {
+func NewRadarrRetriever(appUrl string, apiKey string, dryRun bool) (*RadarrRetriever, error) {
 	starrConfig := starr.New(apiKey, appUrl, 0)
 	client := radarr.New(starrConfig)
 	_, err := client.GetSystemStatus()
 	if err != nil {
 		return nil, fmt.Errorf("could not get radarr system status: %w", err)
 	}
-	return &RadarrRetriever{nil, client, appUrl}, nil
+	return &RadarrRetriever{nil, client, appUrl, dryRun}, nil
 }
 
 func (r *RadarrRetriever) RefreshCache() error {
@@ -88,7 +90,7 @@ func (r *RadarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring
 	if err != nil {
 		return fmt.Errorf("could not get radarr movie files: %w", err)
 	}
-	var movies map[int64]struct{}
+	movies := make(map[int64]struct{})
 	if stopParentMonitoring {
 		for _, movieFile := range movieFiles {
 			if _, ok := movies[movieFile.MovieID]; ok {
@@ -97,16 +99,13 @@ func (r *RadarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring
 			movies[movieFile.MovieID] = struct{}{}
 		}
 	}
-	if err = r.client.DeleteMovieFiles(fileIds...); err != nil {
+	if err = r.deleteMovieFiles(fileIds); err != nil {
 		return fmt.Errorf("could not bulk delete movie files: %w", err)
 	}
 	monitoringUpdateErrors := make([]error, 0)
 	if stopParentMonitoring {
 		for movieId, _ := range movies {
-			if _, err = r.client.UpdateMovie(movieId, &radarr.Movie{
-				ID:        movieId,
-				Monitored: false,
-			}, false); err != nil {
+			if err = r.stopMovieMonitoring(movieId); err != nil {
 				monitoringUpdateErrors = append(monitoringUpdateErrors, err)
 			}
 		}
@@ -115,6 +114,26 @@ func (r *RadarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring
 		return errors.Join(monitoringUpdateErrors...)
 	}
 	return nil
+}
+
+func (r *RadarrRetriever) deleteMovieFiles(fileIds []int64) error {
+	if r.dryRun {
+		slog.Info("[DRY RUN] Skipping Radarr movie file deletion.", "fileIds", fileIds)
+		return nil
+	}
+	return r.client.DeleteMovieFiles(fileIds...)
+}
+
+func (r *RadarrRetriever) stopMovieMonitoring(movieId int64) error {
+	if r.dryRun {
+		slog.Info("[DRY RUN] Skipping Radarr stop movie monitoring call.", "movieId", movieId)
+		return nil
+	}
+	_, err := r.client.UpdateMovie(movieId, &radarr.Movie{
+		ID:        movieId,
+		Monitored: false,
+	}, false)
+	return err
 }
 
 func (r *RadarrRetriever) SupportedMediaType() common.MediaType {

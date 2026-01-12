@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
+	"net/url"
 	"path"
 	"path/filepath"
 	"slices"
@@ -23,18 +25,22 @@ type SonarrRetriever struct {
 	seriesEpisodeFilesCache map[int64][]*sonarr.EpisodeFile
 	client                  *sonarr.Sonarr
 	appUrl                  string
+	dryRun                  bool
 }
 
-const sonarrEpisodeFileBulkDeleteEndpoint = sonarr.APIver + "/episodeFile/bulk"
+const (
+	sonarrEpisodeFileEndpoint           = sonarr.APIver + "/episodeFile"
+	sonarrEpisodeFileBulkDeleteEndpoint = sonarrEpisodeFileEndpoint + "/bulk"
+)
 
-func NewSonarrRetriever(appUrl string, apiKey string) (*SonarrRetriever, error) {
+func NewSonarrRetriever(appUrl string, apiKey string, dryRun bool) (*SonarrRetriever, error) {
 	config := starr.New(apiKey, appUrl, 0)
 	client := sonarr.New(config)
 	_, err := client.GetSystemStatus()
 	if err != nil {
 		return nil, fmt.Errorf("could not get sonarr system status: %w", err)
 	}
-	return &SonarrRetriever{nil, nil, client, appUrl}, nil
+	return &SonarrRetriever{nil, nil, client, appUrl, dryRun}, nil
 }
 
 func (r *SonarrRetriever) RefreshCache() error {
@@ -112,11 +118,11 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 }
 
 func (r *SonarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
-	episodeFiles, err := r.client.GetEpisodeFiles(fileIds...)
+	episodeFiles, err := r.getEpisodeFiles(fileIds)
 	if err != nil {
 		return fmt.Errorf("could not get sonarr episode files: %w", err)
 	}
-	var seriesSeasonMap map[int64][]int
+	seriesSeasonMap := make(map[int64][]int)
 	if stopParentMonitoring {
 		for _, episodeFile := range episodeFiles {
 			seasonList, ok := seriesSeasonMap[episodeFile.SeriesID]
@@ -128,6 +134,42 @@ func (r *SonarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring
 			seriesSeasonMap[episodeFile.SeriesID] = seasonList
 		}
 	}
+	if err = r.deleteEpisodeFiles(fileIds); err != nil {
+		return err
+	}
+	monitoringUpdateErrors := make([]error, 0)
+	if stopParentMonitoring {
+		for seriesId, seasonList := range seriesSeasonMap {
+			if err = r.stopMonitoringSeasons(seriesId, seasonList); err != nil {
+				monitoringUpdateErrors = append(monitoringUpdateErrors, err)
+			}
+		}
+	}
+	if len(monitoringUpdateErrors) > 0 {
+		return errors.Join(monitoringUpdateErrors...)
+	}
+	return nil
+}
+
+func (r *SonarrRetriever) getEpisodeFiles(fileIds []int64) ([]*sonarr.EpisodeFile, error) {
+	req := starr.Request{URI: sonarrEpisodeFileEndpoint, Query: make(url.Values)}
+	for _, efID := range fileIds {
+		req.Query.Add("episodeFileIds", starr.Str(efID))
+	}
+
+	var output []*sonarr.EpisodeFile
+	if err := r.client.GetInto(context.Background(), req, &output); err != nil {
+		return nil, fmt.Errorf("api.Get(%s): %w", &req, err)
+	}
+
+	return output, nil
+}
+
+func (r *SonarrRetriever) SupportedMediaType() common.MediaType {
+	return common.MediaTypeSeries
+}
+
+func (r *SonarrRetriever) deleteEpisodeFiles(fileIds []int64) error {
 	payload := struct {
 		EpisodeFileIds []int64 `json:"episodeFileIds"`
 	}{
@@ -138,36 +180,35 @@ func (r *SonarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring
 		return fmt.Errorf("could not encode sonarr episode file bulk delete payload: %w", err)
 	}
 	req := starr.Request{URI: sonarrEpisodeFileBulkDeleteEndpoint, Body: bytes.NewReader(payloadEncoded)}
+	if r.dryRun {
+		slog.Info("[DRY RUN] Skipping delete Sonarr episode files.", "fileIds", fileIds)
+		return nil
+	}
 	if err = r.client.DeleteAny(context.Background(), req); err != nil {
-		return fmt.Errorf("could not bulkd delete episode files from sonarr: %w",
+		return fmt.Errorf("could not bulk delete episode files from sonarr: %w",
 			fmt.Errorf("api.Delete(%s): %w", &req, err))
-	}
-	monitoringUpdateErrors := make([]error, 0)
-	if stopParentMonitoring {
-		for seriesId, seasonList := range seriesSeasonMap {
-			seasons := make([]*sonarr.Season, len(seasonList))
-			for _, season := range seasonList {
-				seasons = append(seasons, &sonarr.Season{
-					Monitored:    false,
-					SeasonNumber: season,
-				})
-			}
-			_, err = r.client.UpdateSeries(&sonarr.AddSeriesInput{
-				ID:      seriesId,
-				Seasons: seasons,
-			}, false)
-			if err != nil {
-				monitoringUpdateErrors = append(monitoringUpdateErrors,
-					fmt.Errorf("could not update monitoring status of series %d: %w", seriesId, err))
-			}
-		}
-	}
-	if len(monitoringUpdateErrors) > 0 {
-		return errors.Join(monitoringUpdateErrors...)
 	}
 	return nil
 }
 
-func (r *SonarrRetriever) SupportedMediaType() common.MediaType {
-	return common.MediaTypeSeries
+func (r *SonarrRetriever) stopMonitoringSeasons(seriesId int64, seasonNumbers []int) error {
+	seasons := make([]*sonarr.Season, len(seasonNumbers))
+	for _, season := range seasonNumbers {
+		seasons = append(seasons, &sonarr.Season{
+			Monitored:    false,
+			SeasonNumber: season,
+		})
+	}
+	if r.dryRun {
+		slog.Info("[DRY RUN] Skipping Sonarr stop monitoring season.", "seriesId", seriesId, "seasons", seasonNumbers)
+		return nil
+	}
+	_, err := r.client.UpdateSeries(&sonarr.AddSeriesInput{
+		ID:      seriesId,
+		Seasons: seasons,
+	}, false)
+	if err != nil {
+		return fmt.Errorf("could not update monitoring status of series %d: %w", seriesId, err)
+	}
+	return nil
 }

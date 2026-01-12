@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -160,20 +161,23 @@ func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, re
 	collapsed := request.URL.Query().Get("collapsed") == "true"
 	idString := request.PathValue("id")
 	seriesId, _ := strconv.ParseInt(idString, 10, 64)
-	handler.serveMediaSeriesEntry(writer, seriesId, collapsed)
+	handler.serveMediaSeriesEntry(writer, request, seriesId, collapsed)
 }
 
-func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, seriesId int64, collapsed bool) {
+func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, request *http.Request, seriesId int64, collapsed bool) {
 	media, err := handler.manager.GetMatchedMediaBySeriesId(seriesId)
-	if err != nil {
+	if errors.Is(err, common.ErrMediaNotFound) {
+		// write 200 because of HTMX request
+		writer.WriteHeader(http.StatusOK)
+		return
+	} else if err != nil {
 		slog.Error(err.Error())
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	mappedMedias := handler.getMatchedMediaList([]common.MatchedMedia{media})
 	if len(mappedMedias) == 0 {
-		// write 200 because of HTMX request
-		writer.WriteHeader(http.StatusOK)
+		http.NotFound(writer, request)
 		return
 	}
 	mappedMedia := mappedMedias[0]
@@ -267,6 +271,6 @@ func (handler *handler) getMediaSeasonDeletionHandler() http.HandlerFunc {
 			http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		handler.serveMediaSeriesEntry(writer, id, false)
+		handler.serveMediaSeriesEntry(writer, request, id, false)
 	}
 }

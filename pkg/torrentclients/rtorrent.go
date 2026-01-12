@@ -3,6 +3,7 @@ package torrentclients
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -13,9 +14,10 @@ var _ common.TorrentClientRetriever = (*RtorrentRetriever)(nil)
 
 type RtorrentRetriever struct {
 	client *rtorrent.Client
+	dryRun bool
 }
 
-func NewRtorrentRetriever(hostname string, username string, password string) (*RtorrentRetriever, error) {
+func NewRtorrentRetriever(hostname string, username string, password string, dryRun bool) (*RtorrentRetriever, error) {
 	client := rtorrent.NewClient(rtorrent.Config{
 		Addr:      hostname,
 		BasicUser: username,
@@ -25,7 +27,7 @@ func NewRtorrentRetriever(hostname string, username string, password string) (*R
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to remote rtorrent rpc api: %w", err)
 	}
-	return &RtorrentRetriever{client}, nil
+	return &RtorrentRetriever{client, dryRun}, nil
 }
 
 func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry, error) {
@@ -59,6 +61,10 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 
 func (retriever *RtorrentRetriever) DeleteTorrent(id string) error {
 	hash := id
+	if retriever.dryRun {
+		slog.Info("[DRY RUN] Skipping Deluge torrent deletion.", "hash", hash)
+		return nil
+	}
 	torrent := rtorrent.Torrent{Hash: hash}
 	if err := retriever.client.SetForceDelete(context.Background(), torrent, true); err != nil {
 		errString := err.Error()

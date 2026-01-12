@@ -141,7 +141,7 @@ func (m *Manager) getSingleMatchedMediaEntry(mediaType common.MediaType, id int6
 		return common.MatchedMedia{}, err
 	}
 	if len(matchedMediaList) == 0 {
-		return common.MatchedMedia{}, fmt.Errorf("no matched media found with type %s and id %d", mediaType, id)
+		return common.MatchedMedia{}, common.ErrMediaNotFound
 	} else if len(matchedMediaList) > 1 {
 		return common.MatchedMedia{}, fmt.Errorf("multiple matched media found with type %s and id %d", mediaType, id)
 	}
@@ -242,7 +242,8 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 	if err = retriever.DeleteMediaFiles(slices.Collect(maps.Keys(fileIdsToDelete)), true); err != nil {
 		return err
 	}
-	slog.Info("Successfully deleted delete media files", "retriever", fmt.Sprintf("%T", retriever), "mediaId")
+	slog.Info("Successfully deleted delete media files",
+		"retriever", fmt.Sprintf("%T", retriever), "mediaId", mediaId)
 	mediaIndex := slices.IndexFunc(m.matchedMediaCache, func(media common.MatchedMedia) bool {
 		return media.Type == mediaType && media.Id == mediaId
 	})
@@ -251,15 +252,19 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 		return nil
 	}
 	mediaEntry := m.matchedMediaCache[mediaIndex]
-	for _, part := range parts {
-		mediaEntry.Parts = slices.DeleteFunc(mediaEntry.Parts, func(mediaPart common.MatchedMediaPart) bool {
-			return mediaPart.Id == part.Id
+	for partId := range fileIdsToDelete {
+		index := slices.IndexFunc(mediaEntry.Parts, func(mediaPart common.MatchedMediaPart) bool {
+			return mediaPart.Id == partId
 		})
+		if index == -1 {
+			continue
+		}
+		mediaEntry.Parts = append(mediaEntry.Parts[:index], mediaEntry.Parts[index+1:]...)
 	}
 	if len(mediaEntry.Parts) > 0 {
 		m.matchedMediaCache[mediaIndex] = mediaEntry
 	} else {
-		slices.DeleteFunc(m.matchedMediaCache, func(matchedMedia common.MatchedMedia) bool {
+		m.matchedMediaCache = slices.DeleteFunc(m.matchedMediaCache, func(matchedMedia common.MatchedMedia) bool {
 			return matchedMedia.Id == mediaId
 		})
 	}
