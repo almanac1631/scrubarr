@@ -13,7 +13,6 @@ import (
 )
 
 var _ common.TorrentClientManager = (*DefaultTorrentManager)(nil)
-var _ common.CachedRetriever = (*DefaultTorrentManager)(nil)
 
 type DefaultTorrentManager struct {
 	Entries    map[string][]*common.TorrentEntry

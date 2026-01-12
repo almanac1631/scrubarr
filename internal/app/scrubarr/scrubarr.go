@@ -79,6 +79,8 @@ func StartApp() {
 		os.Exit(1)
 	}
 
+	mediaManager := media.NewDefaultMediaManager(radarrRetriever, sonarrRetriever)
+
 	delugeRetriever, err := torrentclients.NewDelugeRetriever(
 		k.MustString("connections.deluge.hostname"),
 		uint(k.MustInt("connections.deluge.port")),
@@ -105,13 +107,13 @@ func StartApp() {
 	torrentManager := torrentclients.NewDefaultTorrentManager(delugeRetriever, rtorrentRetriever)
 
 	slog.Debug("Warming up retriever caches...")
-	if err = warmupCaches(*saveCache, *useCache, radarrRetriever, sonarrRetriever, torrentManager); err != nil {
+	if err = warmupCaches(*saveCache, *useCache, mediaManager, torrentManager); err != nil {
 		slog.Error("could not setup retriever caches", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, radarrRetriever, sonarrRetriever, torrentManager)
+	router := webserver.SetupWebserver(k, mediaManager, torrentManager)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 

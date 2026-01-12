@@ -1,10 +1,8 @@
 package media
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"path"
 	"path/filepath"
@@ -17,10 +15,9 @@ import (
 var _ common.MediaRetriever = (*RadarrRetriever)(nil)
 
 type RadarrRetriever struct {
-	moviesCache []*radarr.Movie
-	client      *radarr.Radarr
-	appUrl      string
-	dryRun      bool
+	client *radarr.Radarr
+	appUrl string
+	dryRun bool
 }
 
 func NewRadarrRetriever(appUrl string, apiKey string, dryRun bool) (*RadarrRetriever, error) {
@@ -30,38 +27,19 @@ func NewRadarrRetriever(appUrl string, apiKey string, dryRun bool) (*RadarrRetri
 	if err != nil {
 		return nil, fmt.Errorf("could not get radarr system status: %w", err)
 	}
-	return &RadarrRetriever{nil, client, appUrl, dryRun}, nil
+	return &RadarrRetriever{client, appUrl, dryRun}, nil
 }
 
-func (r *RadarrRetriever) RefreshCache() error {
-	var err error
-	r.moviesCache, err = r.client.GetMovie(&radarr.GetMovie{
+func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
+	movies, err := r.client.GetMovie(&radarr.GetMovie{
 		TMDBID:             0,
 		ExcludeLocalCovers: true,
 	})
 	if err != nil {
-		return fmt.Errorf("could not get radarr movies: %w", err)
-	}
-	return nil
-}
-
-func (r *RadarrRetriever) SaveCache(writer io.Writer) error {
-	return json.NewEncoder(writer).Encode(r.moviesCache)
-}
-
-func (r *RadarrRetriever) LoadCache(reader io.ReadSeeker) error {
-	r.moviesCache = []*radarr.Movie{}
-	return json.NewDecoder(reader).Decode(&r.moviesCache)
-}
-
-func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
-	if r.moviesCache == nil {
-		if err := r.RefreshCache(); err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("could not get radarr movies: %w", err)
 	}
 	var mappedMovies []common.Media
-	for _, movie := range r.moviesCache {
+	for _, movie := range movies {
 		if !movie.HasFile {
 			continue
 		}
