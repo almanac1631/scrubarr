@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"slices"
@@ -45,26 +44,28 @@ type MappedMediaSeries struct {
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
+	logger := getRequestLogger(request)
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	if utils.IsHTMXRequest(request) {
 		if err := handler.ExecuteSubTemplate(writer, "media.gohtml", "content", mediaEndpointData{
 			SortInfo: sortInfo,
 		}); err != nil {
-			slog.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
 	} else {
 		if err := handler.ExecuteRootTemplate(writer, "media.gohtml", mediaEndpointData{
 			SortInfo: sortInfo,
 		}); err != nil {
-			slog.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
 	}
 }
 
 func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, request *http.Request) {
+	logger := getRequestLogger(request)
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	if !utils.IsHTMXRequest(request) {
 		writer.WriteHeader(http.StatusNotFound)
@@ -79,7 +80,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 	matchedMediaList, hasNext, err := handler.manager.GetMatchedMedia(page, sortInfo)
 	if err != nil {
-		slog.Error("failed to get movie mapping", "err", err)
+		logger.Error("Failed to get media mapping.", "error", err)
 		writer.WriteHeader(http.StatusInternalServerError)
 		_, _ = writer.Write([]byte("500 Internal Server Error"))
 		return
@@ -97,7 +98,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		SortInfo:    sortInfo,
 		NextPage:    nextPage,
 	}); err != nil {
-		slog.Error(err.Error())
+		logger.Error(err.Error())
 		return
 	}
 	return
@@ -165,13 +166,14 @@ func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, re
 }
 
 func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, request *http.Request, seriesId int64, collapsed bool) {
+	logger := getRequestLogger(request)
 	media, err := handler.manager.GetMatchedMediaBySeriesId(seriesId)
 	if errors.Is(err, common.ErrMediaNotFound) {
 		// write 200 because of HTMX request
 		writer.WriteHeader(http.StatusOK)
 		return
 	} else if err != nil {
-		slog.Error(err.Error())
+		logger.Error(err.Error())
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -185,7 +187,7 @@ func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, reques
 		mappedMedia.Parts = []common.MatchedMediaPart{}
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entry", mappedMedia); err != nil {
-		slog.Error(err.Error())
+		logger.Error(err.Error())
 		return
 	}
 	return
@@ -227,6 +229,7 @@ func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
 
 func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		logger := getRequestLogger(request)
 		if !utils.IsHTMXRequest(request) {
 			http.Error(writer, "404 Not Found", http.StatusNotFound)
 			return
@@ -237,11 +240,14 @@ func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http
 			http.Error(writer, "400 Bad Request", http.StatusBadRequest)
 			return
 		}
+		logger = logger.With("mediaType", mediaType, "id", id)
+		logger.Debug("Deleting media...")
 		if err := handler.manager.DeleteMedia(mediaType, id); err != nil {
-			slog.Error(err.Error())
+			logger.Error("Could not delete media.", "error", err)
 			http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		logger.Info("Successfully deleted media.")
 		writer.WriteHeader(http.StatusOK)
 		return
 	}
@@ -249,6 +255,7 @@ func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http
 
 func (handler *handler) getMediaSeasonDeletionHandler() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		logger := getRequestLogger(request)
 		if !utils.IsHTMXRequest(request) {
 			http.Error(writer, "404 Not Found", http.StatusNotFound)
 			return
@@ -265,11 +272,14 @@ func (handler *handler) getMediaSeasonDeletionHandler() http.HandlerFunc {
 			http.Error(writer, "400 Bad Request", http.StatusBadRequest)
 			return
 		}
+		logger = logger.With("mediaType", common.MediaTypeSeries, "season", season, "id", id)
+		logger.Debug("Deleting series season...")
 		if err = handler.manager.DeleteSeason(id, season); err != nil {
-			slog.Error(err.Error())
+			logger.Error("Could not delete series season.", "error", err)
 			http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		logger.Info("Successfully series season.")
 		handler.serveMediaSeriesEntry(writer, request, id, false)
 	}
 }

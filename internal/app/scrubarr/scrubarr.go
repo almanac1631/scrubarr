@@ -55,7 +55,7 @@ func StartApp() {
 		panic(err)
 	}
 
-	slog.Info("starting scrubarr...", "version", version, "commit", commit)
+	slog.Info("Starting scrubarr...", "version", version, "commit", commit)
 
 	if *dryRun {
 		slog.Info("Running in dry run mode. No files nor torrents will be deleted.")
@@ -63,19 +63,19 @@ func StartApp() {
 
 	listener, err := webserver.SetupListener(k)
 	if err != nil {
-		slog.Error("could not setup web server listener", "error", err)
+		slog.Error("Could not setup web server listener.", "error", err)
 		os.Exit(1)
 	}
 
 	radarrRetriever, err := media.NewRadarrRetriever(k.MustString("connections.radarr.hostname"), k.MustString("connections.radarr.api_key"), *dryRun)
 	if err != nil {
-		slog.Error("could not setup radarr retriever", "error", err)
+		slog.Error("Could not setup radarr retriever", "error", err)
 		os.Exit(1)
 	}
 
 	sonarrRetriever, err := media.NewSonarrRetriever(k.MustString("connections.sonarr.hostname"), k.MustString("connections.sonarr.api_key"), *dryRun)
 	if err != nil {
-		slog.Error("could not setup sonarr retriever", "error", err)
+		slog.Error("Could not setup sonarr retriever", "error", err)
 		os.Exit(1)
 	}
 
@@ -89,7 +89,7 @@ func StartApp() {
 		*dryRun,
 	)
 	if err != nil {
-		slog.Error("could not setup deluge retriever", "error", err)
+		slog.Error("Could not setup deluge retriever", "error", err)
 		os.Exit(1)
 	}
 
@@ -100,7 +100,7 @@ func StartApp() {
 		*dryRun,
 	)
 	if err != nil {
-		slog.Error("could not setup rtorrent retriever", "error", err)
+		slog.Error("Could not setup rtorrent retriever", "error", err)
 		os.Exit(1)
 	}
 
@@ -108,7 +108,7 @@ func StartApp() {
 
 	slog.Debug("Warming up retriever caches...")
 	if err = warmupCaches(*saveCache, *useCache, mediaManager, torrentManager); err != nil {
-		slog.Error("could not setup retriever caches", "error", err)
+		slog.Error("Could not setup retriever caches.", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
@@ -121,18 +121,18 @@ func StartApp() {
 		exitChan := make(chan os.Signal, 1)
 		signal.Notify(exitChan, os.Interrupt)
 		<-exitChan
-		slog.Info("received exit signal. shutting down...")
+		slog.Info("Received exit signal. Shutting down...")
 		if err := listener.Close(); err != nil {
-			slog.Error("could not close listener", "error", err)
+			slog.Error("Could not close listener.", "error", err)
 		}
-		slog.Info("bye!")
+		slog.Info("Goodbye!")
 	}()
 
 	err = http.Serve(listener, router)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) && err.Error() != "" {
 		var opErr *net.OpError
 		if errors.As(err, &opErr) && opErr.Err.Error() != "use of closed network connection" {
-			slog.Error("could not serve webserver", "error", err, "errType", fmt.Sprintf("%T", err))
+			slog.Error("Could not serve webserver.", "error", err, "errType", fmt.Sprintf("%T", err))
 		}
 	}
 }

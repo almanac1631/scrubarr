@@ -58,7 +58,7 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, e
 
 func (retriever *DelugeRetriever) DeleteTorrent(id string) error {
 	if retriever.dryRun {
-		slog.Info("[DRY RUN] Skipping Deluge torrent deletion.", "id", id)
+		slog.Info("[DRY RUN] Skipping deluge torrent deletion.", "id", id)
 		return nil
 	}
 	ok, err := retriever.client.RemoveTorrent(id, true)

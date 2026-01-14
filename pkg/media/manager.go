@@ -39,6 +39,8 @@ func (manager *DefaultMediaManager) GetMedia() ([]common.Media, error) {
 }
 
 func (manager *DefaultMediaManager) DeleteMediaFiles(mediaType common.MediaType, fileIds []int64, stopParentMonitoring bool) error {
+	manager.entryLock.Lock()
+	defer manager.entryLock.Unlock()
 	retriever, ok := manager.retrievers[mediaType]
 	if !ok {
 		return fmt.Errorf("could not find retriever for media type %q", mediaType)

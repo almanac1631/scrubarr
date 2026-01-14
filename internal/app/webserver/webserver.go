@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -23,21 +24,22 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on %s/%s: %w", network, addr, err)
 	}
-	slog.Info("Listening on webserver interface", "network", network, "addr", addr)
+	slog.Info("Listening on webserver interface", "addr", addr)
 	return listener, nil
 }
 
 func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
-		slog.Error("could not create template cache", "error", err)
+		slog.Error("Could not create template cache.", "error", err)
 		os.Exit(1)
 	}
 	pathPrefix := config.String("general.path_prefix")
+	realIpHeaderName := config.String("general.real_ip_header_name")
 	handler, err := newHandler(config, pathPrefix, templateCache, mediaManager, torrentManager)
 	router := http.NewServeMux()
 	if err != nil {
-		slog.Error("could not create webserver handler", "error", err)
+		slog.Error("Could not create webserver handler.", "error", err)
 		os.Exit(1)
 	}
 	router.Handle("GET /assets/", http.FileServer(http.FS(internal.Assets)))
@@ -70,7 +72,7 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 			return
 		}
 		token := sessionCookie.Value
-		tokenOk, err := validateToken(handler.jwtConfig.PublicKey, token)
+		tokenOk, username, err := validateToken(handler.jwtConfig.PublicKey, token)
 		if !tokenOk {
 			if err != nil {
 				slog.Debug("Could not validate JWT", "error", err, "token", token)
@@ -78,14 +80,33 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 			redirectToLogin(writer)
 			return
 		}
+		logger := slog.With("remote", request.RemoteAddr).With("username", username)
+		request = request.WithContext(context.WithValue(request.Context(), "logger", logger))
 		authorizedRouter.ServeHTTP(writer, request)
 	}))
 
-	if pathPrefix != "" {
-		slog.Info("stripping path prefix", "path_prefix", pathPrefix)
-		return http.StripPrefix(pathPrefix, router)
+	var realIpHandler http.Handler = router
+
+	if realIpHeaderName != "" {
+		slog.Info("Using real ip header.", "realIpHeaderName", realIpHeaderName)
+		wrapperRouter := http.NewServeMux()
+		wrapperRouter.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			realIp := request.Header.Get(realIpHeaderName)
+			if realIp == "" {
+				slog.Warn("Could not find value for real ip header.", "realIpHeaderName", realIpHeaderName, "remote", request.RemoteAddr)
+				realIp = request.RemoteAddr
+			}
+			request.RemoteAddr = realIp
+			router.ServeHTTP(writer, request)
+		}))
+		realIpHandler = wrapperRouter
 	}
-	return router
+
+	if pathPrefix != "" {
+		slog.Info("Applying path prefix stripping.", "path_prefix", pathPrefix)
+		return http.StripPrefix(pathPrefix, realIpHandler)
+	}
+	return realIpHandler
 }
 
 func isErrAndNoBrokenPipe(err error) bool {
@@ -97,4 +118,13 @@ func isErrAndNoBrokenPipe(err error) bool {
 		return !errors.Is(opErr.Err, syscall.EPIPE) && !errors.Is(err, io.ErrClosedPipe)
 	}
 	return true
+}
+
+func getRequestLogger(request *http.Request) *slog.Logger {
+	logger, ok := request.Context().Value("logger").(*slog.Logger)
+	if !ok {
+		slog.Error("Could not get request logger.", "request", request)
+		return slog.With("remote", request.RemoteAddr).With("username", "<unknown>")
+	}
+	return logger
 }

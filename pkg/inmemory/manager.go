@@ -110,7 +110,7 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.
 			result = CompareBool(existsInTorrentClient(a), existsInTorrentClient(b))
 			break
 		default:
-			slog.Error("received unknown sort key", "sortKey", sortInfo.Key)
+			slog.Error("Received unknown sort key.", "sortKey", sortInfo.Key)
 			result = 0 // mark as incomparable
 		}
 		if sortInfo.Order == common.SortOrderDesc {
@@ -222,7 +222,7 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 		}
 	}
 	for _, torrentToDelete := range torrentsToDelete {
-		slog.Info("delete torrent", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
+		slog.Debug("Deleting torrent...", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
 		if err := m.torrentManager.DeleteFinding(torrentToDelete.client, torrentToDelete.id); err != nil {
 			return fmt.Errorf("could not delete %s (id: %d) from torrent client %q (torrent id: %q): %w",
 				mediaType, mediaId, torrentToDelete.client, torrentToDelete.id, err)
@@ -232,12 +232,12 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 	if err := m.mediaManager.DeleteMediaFiles(mediaType, fileIdsToDelete, true); err != nil {
 		return err
 	}
-	slog.Info("Successfully deleted delete media files", "mediaId", mediaId)
+	slog.Debug("Successfully deleted delete media files from media manager.", "mediaId", mediaId)
 	mediaIndex := slices.IndexFunc(m.matchedMediaCache, func(media common.MatchedMedia) bool {
 		return media.Type == mediaType && media.Id == mediaId
 	})
 	if mediaIndex == -1 {
-		slog.Warn("no matched media found for this media", "mediaType", mediaType, "mediaId", mediaId)
+		slog.Warn("No matched media found for this media.", "mediaType", mediaType, "mediaId", mediaId)
 		return nil
 	}
 	mediaEntry := m.matchedMediaCache[mediaIndex]
