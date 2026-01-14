@@ -35,6 +35,7 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 		os.Exit(1)
 	}
 	pathPrefix := config.String("general.path_prefix")
+	realIpHeaderName := config.String("general.real_ip_header_name")
 	handler, err := newHandler(config, pathPrefix, templateCache, mediaManager, torrentManager)
 	router := http.NewServeMux()
 	if err != nil {
@@ -84,11 +85,28 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 		authorizedRouter.ServeHTTP(writer, request)
 	}))
 
+	var realIpHandler http.Handler = router
+
+	if realIpHeaderName != "" {
+		slog.Info("Using real ip header.", "realIpHeaderName", realIpHeaderName)
+		wrapperRouter := http.NewServeMux()
+		wrapperRouter.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			realIp := request.Header.Get(realIpHeaderName)
+			if realIp == "" {
+				slog.Warn("Could not find value for real ip header.", "realIpHeaderName", realIpHeaderName, "remote", request.RemoteAddr)
+				realIp = request.RemoteAddr
+			}
+			request.RemoteAddr = realIp
+			router.ServeHTTP(writer, request)
+		}))
+		realIpHandler = wrapperRouter
+	}
+
 	if pathPrefix != "" {
 		slog.Info("Applying path prefix stripping.", "path_prefix", pathPrefix)
-		return http.StripPrefix(pathPrefix, router)
+		return http.StripPrefix(pathPrefix, realIpHandler)
 	}
-	return router
+	return realIpHandler
 }
 
 func isErrAndNoBrokenPipe(err error) bool {

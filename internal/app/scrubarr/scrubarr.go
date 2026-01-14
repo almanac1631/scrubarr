@@ -125,7 +125,7 @@ func StartApp() {
 		if err := listener.Close(); err != nil {
 			slog.Error("Could not close listener.", "error", err)
 		}
-		slog.Info("bye!")
+		slog.Info("Goodbye!")
 	}()
 
 	err = http.Serve(listener, router)
