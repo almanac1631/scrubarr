@@ -24,21 +24,21 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on %s/%s: %w", network, addr, err)
 	}
-	slog.Info("Listening on webserver interface", "network", network, "addr", addr)
+	slog.Info("Listening on webserver interface", "addr", addr)
 	return listener, nil
 }
 
 func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
-		slog.Error("could not create template cache", "error", err)
+		slog.Error("Could not create template cache.", "error", err)
 		os.Exit(1)
 	}
 	pathPrefix := config.String("general.path_prefix")
 	handler, err := newHandler(config, pathPrefix, templateCache, mediaManager, torrentManager)
 	router := http.NewServeMux()
 	if err != nil {
-		slog.Error("could not create webserver handler", "error", err)
+		slog.Error("Could not create webserver handler.", "error", err)
 		os.Exit(1)
 	}
 	router.Handle("GET /assets/", http.FileServer(http.FS(internal.Assets)))
@@ -79,12 +79,13 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 			redirectToLogin(writer)
 			return
 		}
-		request = request.WithContext(context.WithValue(request.Context(), "username", username))
+		logger := slog.With("remote", request.RemoteAddr).With("username", username)
+		request = request.WithContext(context.WithValue(request.Context(), "logger", logger))
 		authorizedRouter.ServeHTTP(writer, request)
 	}))
 
 	if pathPrefix != "" {
-		slog.Info("stripping path prefix", "path_prefix", pathPrefix)
+		slog.Info("Applying path prefix stripping.", "path_prefix", pathPrefix)
 		return http.StripPrefix(pathPrefix, router)
 	}
 	return router
@@ -99,4 +100,13 @@ func isErrAndNoBrokenPipe(err error) bool {
 		return !errors.Is(opErr.Err, syscall.EPIPE) && !errors.Is(err, io.ErrClosedPipe)
 	}
 	return true
+}
+
+func getRequestLogger(request *http.Request) *slog.Logger {
+	logger, ok := request.Context().Value("logger").(*slog.Logger)
+	if !ok {
+		slog.Error("Could not get request logger.", "request", request)
+		return slog.With("remote", request.RemoteAddr).With("username", "<unknown>")
+	}
+	return logger
 }

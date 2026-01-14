@@ -62,7 +62,7 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 func (retriever *RtorrentRetriever) DeleteTorrent(id string) error {
 	hash := id
 	if retriever.dryRun {
-		slog.Info("[DRY RUN] Skipping Deluge torrent deletion.", "hash", hash)
+		slog.Info("[DRY RUN] Skipping rtorrent torrent deletion.", "hash", hash)
 		return nil
 	}
 	torrent := rtorrent.Torrent{Hash: hash}

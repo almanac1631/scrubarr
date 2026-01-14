@@ -96,7 +96,7 @@ func (r *RadarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring
 
 func (r *RadarrRetriever) deleteMovieFiles(fileIds []int64) error {
 	if r.dryRun {
-		slog.Info("[DRY RUN] Skipping Radarr movie file deletion.", "fileIds", fileIds)
+		slog.Info("[DRY RUN] Skipping radarr movie file deletion.", "fileIds", fileIds)
 		return nil
 	}
 	return r.client.DeleteMovieFiles(fileIds...)
@@ -104,7 +104,7 @@ func (r *RadarrRetriever) deleteMovieFiles(fileIds []int64) error {
 
 func (r *RadarrRetriever) stopMovieMonitoring(movieId int64) error {
 	if r.dryRun {
-		slog.Info("[DRY RUN] Skipping Radarr stop movie monitoring call.", "movieId", movieId)
+		slog.Info("[DRY RUN] Skipping radarr stop movie monitoring call.", "movieId", movieId)
 		return nil
 	}
 	_, err := r.client.UpdateMovie(movieId, &radarr.Movie{

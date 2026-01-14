@@ -142,7 +142,7 @@ func (r *SonarrRetriever) deleteEpisodeFiles(fileIds []int64) error {
 	}
 	req := starr.Request{URI: sonarrEpisodeFileBulkDeleteEndpoint, Body: bytes.NewReader(payloadEncoded)}
 	if r.dryRun {
-		slog.Info("[DRY RUN] Skipping delete Sonarr episode files.", "fileIds", fileIds)
+		slog.Info("[DRY RUN] Skipping delete sonarr episode files.", "fileIds", fileIds)
 		return nil
 	}
 	if err = r.client.DeleteAny(context.Background(), req); err != nil {
@@ -161,7 +161,7 @@ func (r *SonarrRetriever) stopMonitoringSeasons(seriesId int64, seasonNumbers []
 		})
 	}
 	if r.dryRun {
-		slog.Info("[DRY RUN] Skipping Sonarr stop monitoring season.", "seriesId", seriesId, "seasons", seasonNumbers)
+		slog.Info("[DRY RUN] Skipping sonarr stop monitoring season.", "seriesId", seriesId, "seasons", seasonNumbers)
 		return nil
 	}
 	_, err := r.client.UpdateSeries(&sonarr.AddSeriesInput{

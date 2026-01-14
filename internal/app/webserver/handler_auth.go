@@ -21,6 +21,7 @@ const (
 
 func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodPost {
+		logger := slog.With("remote", request.RemoteAddr)
 		username := request.PostFormValue("username")
 		if username == "" {
 			http.Error(writer, "username is required", http.StatusBadRequest)
@@ -35,18 +36,19 @@ func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Re
 		passwordHashExpected := handler.passwordRetriever()
 		incorrectUsername := handler.username != username
 		if incorrectUsername || !checkPassword(passwordHashExpected, password, handler.passwordSalt) {
+			logger.Warn("Failed login attempt with incorrect credentials.", "username", username)
 			writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 			writer.WriteHeader(http.StatusUnauthorized)
 			if err := handler.ExecuteSubTemplate(writer, "login.gohtml", "login_notification", nil); err != nil {
-				slog.Error(err.Error())
+				logger.Error(err.Error())
 				return
 			}
 			return
 		}
-		slog.Debug("Successfully authenticated user", "username", username)
+		logger.Info("Successful user login.", "username", username)
 		jwtStr, err := generateToken(handler.jwtConfig.PrivateKey, username)
 		if err != nil {
-			slog.Error("Error generating the JWT", "error", err)
+			logger.Error("Error generating the JWT", "error", err)
 			http.Error(writer, "internal server error", http.StatusInternalServerError)
 		}
 		http.SetCookie(writer, &http.Cookie{
