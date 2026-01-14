@@ -23,6 +23,7 @@ type mediaEndpointData struct {
 	MappedMedia []*MappedMedia
 	SortInfo    common.SortInfo
 	NextPage    int
+	Version     string
 }
 
 type MappedMedia struct {
@@ -57,6 +58,7 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 	} else {
 		if err := handler.ExecuteRootTemplate(writer, "media.gohtml", mediaEndpointData{
 			SortInfo: sortInfo,
+			Version:  handler.version,
 		}); err != nil {
 			logger.Error(err.Error())
 			return

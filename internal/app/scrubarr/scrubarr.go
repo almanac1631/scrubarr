@@ -113,7 +113,7 @@ func StartApp() {
 	}
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, mediaManager, torrentManager)
+	router := webserver.SetupWebserver(k, version, mediaManager, torrentManager)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 
