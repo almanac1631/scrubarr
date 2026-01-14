@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -70,7 +71,7 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 			return
 		}
 		token := sessionCookie.Value
-		tokenOk, err := validateToken(handler.jwtConfig.PublicKey, token)
+		tokenOk, username, err := validateToken(handler.jwtConfig.PublicKey, token)
 		if !tokenOk {
 			if err != nil {
 				slog.Debug("Could not validate JWT", "error", err, "token", token)
@@ -78,6 +79,7 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 			redirectToLogin(writer)
 			return
 		}
+		request = request.WithContext(context.WithValue(request.Context(), "username", username))
 		authorizedRouter.ServeHTTP(writer, request)
 	}))
 

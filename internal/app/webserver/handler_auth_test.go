@@ -108,25 +108,26 @@ func Test_validateToken(t *testing.T) {
 		jwtStr string
 	}
 	type want struct {
-		ok     bool
-		errStr string
+		ok       bool
+		username string
+		errStr   string
 	}
 	tests := []struct {
 		name string
 		args args
 		want want
 	}{
-		{"validates valid token", args{testPublicCert, validToken}, want{true, ""}},
-		{"does not validate expired token", args{testPublicCert, expiredToken}, want{false, "expired"}},
-		{"does not validate test token with invalid mechanism", args{testPublicCert, testToken}, want{false, "unexpected signing method"}},
-		{"does not validate malformed token", args{testPublicCert, malformedToken}, want{false, "token is malformed"}},
+		{"validates valid token", args{testPublicCert, validToken}, want{true, "blinks", ""}},
+		{"does not validate expired token", args{testPublicCert, expiredToken}, want{false, "", "expired"}},
+		{"does not validate test token with invalid mechanism", args{testPublicCert, testToken}, want{false, "", "unexpected signing method"}},
+		{"does not validate malformed token", args{testPublicCert, malformedToken}, want{false, "", "token is malformed"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotOk, gotErr := validateToken(tt.args.key, tt.args.jwtStr)
-			if gotOk != tt.want.ok ||
+			gotOk, gotUsername, gotErr := validateToken(tt.args.key, tt.args.jwtStr)
+			if gotOk != tt.want.ok || gotUsername != tt.want.username ||
 				(tt.want.errStr != "" && !strings.Contains(gotErr.Error(), tt.want.errStr)) {
-				t.Errorf("validateToken() = (%v, %s), want (%v, error string: %v)", gotOk, gotErr, tt.want.ok, tt.want.errStr)
+				t.Errorf("validateToken() = (%v, %s, %s), want (%v, %s, error string: %v)", gotOk, gotUsername, gotErr, tt.want.ok, tt.want.username, tt.want.errStr)
 			}
 		})
 	}

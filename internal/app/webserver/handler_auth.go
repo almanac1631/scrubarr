@@ -99,7 +99,7 @@ func generateHash(passwordRaw, salt []byte) []byte {
 	return result
 }
 
-func validateToken(key *ecdsa.PublicKey, jwtStr string) (bool, error) {
+func validateToken(key *ecdsa.PublicKey, jwtStr string) (bool, string, error) {
 	jwtToken, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.SigningMethodES256 {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -107,15 +107,19 @@ func validateToken(key *ecdsa.PublicKey, jwtStr string) (bool, error) {
 		return key, nil
 	})
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 	if !jwtToken.Valid {
-		return false, nil
+		return false, "", nil
 	}
 	claims := jwtToken.Claims.(jwt.MapClaims)
 	err = jwt.NewValidator(
 		jwt.WithIssuedAt(),
 		jwt.WithExpirationRequired(),
 	).Validate(claims)
-	return true, nil
+	username, err := claims.GetSubject()
+	if err != nil {
+		return false, "", err
+	}
+	return true, username, nil
 }
