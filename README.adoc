@@ -1,12 +1,12 @@
 = scrubarr
 
+== Usage
+
+. *Installation*: Simply download the binary matching your operating system.
+. *Config generation*: `configs/scrubarr.toml` represents an example config that should be adjusted to fit your needs.
+. *Run scrubarr*: Use `scrubarr serve` to run the scrubarr server.
+
 == Disclaimer
 
 I do not own the rights of any logos of 3rd party software used in this software.
 Please contact the owner of the repository if the icons should be removed.
-
-== Credits
-
-Some awesome projects you definitely have to checkout!
-
-* The scrubarr logo is taken from https://github.com/tabler/tabler-icons[tabler/tabler-icons]
