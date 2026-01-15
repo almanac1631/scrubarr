@@ -29,6 +29,7 @@ require (
 	github.com/spf13/cobra v1.10.2 // indirect
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/term v0.39.0 // indirect
 )
 
 replace github.com/autobrr/go-rtorrent v1.12.0 => github.com/almanac1631/go-rtorrent v1.15.0

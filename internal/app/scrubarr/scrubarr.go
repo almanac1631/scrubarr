@@ -47,6 +47,12 @@ var serveCmd = &cobra.Command{
 	Run:   serve,
 }
 
+var generatePasswordHashCmd = &cobra.Command{
+	Use:   "generate-password-hash",
+	Short: "Generate a password hash for scrubarr",
+	Run:   generatePasswordHash,
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVar(&logLevel, "level", "info", "slog level to use")
 	serveCmd.Flags().StringVar(&configPath, "config", "./config.toml", "path to config file")
@@ -55,6 +61,7 @@ func init() {
 	serveCmd.Flags().BoolVar(&useCache, "use-cache", false, "use previously saved cache for retrievers")
 	serveCmd.Flags().BoolVar(&dryRun, "dry-run", false, "enable dry run mode to prevent actual file/torrent deletion")
 	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(generatePasswordHashCmd)
 }
 
 func StartApp() {

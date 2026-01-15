@@ -4,6 +4,7 @@
 
 . *Installation*: Simply download the binary matching your operating system.
 . *Config generation*: `configs/scrubarr.toml` represents an example config that should be adjusted to fit your needs.
+.. *Password hash*: In order to generate the password hash and salt, use the `scrubarr  generate-password-hash` command and use the resulting values in the config file.
 . *Run scrubarr*: Use `scrubarr serve` to run the scrubarr server.
 
 == Disclaimer
