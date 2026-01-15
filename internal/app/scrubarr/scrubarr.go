@@ -38,7 +38,7 @@ func StartApp() {
 	logLevel := f.String("level", "info", "log level to use")
 	saveCache := f.Bool("save-cache", false, "save cache for retriever responses")
 	useCache := f.Bool("use-cache", false, "use previously saved cache for retrievers")
-	dryRun := f.Bool("dry-run", true, "enable dry run mode to prevent actual file/torrent deletion")
+	dryRun := f.Bool("dry-run", false, "enable dry run mode to prevent actual file/torrent deletion")
 	err := f.Parse(os.Args[1:])
 	if err != nil {
 		panic(err)
