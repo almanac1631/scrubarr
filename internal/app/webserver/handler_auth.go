@@ -92,11 +92,11 @@ func generateToken(key *ecdsa.PrivateKey, username string) (string, error) {
 }
 
 func checkPassword(passwordHashExpected, passwordRawActual, salt []byte) bool {
-	passwordHashActual := generateHash(passwordRawActual, salt)
+	passwordHashActual := GenerateHash(passwordRawActual, salt)
 	return bytes.Equal(passwordHashActual, passwordHashExpected)
 }
 
-func generateHash(passwordRaw, salt []byte) []byte {
+func GenerateHash(passwordRaw, salt []byte) []byte {
 	result := argon2.IDKey(passwordRaw, salt, 2, 19456, 1, 16)
 	return result
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -25,41 +25,58 @@ var (
 	commit  = "<no commit>"
 )
 
-var k = koanf.New(".")
+var (
+	k                           = koanf.New(".")
+	configPath, logLevel        string
+	saveCache, useCache, dryRun bool
+)
+
+var rootCmd = &cobra.Command{
+	Use:     "scrubarr",
+	Short:   "scrubarr is a tool to track and delete files safely on *arr instances.",
+	Version: version,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		setupLogging()
+		slog.Info("Scrubarr start initiated.", "version", version, "commit", commit)
+	},
+}
+
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Start the scrubarr server",
+	Run:   serve,
+}
+
+var generatePasswordHashCmd = &cobra.Command{
+	Use:   "generate-password-hash",
+	Short: "Generate a password hash for scrubarr",
+	Run:   generatePasswordHash,
+}
+
+func init() {
+	rootCmd.PersistentFlags().StringVar(&logLevel, "level", "info", "slog level to use")
+	serveCmd.Flags().StringVar(&configPath, "config", "./config.toml", "path to config file")
+	serveCmd.Flags().StringVar(&logLevel, "level", "info", "log level to use")
+	serveCmd.Flags().BoolVar(&saveCache, "save-cache", false, "save cache to disk")
+	serveCmd.Flags().BoolVar(&useCache, "use-cache", false, "use previously saved cache for retrievers")
+	serveCmd.Flags().BoolVar(&dryRun, "dry-run", false, "enable dry run mode to prevent actual file/torrent deletion")
+	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(generatePasswordHashCmd)
+}
 
 func StartApp() {
-	f := flag.NewFlagSet("scrubarr", flag.ContinueOnError)
-	f.Usage = func() {
-		fmt.Println("Usage: scrubarr [options...]")
-		fmt.Println(f.FlagUsages())
-		os.Exit(0)
+	if err := rootCmd.Execute(); err != nil {
+		panic(err)
 	}
-	configPath := f.String("config", "./config.toml", "path to config file")
-	logLevel := f.String("level", "info", "log level to use")
-	saveCache := f.Bool("save-cache", false, "save cache for retriever responses")
-	useCache := f.Bool("use-cache", false, "use previously saved cache for retrievers")
-	dryRun := f.Bool("dry-run", false, "enable dry run mode to prevent actual file/torrent deletion")
-	err := f.Parse(os.Args[1:])
+}
+
+func serve(cmd *cobra.Command, args []string) {
+	err := LoadConfig(configPath)
 	if err != nil {
 		panic(err)
 	}
 
-	var level slog.Level
-	err = level.UnmarshalText([]byte(*logLevel))
-	if err != nil {
-		panic(err)
-	}
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
-	slog.SetDefault(logger)
-
-	err = LoadConfig(*configPath)
-	if err != nil {
-		panic(err)
-	}
-
-	slog.Info("Starting scrubarr...", "version", version, "commit", commit)
-
-	if *dryRun {
+	if dryRun {
 		slog.Info("Running in dry run mode. No files nor torrents will be deleted.")
 	}
 
@@ -69,13 +86,21 @@ func StartApp() {
 		os.Exit(1)
 	}
 
-	radarrRetriever, err := media.NewRadarrRetriever(k.MustString("connections.radarr.hostname"), k.MustString("connections.radarr.api_key"), *dryRun)
+	radarrRetriever, err := media.NewRadarrRetriever(
+		k.MustString("connections.radarr.hostname"),
+		k.MustString("connections.radarr.api_key"),
+		dryRun,
+	)
 	if err != nil {
 		slog.Error("Could not setup radarr retriever", "error", err)
 		os.Exit(1)
 	}
 
-	sonarrRetriever, err := media.NewSonarrRetriever(k.MustString("connections.sonarr.hostname"), k.MustString("connections.sonarr.api_key"), *dryRun)
+	sonarrRetriever, err := media.NewSonarrRetriever(
+		k.MustString("connections.sonarr.hostname"),
+		k.MustString("connections.sonarr.api_key"),
+		dryRun,
+	)
 	if err != nil {
 		slog.Error("Could not setup sonarr retriever", "error", err)
 		os.Exit(1)
@@ -88,7 +113,7 @@ func StartApp() {
 		uint(k.MustInt("connections.deluge.port")),
 		k.MustString("connections.deluge.username"),
 		k.MustString("connections.deluge.password"),
-		*dryRun,
+		dryRun,
 	)
 	if err != nil {
 		slog.Error("Could not setup deluge retriever", "error", err)
@@ -99,7 +124,7 @@ func StartApp() {
 		k.MustString("connections.rtorrent.hostname"),
 		k.MustString("connections.rtorrent.username"),
 		k.MustString("connections.rtorrent.password"),
-		*dryRun,
+		dryRun,
 	)
 	if err != nil {
 		slog.Error("Could not setup rtorrent retriever", "error", err)
@@ -112,7 +137,7 @@ func StartApp() {
 
 	refreshCaches := func() {
 		slog.Debug("Refreshing retriever data...")
-		if err = warmupCaches(*saveCache, *useCache, mediaManager, torrentManager); err != nil {
+		if err = warmupCaches(saveCache, useCache, mediaManager, torrentManager); err != nil {
 			slog.Error("Could not setup retriever caches.", "error", err)
 			os.Exit(1)
 		}
