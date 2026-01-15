@@ -19,13 +19,15 @@ type handler struct {
 
 	pathPrefix string
 
+	version string
+
 	jwtConfig         *JwtConfig
 	username          string
 	passwordRetriever func() []byte
 	passwordSalt      []byte
 }
 
-func newHandler(config *koanf.Koanf, pathPrefix string, templateCache TemplateCache, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) (*handler, error) {
+func newHandler(config *koanf.Koanf, version, pathPrefix string, templateCache TemplateCache, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) (*handler, error) {
 	manager := inmemory.NewManager(mediaManager, torrentManager)
 
 	username := strings.ToLower(config.MustString("general.auth.username"))
@@ -61,6 +63,7 @@ func newHandler(config *koanf.Koanf, pathPrefix string, templateCache TemplateCa
 		templateCache,
 		manager,
 		pathPrefix,
+		version,
 		jwtConfig,
 		username,
 		passwordRetriever,

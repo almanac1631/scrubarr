@@ -28,7 +28,7 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) http.Handler {
+func SetupWebserver(config *koanf.Koanf, version string, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
 		slog.Error("Could not create template cache.", "error", err)
@@ -36,7 +36,7 @@ func SetupWebserver(config *koanf.Koanf, mediaManager common.MediaManager, torre
 	}
 	pathPrefix := config.String("general.path_prefix")
 	realIpHeaderName := config.String("general.real_ip_header_name")
-	handler, err := newHandler(config, pathPrefix, templateCache, mediaManager, torrentManager)
+	handler, err := newHandler(config, version, pathPrefix, templateCache, mediaManager, torrentManager)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("Could not create webserver handler.", "error", err)

@@ -1,6 +1,7 @@
 package scrubarr
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
 	"github.com/almanac1631/scrubarr/pkg/media"
@@ -36,7 +38,7 @@ func StartApp() {
 	logLevel := f.String("level", "info", "log level to use")
 	saveCache := f.Bool("save-cache", false, "save cache for retriever responses")
 	useCache := f.Bool("use-cache", false, "use previously saved cache for retrievers")
-	dryRun := f.Bool("dry-run", true, "enable dry run mode to prevent actual file/torrent deletion")
+	dryRun := f.Bool("dry-run", false, "enable dry run mode to prevent actual file/torrent deletion")
 	err := f.Parse(os.Args[1:])
 	if err != nil {
 		panic(err)
@@ -106,14 +108,36 @@ func StartApp() {
 
 	torrentManager := torrentclients.NewDefaultTorrentManager(delugeRetriever, rtorrentRetriever)
 
-	slog.Debug("Warming up retriever caches...")
-	if err = warmupCaches(*saveCache, *useCache, mediaManager, torrentManager); err != nil {
-		slog.Error("Could not setup retriever caches.", "error", err)
-		os.Exit(1)
+	refreshInterval := k.Duration("general.refresh_interval")
+
+	refreshCaches := func() {
+		slog.Debug("Refreshing retriever data...")
+		if err = warmupCaches(*saveCache, *useCache, mediaManager, torrentManager); err != nil {
+			slog.Error("Could not setup retriever caches.", "error", err)
+			os.Exit(1)
+		}
+		slog.Debug("Refreshed retriever data.")
 	}
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	if refreshInterval != 0 {
+		slog.Info("Starting retriever refresh automation...", "interval", refreshInterval)
+		go func() {
+			for {
+				select {
+				case <-time.After(refreshInterval):
+					refreshCaches()
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
+	refreshCaches()
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, mediaManager, torrentManager)
+	router := webserver.SetupWebserver(k, version, mediaManager, torrentManager)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 
@@ -122,6 +146,7 @@ func StartApp() {
 		signal.Notify(exitChan, os.Interrupt)
 		<-exitChan
 		slog.Info("Received exit signal. Shutting down...")
+		cancelFunc()
 		if err := listener.Close(); err != nil {
 			slog.Error("Could not close listener.", "error", err)
 		}

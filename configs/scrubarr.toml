@@ -3,6 +3,7 @@ listen_network = "tcp"
 listen_addr = ":8888"
 path_prefix = "/scrubarr"
 real_ip_header_name = "X-Forwarded-For"
+refresh_interval = "1h"
 
 [general.auth]
 username = "blinks"
