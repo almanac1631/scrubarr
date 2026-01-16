@@ -15,6 +15,10 @@ username = "blinks"
 password_salt = ""
 password_hash = ""
 
+[general.auth.providers.jellyfin]
+# use the complete base url of your jellyfin instance
+base_url = ""
+
 [general.auth.jwt]
 private_key_path = ""
 public_key_path = ""

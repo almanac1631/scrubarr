@@ -19,7 +19,7 @@ const (
 
 func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodPost {
-		logger := slog.With("remote", request.RemoteAddr)
+		logger := slog.With("remote", request.RemoteAddr, "authProvider", handler.authProvider.Name())
 		username := request.PostFormValue("username")
 		if username == "" {
 			http.Error(writer, "username is required", http.StatusBadRequest)

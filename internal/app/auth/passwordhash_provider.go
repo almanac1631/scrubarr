@@ -6,6 +6,8 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
+var _ Provider = (*PasswordBasedProvider)(nil)
+
 type PasswordBasedProvider struct {
 	username                   string
 	passwordHash, passwordSalt []byte
@@ -32,4 +34,8 @@ func checkPassword(passwordHashExpected, passwordRawActual, salt []byte) bool {
 func GenerateHash(passwordRaw, salt []byte) []byte {
 	result := argon2.IDKey(passwordRaw, salt, 2, 19456, 1, 16)
 	return result
+}
+
+func (provider PasswordBasedProvider) Name() string {
+	return "passwordhash"
 }

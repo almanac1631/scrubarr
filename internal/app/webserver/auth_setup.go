@@ -12,7 +12,8 @@ import (
 )
 
 var authProviderRegistry = map[string]func(map[string]string) (auth.Provider, error){
-	"passwordhash": loadPasswordHashAuthProvider(),
+	"passwordhash": loadPasswordHashAuthProvider,
+	"jellyfin":     loadJellyfinAuthProvider,
 }
 
 func GetAuthProvider(k *koanf.Koanf) (auth.Provider, error) {
@@ -30,31 +31,37 @@ func GetAuthProvider(k *koanf.Koanf) (auth.Provider, error) {
 	return provider, nil
 }
 
-func loadPasswordHashAuthProvider() func(config map[string]string) (auth.Provider, error) {
-	return func(config map[string]string) (auth.Provider, error) {
-		username := strings.ToLower(config["username"])
-		if username == "" {
-			return nil, fmt.Errorf("username is required")
-		}
-		loadByteValue := func(path string) ([]byte, error) {
-			value, err := hex.DecodeString(config[path])
-			if err != nil {
-				return nil, fmt.Errorf("error decoding hex value on path %q: %w", strconv.Quote(path), err)
-			}
-			if len(value) == 0 {
-				return nil, fmt.Errorf("value for %q cannot be empty", path)
-			}
-			return value, nil
-		}
-		passwordHash, err := loadByteValue("password_hash")
-		if err != nil {
-			return nil, err
-		}
-
-		passwordSalt, err := loadByteValue("password_salt")
-		if err != nil {
-			return nil, err
-		}
-		return auth.NewPasswordBasedProvider(username, passwordHash, passwordSalt), nil
+func loadPasswordHashAuthProvider(config map[string]string) (auth.Provider, error) {
+	username := strings.ToLower(config["username"])
+	if username == "" {
+		return nil, fmt.Errorf("username is required")
 	}
+	loadByteValue := func(path string) ([]byte, error) {
+		value, err := hex.DecodeString(config[path])
+		if err != nil {
+			return nil, fmt.Errorf("error decoding hex value on path %q: %w", strconv.Quote(path), err)
+		}
+		if len(value) == 0 {
+			return nil, fmt.Errorf("value for %q cannot be empty", path)
+		}
+		return value, nil
+	}
+	passwordHash, err := loadByteValue("password_hash")
+	if err != nil {
+		return nil, err
+	}
+
+	passwordSalt, err := loadByteValue("password_salt")
+	if err != nil {
+		return nil, err
+	}
+	return auth.NewPasswordBasedProvider(username, passwordHash, passwordSalt), nil
+}
+
+func loadJellyfinAuthProvider(config map[string]string) (auth.Provider, error) {
+	baseUrl := config["base_url"]
+	if baseUrl == "" {
+		return nil, fmt.Errorf("base_url is required")
+	}
+	return auth.NewJellyfinProvider(baseUrl), nil
 }
