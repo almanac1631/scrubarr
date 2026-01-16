@@ -9,7 +9,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/almanac1631/scrubarr/internal/app/webserver"
+	"github.com/almanac1631/scrubarr/internal/app/auth"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -42,7 +42,7 @@ func generatePasswordHash(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	saltString := hex.EncodeToString(salt)
-	passwordHash := webserver.GenerateHash(bytePassword, salt)
+	passwordHash := auth.GenerateHash(bytePassword, salt)
 	passwordHashString := hex.EncodeToString(passwordHash)
 	slog.Info("Successfully generated password.", "salt", saltString, "passwordHash", passwordHashString)
 	fmt.Println("Salt:", saltString)

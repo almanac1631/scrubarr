@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"fmt"
 	"log/slog"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/almanac1631/scrubarr/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/argon2"
 )
 
 const (
@@ -21,7 +19,7 @@ const (
 
 func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodPost {
-		logger := slog.With("remote", request.RemoteAddr)
+		logger := slog.With("remote", request.RemoteAddr, "authProvider", handler.authProvider.Name())
 		username := request.PostFormValue("username")
 		if username == "" {
 			http.Error(writer, "username is required", http.StatusBadRequest)
@@ -33,9 +31,13 @@ func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Re
 			http.Error(writer, "password is required", http.StatusBadRequest)
 			return
 		}
-		passwordHashExpected := handler.passwordRetriever()
-		incorrectUsername := handler.username != username
-		if incorrectUsername || !checkPassword(passwordHashExpected, password, handler.passwordSalt) {
+		ok, err := handler.authProvider.CheckCredentials(username, password)
+		if err != nil {
+			slog.Error("Error checking credentials", "error", err)
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !ok {
 			logger.Warn("Failed login attempt with incorrect credentials.", "username", username)
 			writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 			writer.WriteHeader(http.StatusUnauthorized)
@@ -89,16 +91,6 @@ func generateToken(key *ecdsa.PrivateKey, username string) (string, error) {
 		"exp": time.Now().Add(sessionExpiryTime).Unix(),
 	})
 	return token.SignedString(key)
-}
-
-func checkPassword(passwordHashExpected, passwordRawActual, salt []byte) bool {
-	passwordHashActual := GenerateHash(passwordRawActual, salt)
-	return bytes.Equal(passwordHashActual, passwordHashExpected)
-}
-
-func GenerateHash(passwordRaw, salt []byte) []byte {
-	result := argon2.IDKey(passwordRaw, salt, 2, 19456, 1, 16)
-	return result
 }
 
 func validateToken(key *ecdsa.PublicKey, jwtStr string) (bool, string, error) {
