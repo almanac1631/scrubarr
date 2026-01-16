@@ -1,55 +1,27 @@
 package webserver
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 
+	"github.com/almanac1631/scrubarr/internal/app/auth"
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/inmemory"
 	"github.com/knadh/koanf/v2"
 )
 
 type handler struct {
+	version       string
+	pathPrefix    string
+	authProvider  auth.Provider
 	templateCache TemplateCache
-
-	manager common.Manager
-
-	pathPrefix string
-
-	version string
-
-	jwtConfig         *JwtConfig
-	username          string
-	passwordRetriever func() []byte
-	passwordSalt      []byte
+	manager       common.Manager
+	jwtConfig     *JwtConfig
 }
 
-func newHandler(config *koanf.Koanf, version, pathPrefix string, templateCache TemplateCache, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) (*handler, error) {
+func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) (*handler, error) {
 	manager := inmemory.NewManager(mediaManager, torrentManager)
 
-	username := strings.ToLower(config.MustString("general.auth.username"))
-	loadByteValue := func(path string) ([]byte, error) {
-		value, err := hex.DecodeString(config.MustString(path))
-		if err != nil {
-			return nil, fmt.Errorf("error decoding hex value on path %s: %w", strconv.Quote(path), err)
-		}
-		return value, nil
-	}
-	passwordSalt, err := loadByteValue("general.auth.password_salt")
-	if err != nil {
-		return nil, err
-	}
-	_, err = loadByteValue("general.auth.password_hash")
-	if err != nil {
-		return nil, err
-	}
-	passwordRetriever := func() []byte {
-		passwordHash, _ := hex.DecodeString(config.MustString("general.auth.password_hash"))
-		return passwordHash
-	}
 	privateKey, err := loadJwtPrivateKey(config)
 	if err != nil {
 		return nil, err
@@ -60,14 +32,12 @@ func newHandler(config *koanf.Koanf, version, pathPrefix string, templateCache T
 	}
 	jwtConfig := &JwtConfig{privateKey, publicKey}
 	return &handler{
+		version,
+		pathPrefix,
+		authProvider,
 		templateCache,
 		manager,
-		pathPrefix,
-		version,
 		jwtConfig,
-		username,
-		passwordRetriever,
-		passwordSalt,
 	}, nil
 }
 

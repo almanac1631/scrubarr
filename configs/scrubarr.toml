@@ -6,7 +6,12 @@ real_ip_header_name = "X-Forwarded-For"
 refresh_interval = "1h"
 
 [general.auth]
+# can be set either for "passwordhash" or "jellyfin"
+provider = "passwordhash"
+
+[general.auth.providers.passwordhash]
 username = "blinks"
+# use scrubarr generate-password-hash utility to retrieve these values from your password
 password_salt = ""
 password_hash = ""
 
