@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -38,11 +39,12 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 	torrentEntries := make([]*common.TorrentEntry, 0, len(torrentList))
 	for _, torrent := range torrentList {
 		torrentEntry := &common.TorrentEntry{
-			Client: retriever.Name(),
-			Id:     torrent.Hash,
-			Name:   torrent.Name,
-			Added:  torrent.Finished,
-			Files:  []*common.TorrentFile{},
+			Client:   retriever.Name(),
+			Id:       torrent.Hash,
+			Name:     torrent.Name,
+			Added:    torrent.Finished,
+			Files:    []*common.TorrentFile{},
+			Trackers: []string{},
 		}
 		torrentFiles, err := retriever.client.GetFiles(context.Background(), torrent)
 		if err != nil {
@@ -55,6 +57,15 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 			})
 		}
 		torrentEntries = append(torrentEntries, torrentEntry)
+		torrentTrackers, err := retriever.client.GetTrackers(context.Background(), torrent)
+		if err != nil {
+			return nil, fmt.Errorf("could not get trackers from rtorrent: %w", err)
+		}
+		for _, tracker := range torrentTrackers {
+			if !slices.Contains(torrentEntry.Trackers, tracker) {
+				torrentEntry.Trackers = append(torrentEntry.Trackers, tracker)
+			}
+		}
 	}
 	return torrentEntries, nil
 }

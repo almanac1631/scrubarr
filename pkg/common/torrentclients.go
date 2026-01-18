@@ -13,11 +13,12 @@ type TorrentFile struct {
 }
 
 type TorrentEntry struct {
-	Client string
-	Id     string
-	Name   string
-	Added  time.Time
-	Files  []*TorrentFile
+	Client   string
+	Id       string
+	Name     string
+	Added    time.Time
+	Files    []*TorrentFile
+	Trackers []string
 }
 
 type TorrentClientManager interface {
