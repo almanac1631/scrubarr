@@ -107,7 +107,7 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.
 			result = cmp.Compare(a.Added.Unix(), b.Added.Unix())
 			break
 		case common.SortKeyTorrentStatus:
-			result = CompareBool(existsInTorrentClient(a), existsInTorrentClient(b))
+			result = compareBool(existsInTorrentClient(a), existsInTorrentClient(b))
 			break
 		default:
 			slog.Error("Received unknown sort key.", "sortKey", sortInfo.Key)
@@ -161,7 +161,7 @@ func (m *Manager) getFilteredMatchedMediaFunc(filterFunc func(media common.Match
 	return filteredMediaList, nil
 }
 
-func CompareBool(a, b bool) int {
+func compareBool(a, b bool) int {
 	if a == b {
 		return 0
 	}
