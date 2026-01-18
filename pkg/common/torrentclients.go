@@ -19,6 +19,7 @@ type TorrentEntry struct {
 	Added    time.Time
 	Files    []*TorrentFile
 	Trackers []string
+	Ratio    float64
 }
 
 type TorrentClientManager interface {

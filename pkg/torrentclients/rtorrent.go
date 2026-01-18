@@ -45,6 +45,7 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 			Added:    torrent.Finished,
 			Files:    []*common.TorrentFile{},
 			Trackers: []string{},
+			Ratio:    torrent.Ratio,
 		}
 		torrentFiles, err := retriever.client.GetFiles(context.Background(), torrent)
 		if err != nil {
