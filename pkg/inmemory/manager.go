@@ -2,6 +2,7 @@ package inmemory
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"log/slog"
 	"maps"
@@ -19,11 +20,13 @@ type Manager struct {
 	mediaManager common.MediaManager
 
 	torrentManager common.TorrentClientManager
+
+	trackerManager common.TrackerManager
 }
 
-func NewManager(mediaManager common.MediaManager, torrentManager common.TorrentClientManager) *Manager {
+func NewManager(mediaManager common.MediaManager, torrentManager common.TorrentClientManager, trackerManager common.TrackerManager) *Manager {
 	return &Manager{
-		nil, mediaManager, torrentManager,
+		nil, mediaManager, torrentManager, trackerManager,
 	}
 }
 
@@ -46,8 +49,22 @@ func (m *Manager) refreshCache() error {
 			if finding != nil && !finding.Added.IsZero() && finding.Added.After(added) {
 				added = finding.Added
 			}
+			var trackerName string
+			if finding != nil {
+				trackerName, err = m.trackerManager.GetTrackerName(finding.Trackers)
+				if err != nil {
+					if errors.Is(err, common.ErrTrackerNotFound) {
+						slog.Warn("Could not find tracker name for media entry.",
+							"mediaType", mediaEntry.Type, "mediaId", mediaEntry.Id, "part", finding.Name,
+							"trackers", finding.Trackers, "findingId", finding.Id, "findingClient", finding.Client)
+					} else {
+						return err
+					}
+				}
+			}
 			mediaPart := common.MatchedMediaPart{
 				MediaPart:      part,
+				TrackerName:    trackerName,
 				TorrentFinding: finding,
 			}
 			parts = append(parts, mediaPart)

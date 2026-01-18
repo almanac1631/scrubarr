@@ -19,8 +19,9 @@ type handler struct {
 	jwtConfig     *JwtConfig
 }
 
-func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) (*handler, error) {
-	manager := inmemory.NewManager(mediaManager, torrentManager)
+func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache,
+	mediaManager common.MediaManager, torrentManager common.TorrentClientManager, trackerManager common.TrackerManager) (*handler, error) {
+	manager := inmemory.NewManager(mediaManager, torrentManager, trackerManager)
 
 	privateKey, err := loadJwtPrivateKey(config)
 	if err != nil {

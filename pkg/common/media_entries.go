@@ -31,6 +31,7 @@ type Media struct {
 
 type MatchedMediaPart struct {
 	MediaPart
+	TrackerName    string
 	TorrentFinding *TorrentEntry
 }
 

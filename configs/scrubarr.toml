@@ -30,7 +30,6 @@ enabled = true
 hostname = "https://somedomain.com/sonarr/"
 api_key = ""
 
-
 [connections.radarr]
 enabled = true
 hostname = "https://somedomain.com/radarr/"
@@ -48,3 +47,9 @@ enabled = true
 hostname = "https://somedomain.com/rtorrent/RPC2/"
 username = "admin"
 password = ""
+
+[trackers]
+
+[trackers.my_tracker]
+name = "My Tracker"
+pattern = "^torrents\\.my-tracker\\.example$"

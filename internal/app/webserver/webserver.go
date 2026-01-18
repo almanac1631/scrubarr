@@ -28,7 +28,8 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func SetupWebserver(config *koanf.Koanf, version string, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) http.Handler {
+func SetupWebserver(config *koanf.Koanf, version string,
+	mediaManager common.MediaManager, torrentManager common.TorrentClientManager, trackerManager common.TrackerManager) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
 		slog.Error("Could not create template cache.", "error", err)
@@ -41,7 +42,7 @@ func SetupWebserver(config *koanf.Koanf, version string, mediaManager common.Med
 		slog.Error("Could not create auth provider.", "error", err)
 		os.Exit(1)
 	}
-	handler, err := newHandler(config, version, pathPrefix, authProvider, templateCache, mediaManager, torrentManager)
+	handler, err := newHandler(config, version, pathPrefix, authProvider, templateCache, mediaManager, torrentManager, trackerManager)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("Could not create webserver handler.", "error", err)
