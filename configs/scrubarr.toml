@@ -53,3 +53,6 @@ password = ""
 [trackers.my_tracker]
 name = "My Tracker"
 pattern = "^torrents\\.my-tracker\\.example$"
+min_ratio = 1.0
+# specify a golang duration, see https://pkg.go.dev/time#ParseDuration
+min_age = "720h"

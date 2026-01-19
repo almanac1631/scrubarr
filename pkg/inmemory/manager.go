@@ -49,9 +49,9 @@ func (m *Manager) refreshCache() error {
 			if finding != nil && !finding.Added.IsZero() && finding.Added.After(added) {
 				added = finding.Added
 			}
-			var trackerName string
+			var tracker common.Tracker
 			if finding != nil {
-				trackerName, err = m.trackerManager.GetTrackerName(finding.Trackers)
+				tracker, err = m.trackerManager.GetTracker(finding.Trackers)
 				if err != nil {
 					if errors.Is(err, common.ErrTrackerNotFound) {
 						slog.Warn("Could not find tracker name for media entry.",
@@ -64,7 +64,7 @@ func (m *Manager) refreshCache() error {
 			}
 			mediaPart := common.MatchedMediaPart{
 				MediaPart:      part,
-				TrackerName:    trackerName,
+				Tracker:        tracker,
 				TorrentFinding: finding,
 			}
 			parts = append(parts, mediaPart)

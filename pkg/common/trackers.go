@@ -1,9 +1,18 @@
 package common
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var ErrTrackerNotFound = errors.New("tracker not found")
 
+type Tracker struct {
+	Name     string
+	MinRatio float64
+	MinAge   time.Duration
+}
+
 type TrackerManager interface {
-	GetTrackerName(trackers []string) (string, error)
+	GetTracker(trackers []string) (Tracker, error)
 }
