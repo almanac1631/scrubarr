@@ -36,21 +36,56 @@
         <td class="py-3 px-1">
             <div class="flex justify-center">
                 <div>
-                    {{ if eq .TorrentStatus "present" }}
+                    {{ if eq .TorrentInformation.Status "present" }}
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-600" title="Present">
                             <use href="#icon-torrent-present"></use>
                         </svg>
-                    {{ else if eq .TorrentStatus "missing" }}
+                    {{ else if eq .TorrentInformation.Status "missing" }}
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-600" title="Missing">
                             <use href="#icon-torrent-missing"></use>
                         </svg>
-                    {{ else if eq .TorrentStatus "incomplete" }}
+                    {{ else if eq .TorrentInformation.Status "incomplete" }}
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-yellow-600" title="Incomplete">
                             <use href="#icon-torrent-missing"></use>
                         </svg>
                     {{ else }}
                         ???
-                    {{ end }}</div>
+                    {{ end }}
+                </div>
+                <div>
+                    {{ if eq .TorrentInformation.RatioStatus "fulfilled" }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-600" title="Unknown">
+                            <use href="#icon-torrent-ratio"></use>
+                        </svg>
+                    {{ else if eq .TorrentInformation.RatioStatus "pending" }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-yellow-600" title="Unknown">
+                            <use href="#icon-torrent-ratio"></use>
+                        </svg>
+                    {{ else if eq .TorrentInformation.RatioStatus "unknown" }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-stone-200" title="Unknown">
+                            <use href="#icon-torrent-ratio"></use>
+                        </svg>
+                    {{ else }}
+                        ???
+                    {{ end }}
+                </div>
+                <div>
+                    {{ if eq .TorrentInformation.AgeStatus "fulfilled" }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-600" title="Unknown">
+                            <use href="#icon-torrent-age"></use>
+                        </svg>
+                    {{ else if eq .TorrentInformation.AgeStatus "pending" }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-yellow-600" title="Unknown">
+                            <use href="#icon-torrent-age"></use>
+                        </svg>
+                    {{ else if eq .TorrentInformation.AgeStatus "unknown" }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-stone-200" title="Unknown">
+                            <use href="#icon-torrent-age"></use>
+                        </svg>
+                    {{ else }}
+                        ???
+                    {{ end }}
+                </div>
             </div>
         </td>
         <td class="py-2 px-1">
@@ -79,15 +114,15 @@
                 <td class="py-3 px-1">
                     <div class="flex justify-center">
                         <div>
-                            {{ if eq .TorrentStatus "present" }}
+                            {{ if eq .TorrentInformation.Status "present" }}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" title="Present">
                                     <use href="#icon-torrent-present"></use>
                                 </svg>
-                            {{ else if eq .TorrentStatus "missing" }}
+                            {{ else if eq .TorrentInformation.Status "missing" }}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-600" title="Missing">
                                     <use href="#icon-torrent-missing"></use>
                                 </svg>
-                            {{ else if eq .TorrentStatus "incomplete" }}
+                            {{ else if eq .TorrentInformation.Status "incomplete" }}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-600"
                                      title="Incomplete">
                                     <use href="#icon-torrent-missing"></use>

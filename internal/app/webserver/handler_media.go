@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
+	"time"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
 	"github.com/almanac1631/scrubarr/pkg/common"
@@ -19,6 +20,21 @@ const (
 	TorrentStatusIncomplete TorrentStatus = "incomplete"
 )
 
+type TorrentAttributeStatus string
+
+const (
+	TorrentAttributeStatusFulfilled TorrentAttributeStatus = "fulfilled"
+	TorrentAttributeStatusPending   TorrentAttributeStatus = "pending"
+	TorrentAttributeStatusUnknown   TorrentAttributeStatus = "unknown"
+)
+
+type TorrentInformation struct {
+	Status                 TorrentStatus
+	RatioStatus, AgeStatus TorrentAttributeStatus
+	Ratio, MinRatio        float64
+	Age, MinAge            time.Duration
+}
+
 type mediaEndpointData struct {
 	MappedMedia []*MappedMedia
 	SortInfo    common.SortInfo
@@ -28,15 +44,15 @@ type mediaEndpointData struct {
 
 type MappedMedia struct {
 	common.MatchedMedia
-	TorrentStatus TorrentStatus
-	Size          int64
+	TorrentInformation TorrentInformation
+	Size               int64
 }
 
 type MappedMediaSeason struct {
-	Season        int
-	Size          int64
-	TorrentStatus TorrentStatus
-	Parts         []common.MatchedMediaPart
+	Season             int
+	Size               int64
+	TorrentInformation TorrentInformation
+	Parts              []common.MatchedMediaPart
 }
 
 type MappedMediaSeries struct {
@@ -109,32 +125,83 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMedia) []*MappedMedia {
 	mediaEntries := make([]*MappedMedia, 0, len(matchedMediaList))
 	for _, matchedMedia := range matchedMediaList {
-		totalSize, torrentStatus := getStatusFromParts(matchedMedia.Parts)
+		totalSize, torrentInformation := getTorrentInformationFromParts(matchedMedia.Parts)
 		mediaEntries = append(mediaEntries, &MappedMedia{
-			MatchedMedia:  matchedMedia,
-			TorrentStatus: torrentStatus,
-			Size:          totalSize,
+			MatchedMedia:       matchedMedia,
+			TorrentInformation: torrentInformation,
+			Size:               totalSize,
 		})
 	}
 	return mediaEntries
 }
 
-func getStatusFromParts(parts []common.MatchedMediaPart) (totalSize int64, torrentStatus TorrentStatus) {
+func getTorrentInformationFromParts(parts []common.MatchedMediaPart) (int64, TorrentInformation) {
+	torrentInformation := &TorrentInformation{
+		Status:      TorrentStatusPresent,
+		RatioStatus: "",
+		Ratio:       -1,
+		MinRatio:    -1,
+		AgeStatus:   "",
+		Age:         -1,
+		MinAge:      -1,
+	}
+	totalSize := int64(0)
 	missingTorrents := 0
 	for _, part := range parts {
 		totalSize += part.Size
+
+		ratioStatus, ageStatus := getTrackerRequirementsStatus(part.TorrentFinding, part.Tracker)
+		torrentInformation.RatioStatus = getNewTorrentAttributeStatus(torrentInformation.RatioStatus, ratioStatus)
+		torrentInformation.AgeStatus = getNewTorrentAttributeStatus(torrentInformation.AgeStatus, ageStatus)
+
 		if part.TorrentFinding == nil {
 			missingTorrents++
 		}
+
+		if len(parts) == 1 {
+			if part.TorrentFinding != nil {
+				torrentInformation.Ratio = part.TorrentFinding.Ratio
+				torrentInformation.Age = now().Sub(part.TorrentFinding.Added)
+			}
+
+			if part.Tracker.IsValid() {
+				torrentInformation.MinRatio = part.Tracker.MinRatio
+				torrentInformation.MinAge = part.Tracker.MinAge
+			}
+		}
 	}
-	if missingTorrents == 0 {
-		torrentStatus = TorrentStatusPresent
-	} else if missingTorrents == len(parts) {
-		torrentStatus = TorrentStatusMissing
+	if missingTorrents == len(parts) {
+		torrentInformation.Status = TorrentStatusMissing
+	} else if missingTorrents != 0 {
+		torrentInformation.Status = TorrentStatusIncomplete
+	}
+	return totalSize, *torrentInformation
+}
+
+func getNewTorrentAttributeStatus(torrentInformationStatus TorrentAttributeStatus, torrentStatus TorrentAttributeStatus) TorrentAttributeStatus {
+	if torrentInformationStatus == TorrentAttributeStatusUnknown {
+		return torrentInformationStatus
+	} else if torrentInformationStatus == TorrentAttributeStatusFulfilled && torrentStatus != torrentInformationStatus {
+		return torrentStatus
+	}
+	return torrentStatus
+}
+
+func getTrackerRequirementsStatus(torrentFinding *common.TorrentEntry, tracker common.Tracker) (ratioStatus TorrentAttributeStatus, ageStatus TorrentAttributeStatus) {
+	if torrentFinding == nil || !tracker.IsValid() {
+		return TorrentAttributeStatusUnknown, TorrentAttributeStatusUnknown
+	}
+	if torrentFinding.Ratio >= tracker.MinRatio {
+		ratioStatus = TorrentAttributeStatusFulfilled
 	} else {
-		torrentStatus = TorrentStatusIncomplete
+		ratioStatus = TorrentAttributeStatusPending
 	}
-	return totalSize, torrentStatus
+	if now().After(torrentFinding.Added.Add(tracker.MinAge)) {
+		ageStatus = TorrentAttributeStatusFulfilled
+	} else {
+		ageStatus = TorrentAttributeStatusPending
+	}
+	return ratioStatus, ageStatus
 }
 
 func getSortInfoFromUrlQuery(values url.Values) common.SortInfo {
@@ -223,7 +290,7 @@ func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
 		}
 	}
 	for _, season := range mappedSeries.Seasons {
-		season.Size, season.TorrentStatus = getStatusFromParts(season.Parts)
+		season.Size, season.TorrentInformation = getTorrentInformationFromParts(season.Parts)
 	}
 	mappedMedia.Parts = partsNoSeason
 	return mappedSeries

@@ -13,6 +13,10 @@ type Tracker struct {
 	MinAge   time.Duration
 }
 
+func (t Tracker) IsValid() bool {
+	return t.Name != ""
+}
+
 type TrackerManager interface {
 	GetTracker(trackers []string) (Tracker, error)
 }
