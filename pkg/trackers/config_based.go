@@ -61,7 +61,12 @@ func getSetConfigValue[V float64 | time.Duration](config *koanf.Koanf, key strin
 	case float64:
 		return V(config.Float64(key)), nil
 	case time.Duration:
-		return V(config.Duration(key)), nil
+		durationStr := config.MustString(key)
+		duration, err := time.ParseDuration(durationStr)
+		if err != nil {
+			return zero, fmt.Errorf("could not parse duration %q: %w", durationStr, err)
+		}
+		return V(duration), nil
 	default:
 		return zero, fmt.Errorf("invalid type for key %q found", key)
 	}
