@@ -10,7 +10,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/knadh/koanf/parsers/toml/v2 v2.2.0
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.3.0
+	github.com/knadh/koanf/v2 v2.3.1
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.47.0
 	golang.org/x/term v0.39.0
