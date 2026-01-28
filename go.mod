@@ -7,7 +7,7 @@ toolchain go1.25.6
 require (
 	github.com/autobrr/go-rtorrent v1.12.0
 	github.com/gdm85/go-libdeluge v0.6.0
-	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/knadh/koanf/parsers/toml/v2 v2.2.0
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.2
