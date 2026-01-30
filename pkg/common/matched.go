@@ -43,15 +43,19 @@ type TorrentInformation struct {
 }
 
 func (torrentInformation TorrentInformation) GetScore() int {
-	score := 30
+	score := 100
 	if torrentInformation.Status == TorrentStatusPresent {
-		score -= 20
+		score -= 60
 	}
-	if torrentInformation.RatioStatus == TorrentAttributeStatusFulfilled {
-		score -= 5
+	getStatusScore := func(status TorrentAttributeStatus) int {
+		if status == TorrentAttributeStatusFulfilled {
+			return 20
+		} else if status == TorrentAttributeStatusPending {
+			return 10
+		}
+		return 0
 	}
-	if torrentInformation.AgeStatus == TorrentAttributeStatusPending {
-		score -= 5
-	}
+	score -= getStatusScore(torrentInformation.RatioStatus)
+	score -= getStatusScore(torrentInformation.AgeStatus)
 	return score
 }

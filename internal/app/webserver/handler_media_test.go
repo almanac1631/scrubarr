@@ -195,6 +195,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 				parts: []common.MatchedEntryPart{
 					torrentComplete,
 					torrentIncompleteAge,
+					torrentComplete,
 				},
 			},
 			wantTorrentInformation: common.TorrentInformation{

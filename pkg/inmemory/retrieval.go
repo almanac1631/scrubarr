@@ -24,7 +24,7 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo common.SortInfo) ([]common.
 	for _, entry := range m.matchedEntriesCache {
 		totalScore := 0
 		for _, part := range entry.Parts {
-			totalScore = part.TorrentInformation.GetScore()
+			totalScore += part.TorrentInformation.GetScore()
 		}
 		torrentStatusScores[entry.Url] = totalScore / len(entry.Parts)
 	}

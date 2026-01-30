@@ -115,9 +115,9 @@ func getBundledTorrentInformationFromParts(parts []common.MatchedEntryPart) comm
 	torrentInformation := &common.TorrentInformation{
 		Status:      common.TorrentStatusPresent,
 		Tracker:     common.Tracker{},
-		RatioStatus: "",
+		RatioStatus: common.TorrentAttributeStatusFulfilled,
 		Ratio:       -1,
-		AgeStatus:   "",
+		AgeStatus:   common.TorrentAttributeStatusFulfilled,
 		Age:         -1,
 	}
 	missingTorrents := 0
@@ -150,13 +150,13 @@ func getBundledTorrentInformationFromParts(parts []common.MatchedEntryPart) comm
 	return *torrentInformation
 }
 
-func getNewTorrentAttributeStatus(torrentInformationStatus common.TorrentAttributeStatus, torrentStatus common.TorrentAttributeStatus) common.TorrentAttributeStatus {
-	if torrentInformationStatus == common.TorrentAttributeStatusUnknown {
-		return torrentInformationStatus
-	} else if torrentInformationStatus == common.TorrentAttributeStatusFulfilled && torrentStatus != torrentInformationStatus {
-		return torrentStatus
+func getNewTorrentAttributeStatus(torrentInformationStatus, torrentStatus common.TorrentAttributeStatus) common.TorrentAttributeStatus {
+	if torrentInformationStatus == common.TorrentAttributeStatusUnknown || torrentStatus == common.TorrentAttributeStatusUnknown {
+		return common.TorrentAttributeStatusUnknown
+	} else if torrentInformationStatus == common.TorrentAttributeStatusFulfilled && torrentStatus == common.TorrentAttributeStatusFulfilled {
+		return common.TorrentAttributeStatusFulfilled
 	}
-	return torrentStatus
+	return common.TorrentAttributeStatusPending
 }
 
 func getSortInfoFromUrlQuery(values url.Values) common.SortInfo {
