@@ -15,6 +15,7 @@ import (
 	"github.com/almanac1631/scrubarr/pkg/media"
 	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 	"github.com/almanac1631/scrubarr/pkg/trackers"
+	"github.com/gorilla/handlers"
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
@@ -185,7 +186,7 @@ func serve(cmd *cobra.Command, args []string) {
 	}()
 
 	srv := &http.Server{
-		Handler:           router,
+		Handler:           handlers.CompressHandler(router),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,
