@@ -48,8 +48,8 @@
                             </div>
                             <div>
                                 <button type="submit"
-                                        class="flex w-full justify-center rounded-md bg-red-500 px-3 py-1.5 text-sm/6 font-semibold text-gray-100 shadow-xs hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500">
-                                    Sign in
+                                        class="flex w-full justify-center rounded-md bg-{{ if eq .AuthProviderName "jellyfin" }}indigo-600{{ else }}red-500{{ end }} px-3 py-1.5 text-sm/6 font-semibold text-gray-100 shadow-xs hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500">
+                                    Sign in{{ if eq .AuthProviderName "jellyfin" }} with Jellyfin{{ end }}
                                 </button>
                             </div>
                         </form>
