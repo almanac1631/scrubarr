@@ -72,7 +72,11 @@ func (handler *handler) handleLogin(writer http.ResponseWriter, request *http.Re
 		return
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := handler.ExecuteRootTemplate(writer, "login.gohtml", nil); err != nil {
+	if err := handler.ExecuteRootTemplate(writer, "login.gohtml", struct {
+		AuthProviderName string
+	}{
+		AuthProviderName: handler.authProvider.Name(),
+	}); err != nil {
 		slog.Error(err.Error())
 		return
 	}
