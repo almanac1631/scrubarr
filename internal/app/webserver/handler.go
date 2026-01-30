@@ -3,12 +3,15 @@ package webserver
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/auth"
 	"github.com/almanac1631/scrubarr/pkg/common"
 	"github.com/almanac1631/scrubarr/pkg/inmemory"
 	"github.com/knadh/koanf/v2"
 )
+
+var now = time.Now
 
 type handler struct {
 	version       string
@@ -19,8 +22,9 @@ type handler struct {
 	jwtConfig     *JwtConfig
 }
 
-func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache, mediaManager common.MediaManager, torrentManager common.TorrentClientManager) (*handler, error) {
-	manager := inmemory.NewManager(mediaManager, torrentManager)
+func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache,
+	mediaManager common.MediaManager, torrentManager common.TorrentClientManager, trackerManager common.TrackerManager) (*handler, error) {
+	manager := inmemory.NewManager(mediaManager, torrentManager, trackerManager)
 
 	privateKey, err := loadJwtPrivateKey(config)
 	if err != nil {

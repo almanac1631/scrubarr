@@ -14,6 +14,7 @@ import (
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
 	"github.com/almanac1631/scrubarr/pkg/media"
 	"github.com/almanac1631/scrubarr/pkg/torrentclients"
+	"github.com/almanac1631/scrubarr/pkg/trackers"
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
@@ -133,8 +134,13 @@ func serve(cmd *cobra.Command, args []string) {
 
 	torrentManager := torrentclients.NewDefaultTorrentManager(delugeRetriever, rtorrentRetriever)
 
-	refreshInterval := k.Duration("general.refresh_interval")
+	trackerManager, err := trackers.NewConfigBasedTrackerManager(k)
+	if err != nil {
+		slog.Error("Could not setup tracker manager", "error", err)
+		os.Exit(1)
+	}
 
+	refreshInterval := k.Duration("general.refresh_interval")
 	refreshCaches := func() {
 		slog.Debug("Refreshing retriever data...")
 		if err = warmupCaches(saveCache, useCache, mediaManager, torrentManager); err != nil {
@@ -162,7 +168,7 @@ func serve(cmd *cobra.Command, args []string) {
 	refreshCaches()
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, version, mediaManager, torrentManager)
+	router := webserver.SetupWebserver(k, version, mediaManager, torrentManager, trackerManager)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 

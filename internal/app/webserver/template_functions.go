@@ -18,4 +18,7 @@ var templateFunctions = template.FuncMap{
 		return currentSortInfo.Key == sortKey && currentSortInfo.Order == sortOrder
 	},
 	"getSeasonGroupedParts": getSeasonGroupedParts,
+	"durationToNanoseconds": func(duration time.Duration) int64 {
+		return duration.Nanoseconds()
+	},
 }

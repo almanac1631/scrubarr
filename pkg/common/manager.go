@@ -26,9 +26,9 @@ type SortInfo struct {
 }
 
 type Manager interface {
-	GetMatchedMedia(page int, sortInfo SortInfo) (media []MatchedMedia, hasNext bool, err error)
+	GetMatchedMedia(page int, sortInfo SortInfo) (media []MatchedEntry, hasNext bool, err error)
 
-	GetMatchedMediaBySeriesId(seriesId int64) (media MatchedMedia, err error)
+	GetMatchedMediaBySeriesId(seriesId int64) (media MatchedEntry, err error)
 
 	DeleteMedia(mediaType MediaType, id int64) error
 

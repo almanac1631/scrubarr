@@ -39,11 +39,13 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, e
 	torrentEntries := make([]*common.TorrentEntry, 0, len(torrentList))
 	for hash, torrent := range torrentList {
 		torrentEntry := &common.TorrentEntry{
-			Client: retriever.Name(),
-			Id:     hash,
-			Name:   torrent.Name,
-			Added:  time.Unix(torrent.CompletedTime, 0).In(time.UTC),
-			Files:  []*common.TorrentFile{},
+			Client:   retriever.Name(),
+			Id:       hash,
+			Name:     torrent.Name,
+			Added:    time.Unix(torrent.CompletedTime, 0).In(time.UTC),
+			Files:    []*common.TorrentFile{},
+			Trackers: []string{torrent.TrackerHost},
+			Ratio:    float64(torrent.Ratio),
 		}
 		for _, file := range torrent.Files {
 			torrentEntry.Files = append(torrentEntry.Files, &common.TorrentFile{
