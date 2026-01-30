@@ -184,7 +184,14 @@ func serve(cmd *cobra.Command, args []string) {
 		slog.Info("Goodbye!")
 	}()
 
-	err = http.Serve(listener, router)
+	srv := &http.Server{
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	err = srv.Serve(listener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) && err.Error() != "" {
 		var opErr *net.OpError
 		if errors.As(err, &opErr) && opErr.Err.Error() != "use of closed network connection" {
