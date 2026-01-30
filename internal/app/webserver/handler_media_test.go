@@ -54,189 +54,178 @@ func Test_getSortInfoFromUrlQuery(t *testing.T) {
 	}
 }
 
-func Test_getTorrentInformationFromParts(t *testing.T) {
+func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 	now = func() time.Time {
 		return time.Date(2026, time.January, 19, 22, 0, 0, 0, time.UTC)
 	}
 	type args struct {
-		parts []common.MatchedMediaPart
+		parts []common.MatchedEntryPart
 	}
-	torrentComplete := common.MatchedMediaPart{
+	torrentComplete := common.MatchedEntryPart{
 		MediaPart: common.MediaPart{Size: 382842},
-		Tracker: common.Tracker{
-			Name:     "test",
-			MinRatio: 0.5,
-			MinAge:   time.Hour,
-		},
-		TorrentFinding: &common.TorrentEntry{
-			Added: now().Add(-2 * time.Hour),
-			Ratio: 1.2,
+		TorrentInformation: common.TorrentInformation{
+			Client: "sonarr",
+			Id:     "abc",
+			Status: common.TorrentStatusPresent,
+			Tracker: common.Tracker{
+				Name:     "test",
+				MinRatio: 0.5,
+				MinAge:   time.Hour,
+			},
+			Age:         time.Hour * 2,
+			AgeStatus:   common.TorrentAttributeStatusFulfilled,
+			Ratio:       1.2,
+			RatioStatus: common.TorrentAttributeStatusFulfilled,
 		},
 	}
 
 	torrentIncompleteRatio := torrentComplete
-	torrentFindingIncompleteRatio := *torrentComplete.TorrentFinding
-	torrentFindingIncompleteRatio.Ratio = 0.1
-	torrentIncompleteRatio.TorrentFinding = &torrentFindingIncompleteRatio
+	torrentIncompleteRatio.TorrentInformation.Ratio = 0.1
+	torrentIncompleteRatio.TorrentInformation.RatioStatus = common.TorrentAttributeStatusPending
 
 	torrentIncompleteAge := torrentComplete
-	torrentFindingIncompleteAge := *torrentComplete.TorrentFinding
-	torrentFindingIncompleteAge.Added = now().Add(2 * time.Hour)
-	torrentIncompleteAge.TorrentFinding = &torrentFindingIncompleteAge
+	torrentIncompleteAge.TorrentInformation.Age = time.Minute * 30
+	torrentIncompleteAge.TorrentInformation.AgeStatus = common.TorrentAttributeStatusPending
 
 	torrentUnknownTracker := torrentComplete
-	torrentUnknownTracker.Tracker = common.Tracker{}
+	torrentUnknownTracker.TorrentInformation.Tracker = common.Tracker{}
+	torrentUnknownTracker.TorrentInformation.AgeStatus = common.TorrentAttributeStatusUnknown
+	torrentUnknownTracker.TorrentInformation.RatioStatus = common.TorrentAttributeStatusUnknown
 
-	torrentMissing := common.MatchedMediaPart{
-		MediaPart:      common.MediaPart{Size: 382842},
-		TorrentFinding: nil,
+	torrentMissing := common.MatchedEntryPart{
+		MediaPart: common.MediaPart{Size: 382842},
+		TorrentInformation: common.TorrentInformation{
+			Status:      common.TorrentStatusMissing,
+			AgeStatus:   common.TorrentAttributeStatusUnknown,
+			RatioStatus: common.TorrentAttributeStatusUnknown,
+		},
 	}
 	tests := []struct {
 		name                   string
 		args                   args
-		wantTotalSize          int64
-		wantTorrentInformation TorrentInformation
+		wantTorrentInformation common.TorrentInformation
 	}{
 		{
 			name: "handle missing torrent entries",
 			args: args{
-				parts: []common.MatchedMediaPart{
+				parts: []common.MatchedEntryPart{
 					torrentMissing,
 					torrentMissing,
 				},
 			},
-			wantTotalSize: 765684,
-			wantTorrentInformation: TorrentInformation{
-				Status:      TorrentStatusMissing,
-				RatioStatus: TorrentAttributeStatusUnknown,
+			wantTorrentInformation: common.TorrentInformation{
+				Status:      common.TorrentStatusMissing,
+				RatioStatus: common.TorrentAttributeStatusUnknown,
 				Ratio:       -1,
-				MinRatio:    -1,
-				AgeStatus:   TorrentAttributeStatusUnknown,
+				AgeStatus:   common.TorrentAttributeStatusUnknown,
 				Age:         -1,
-				MinAge:      -1,
 			},
 		},
 		{
 			name: "handle complete and missing torrent entries",
 			args: args{
-				parts: []common.MatchedMediaPart{
+				parts: []common.MatchedEntryPart{
 					torrentComplete,
 					torrentMissing,
 				},
 			},
-			wantTotalSize: 765684,
-			wantTorrentInformation: TorrentInformation{
-				Status:      TorrentStatusIncomplete,
-				RatioStatus: TorrentAttributeStatusUnknown,
+			wantTorrentInformation: common.TorrentInformation{
+				Status:      common.TorrentStatusIncomplete,
+				RatioStatus: common.TorrentAttributeStatusUnknown,
 				Ratio:       -1,
-				MinRatio:    -1,
-				AgeStatus:   TorrentAttributeStatusUnknown,
+				AgeStatus:   common.TorrentAttributeStatusUnknown,
 				Age:         -1,
-				MinAge:      -1,
 			},
 		},
 		{
 			name: "handle single complete torrent entry",
 			args: args{
-				parts: []common.MatchedMediaPart{
+				parts: []common.MatchedEntryPart{
 					torrentComplete,
 				},
 			},
-			wantTotalSize: 382842,
-			wantTorrentInformation: TorrentInformation{
-				Status:      TorrentStatusPresent,
-				RatioStatus: TorrentAttributeStatusFulfilled,
+			wantTorrentInformation: common.TorrentInformation{
+				Status: common.TorrentStatusPresent,
+				Tracker: common.Tracker{
+					Name:     "test",
+					MinRatio: 0.5,
+					MinAge:   time.Hour,
+				},
+				RatioStatus: common.TorrentAttributeStatusFulfilled,
 				Ratio:       1.2,
-				MinRatio:    0.5,
-				AgeStatus:   TorrentAttributeStatusFulfilled,
+				AgeStatus:   common.TorrentAttributeStatusFulfilled,
 				Age:         time.Hour * 2,
-				MinAge:      time.Hour,
 			},
 		},
 		{
 			name: "handle multiple complete torrent entries",
 			args: args{
-				parts: []common.MatchedMediaPart{
+				parts: []common.MatchedEntryPart{
 					torrentComplete,
 					torrentComplete,
 				},
 			},
-			wantTotalSize: 765684,
-			wantTorrentInformation: TorrentInformation{
-				Status:      TorrentStatusPresent,
-				RatioStatus: TorrentAttributeStatusFulfilled,
+			wantTorrentInformation: common.TorrentInformation{
+				Status:      common.TorrentStatusPresent,
+				RatioStatus: common.TorrentAttributeStatusFulfilled,
 				Ratio:       -1,
-				MinRatio:    -1,
-				AgeStatus:   TorrentAttributeStatusFulfilled,
+				AgeStatus:   common.TorrentAttributeStatusFulfilled,
 				Age:         -1,
-				MinAge:      -1,
 			},
 		},
 		{
 			name: "handle multiple complete and incomplete ratio torrent entries",
 			args: args{
-				parts: []common.MatchedMediaPart{
+				parts: []common.MatchedEntryPart{
 					torrentComplete,
 					torrentIncompleteRatio,
 				},
 			},
-			wantTotalSize: 765684,
-			wantTorrentInformation: TorrentInformation{
-				Status:      TorrentStatusPresent,
-				RatioStatus: TorrentAttributeStatusPending,
+			wantTorrentInformation: common.TorrentInformation{
+				Status:      common.TorrentStatusPresent,
+				RatioStatus: common.TorrentAttributeStatusPending,
 				Ratio:       -1,
-				MinRatio:    -1,
-				AgeStatus:   TorrentAttributeStatusFulfilled,
+				AgeStatus:   common.TorrentAttributeStatusFulfilled,
 				Age:         -1,
-				MinAge:      -1,
 			},
 		},
 		{
 			name: "handle multiple complete and incomplete ratio torrent entries",
 			args: args{
-				parts: []common.MatchedMediaPart{
+				parts: []common.MatchedEntryPart{
 					torrentComplete,
 					torrentIncompleteAge,
 				},
 			},
-			wantTotalSize: 765684,
-			wantTorrentInformation: TorrentInformation{
-				Status:      TorrentStatusPresent,
-				RatioStatus: TorrentAttributeStatusFulfilled,
+			wantTorrentInformation: common.TorrentInformation{
+				Status:      common.TorrentStatusPresent,
+				RatioStatus: common.TorrentAttributeStatusFulfilled,
 				Ratio:       -1,
-				MinRatio:    -1,
-				AgeStatus:   TorrentAttributeStatusPending,
+				AgeStatus:   common.TorrentAttributeStatusPending,
 				Age:         -1,
-				MinAge:      -1,
 			},
 		},
 		{
 			name: "handle complete torrent entry with unknown tracker",
 			args: args{
-				parts: []common.MatchedMediaPart{
+				parts: []common.MatchedEntryPart{
 					torrentUnknownTracker,
 				},
 			},
-			wantTotalSize: 382842,
-			wantTorrentInformation: TorrentInformation{
-				Status:      TorrentStatusPresent,
-				RatioStatus: TorrentAttributeStatusUnknown,
+			wantTorrentInformation: common.TorrentInformation{
+				Status:      common.TorrentStatusPresent,
+				RatioStatus: common.TorrentAttributeStatusUnknown,
 				Ratio:       1.2,
-				MinRatio:    -1,
-				AgeStatus:   TorrentAttributeStatusUnknown,
+				AgeStatus:   common.TorrentAttributeStatusUnknown,
 				Age:         time.Hour * 2,
-				MinAge:      -1,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotTotalSize, gotTorrentInformation := getTorrentInformationFromParts(tt.args.parts)
-			if gotTotalSize != tt.wantTotalSize {
-				t.Errorf("getTorrentInformationFromParts() gotTotalSize = %v, want %v", gotTotalSize, tt.wantTotalSize)
-			}
+			gotTorrentInformation := getBundledTorrentInformationFromParts(tt.args.parts)
 			if !reflect.DeepEqual(gotTorrentInformation, tt.wantTorrentInformation) {
-				t.Errorf("getTorrentInformationFromParts() gotTorrentInformation = %v, want %v", gotTorrentInformation, tt.wantTorrentInformation)
+				t.Errorf("getBundledTorrentInformationFromParts() gotTorrentInformation = %v, want %v", gotTorrentInformation, tt.wantTorrentInformation)
 			}
 		})
 	}

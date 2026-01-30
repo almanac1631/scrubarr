@@ -32,13 +32,14 @@ const (
 )
 
 type TorrentInformation struct {
-	Client                 string
-	Id                     string
-	Status                 TorrentStatus
-	Tracker                Tracker
-	RatioStatus, AgeStatus TorrentAttributeStatus
-	Ratio, MinRatio        float64
-	Age, MinAge            time.Duration
+	Client      string
+	Id          string
+	Status      TorrentStatus
+	Tracker     Tracker
+	RatioStatus TorrentAttributeStatus
+	Ratio       float64
+	AgeStatus   TorrentAttributeStatus
+	Age         time.Duration
 }
 
 func (torrentInformation TorrentInformation) GetScore() int {

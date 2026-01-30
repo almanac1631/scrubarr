@@ -72,9 +72,7 @@ func (m *Manager) refreshCache() error {
 					RatioStatus: ratioStatus,
 					AgeStatus:   ageStatus,
 					Ratio:       ratio,
-					MinRatio:    tracker.MinRatio,
 					Age:         age,
-					MinAge:      tracker.MinAge,
 				},
 			}
 			parts = append(parts, mediaPart)
