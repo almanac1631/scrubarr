@@ -1,0 +1,56 @@
+package common
+
+import (
+	"time"
+)
+
+type MatchedEntry struct {
+	MediaMetadata
+	Size  int64
+	Parts []MatchedEntryPart
+}
+
+type MatchedEntryPart struct {
+	MediaPart          MediaPart
+	TorrentInformation TorrentInformation
+}
+
+type TorrentStatus string
+
+const (
+	TorrentStatusMissing    TorrentStatus = "missing"
+	TorrentStatusPresent    TorrentStatus = "present"
+	TorrentStatusIncomplete TorrentStatus = "incomplete"
+)
+
+type TorrentAttributeStatus string
+
+const (
+	TorrentAttributeStatusFulfilled TorrentAttributeStatus = "fulfilled"
+	TorrentAttributeStatusPending   TorrentAttributeStatus = "pending"
+	TorrentAttributeStatusUnknown   TorrentAttributeStatus = "unknown"
+)
+
+type TorrentInformation struct {
+	Client                 string
+	Id                     string
+	Status                 TorrentStatus
+	Tracker                Tracker
+	RatioStatus, AgeStatus TorrentAttributeStatus
+	Ratio, MinRatio        float64
+	Age, MinAge            time.Duration
+}
+
+func (torrentInformation TorrentInformation) GetScore() int {
+	score := 30
+	if torrentInformation.Status == TorrentStatusPresent {
+		score -= 20
+	}
+	if torrentInformation.RatioStatus == TorrentAttributeStatusFulfilled {
+		score -= 5
+	}
+	if torrentInformation.AgeStatus == TorrentAttributeStatusPending {
+		score -= 5
+	}
+	return score
+}
