@@ -57,8 +57,11 @@ func (m *Manager) refreshCache() error {
 			}
 
 			torrentStatus := common.TorrentStatusMissing
+			var torrentClient, torrentId string
 			if torrentFinding != nil {
 				torrentStatus = common.TorrentStatusPresent
+				torrentClient = torrentFinding.Client
+				torrentId = torrentFinding.Id
 			}
 
 			ratioStatus, ratio := m.getRatioStatus(torrentFinding, tracker)
@@ -67,6 +70,8 @@ func (m *Manager) refreshCache() error {
 			mediaPart := common.MatchedEntryPart{
 				MediaPart: part,
 				TorrentInformation: common.TorrentInformation{
+					Client:      torrentClient,
+					Id:          torrentId,
 					Status:      torrentStatus,
 					Tracker:     tracker,
 					RatioStatus: ratioStatus,
