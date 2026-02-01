@@ -12,7 +12,7 @@ import (
 var _ common.MediaManager = (*DefaultMediaManager)(nil)
 
 type DefaultMediaManager struct {
-	Entries    map[common.MediaType][]common.Media
+	Entries    map[common.MediaType][]common.MediaEntry
 	entryLock  *sync.Mutex
 	retrievers map[common.MediaType]common.MediaRetriever
 }
@@ -25,13 +25,13 @@ func NewDefaultMediaManager(retrievers ...common.MediaRetriever) *DefaultMediaMa
 	return manager
 }
 
-func (manager *DefaultMediaManager) GetMedia() ([]common.Media, error) {
+func (manager *DefaultMediaManager) GetMedia() ([]common.MediaEntry, error) {
 	if manager.Entries == nil {
 		if err := manager.RefreshCache(); err != nil {
 			return nil, err
 		}
 	}
-	mediaList := make([]common.Media, 0)
+	mediaList := make([]common.MediaEntry, 0)
 	for _, mediaEntries := range manager.Entries {
 		mediaList = append(mediaList, mediaEntries...)
 	}
@@ -51,7 +51,7 @@ func (manager *DefaultMediaManager) DeleteMediaFiles(mediaType common.MediaType,
 func (manager *DefaultMediaManager) RefreshCache() error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
-	manager.Entries = make(map[common.MediaType][]common.Media)
+	manager.Entries = make(map[common.MediaType][]common.MediaEntry)
 	for mediaType, retriever := range manager.retrievers {
 		var err error
 		manager.Entries[mediaType], err = retriever.GetMedia()
@@ -71,6 +71,6 @@ func (manager *DefaultMediaManager) SaveCache(writer io.Writer) error {
 func (manager *DefaultMediaManager) LoadCache(reader io.ReadSeeker) error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
-	manager.Entries = make(map[common.MediaType][]common.Media)
+	manager.Entries = make(map[common.MediaType][]common.MediaEntry)
 	return json.NewDecoder(reader).Decode(&manager.Entries)
 }

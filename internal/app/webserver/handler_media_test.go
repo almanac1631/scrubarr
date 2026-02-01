@@ -59,9 +59,9 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		return time.Date(2026, time.January, 19, 22, 0, 0, 0, time.UTC)
 	}
 	type args struct {
-		parts []common.MatchedEntryPart
+		parts []common.MatchedMediaPart
 	}
-	torrentComplete := common.MatchedEntryPart{
+	torrentComplete := common.MatchedMediaPart{
 		MediaPart: common.MediaPart{Size: 382842},
 		TorrentInformation: common.TorrentInformation{
 			Client: "sonarr",
@@ -92,7 +92,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 	torrentUnknownTracker.TorrentInformation.AgeStatus = common.TorrentAttributeStatusUnknown
 	torrentUnknownTracker.TorrentInformation.RatioStatus = common.TorrentAttributeStatusUnknown
 
-	torrentMissing := common.MatchedEntryPart{
+	torrentMissing := common.MatchedMediaPart{
 		MediaPart: common.MediaPart{Size: 382842},
 		TorrentInformation: common.TorrentInformation{
 			Status:      common.TorrentStatusMissing,
@@ -108,7 +108,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		{
 			name: "handle missing torrent entries",
 			args: args{
-				parts: []common.MatchedEntryPart{
+				parts: []common.MatchedMediaPart{
 					torrentMissing,
 					torrentMissing,
 				},
@@ -124,7 +124,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		{
 			name: "handle complete and missing torrent entries",
 			args: args{
-				parts: []common.MatchedEntryPart{
+				parts: []common.MatchedMediaPart{
 					torrentComplete,
 					torrentMissing,
 				},
@@ -140,7 +140,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		{
 			name: "handle single complete torrent entry",
 			args: args{
-				parts: []common.MatchedEntryPart{
+				parts: []common.MatchedMediaPart{
 					torrentComplete,
 				},
 			},
@@ -160,7 +160,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		{
 			name: "handle multiple complete torrent entries",
 			args: args{
-				parts: []common.MatchedEntryPart{
+				parts: []common.MatchedMediaPart{
 					torrentComplete,
 					torrentComplete,
 				},
@@ -176,7 +176,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		{
 			name: "handle multiple complete and incomplete ratio torrent entries",
 			args: args{
-				parts: []common.MatchedEntryPart{
+				parts: []common.MatchedMediaPart{
 					torrentComplete,
 					torrentIncompleteRatio,
 				},
@@ -192,7 +192,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		{
 			name: "handle multiple complete and incomplete ratio torrent entries",
 			args: args{
-				parts: []common.MatchedEntryPart{
+				parts: []common.MatchedMediaPart{
 					torrentComplete,
 					torrentIncompleteAge,
 					torrentComplete,
@@ -209,7 +209,7 @@ func Test_getBundledTorrentInformationFromParts(t *testing.T) {
 		{
 			name: "handle complete torrent entry with unknown tracker",
 			args: args{
-				parts: []common.MatchedEntryPart{
+				parts: []common.MatchedMediaPart{
 					torrentUnknownTracker,
 				},
 			},

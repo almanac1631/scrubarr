@@ -19,7 +19,7 @@ type mediaEndpointData struct {
 }
 
 type MappedMedia struct {
-	common.MatchedEntry
+	common.MatchedMedia
 	TorrentInformation common.TorrentInformation
 	Size               int64
 }
@@ -28,7 +28,7 @@ type MappedMediaSeason struct {
 	Season             int
 	Size               int64
 	TorrentInformation common.TorrentInformation
-	Parts              []common.MatchedEntryPart
+	Parts              []common.MatchedMediaPart
 }
 
 type MappedMediaSeries struct {
@@ -85,7 +85,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	}
 	mediaEntries := handler.getMatchedMediaList(matchedMediaList)
 	for _, mediaEntry := range mediaEntries {
-		mediaEntry.Parts = []common.MatchedEntryPart{}
+		mediaEntry.Parts = []common.MatchedMediaPart{}
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
 		MappedMedia: mediaEntries,
@@ -98,12 +98,12 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	return
 }
 
-func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedEntry) []*MappedMedia {
+func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMedia) []*MappedMedia {
 	mediaEntries := make([]*MappedMedia, 0, len(matchedMediaList))
 	for _, matchedMedia := range matchedMediaList {
 		torrentInformation := getBundledTorrentInformationFromParts(matchedMedia.Parts)
 		mediaEntries = append(mediaEntries, &MappedMedia{
-			MatchedEntry:       matchedMedia,
+			MatchedMedia:       matchedMedia,
 			TorrentInformation: torrentInformation,
 			Size:               matchedMedia.Size,
 		})
@@ -111,7 +111,7 @@ func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedEnt
 	return mediaEntries
 }
 
-func getBundledTorrentInformationFromParts(parts []common.MatchedEntryPart) common.TorrentInformation {
+func getBundledTorrentInformationFromParts(parts []common.MatchedMediaPart) common.TorrentInformation {
 	torrentInformation := &common.TorrentInformation{
 		Status:      common.TorrentStatusPresent,
 		Tracker:     common.Tracker{},
@@ -201,14 +201,14 @@ func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, reques
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	mappedMedias := handler.getMatchedMediaList([]common.MatchedEntry{media})
+	mappedMedias := handler.getMatchedMediaList([]common.MatchedMedia{media})
 	if len(mappedMedias) == 0 {
 		http.NotFound(writer, request)
 		return
 	}
 	mappedMedia := mappedMedias[0]
 	if collapsed {
-		mappedMedia.Parts = []common.MatchedEntryPart{}
+		mappedMedia.Parts = []common.MatchedMediaPart{}
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entry", mappedMedia); err != nil {
 		logger.Error(err.Error())
@@ -222,7 +222,7 @@ func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
 		MappedMedia: mappedMedia,
 		Seasons:     make([]*MappedMediaSeason, 0),
 	}
-	partsNoSeason := make([]common.MatchedEntryPart, 0)
+	partsNoSeason := make([]common.MatchedMediaPart, 0)
 	for _, part := range mappedMedia.Parts {
 		seasonNumber := part.MediaPart.Season
 		if seasonNumber == 0 {
@@ -236,7 +236,7 @@ func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
 		if index == -1 {
 			seasonObj = &MappedMediaSeason{
 				Season: seasonNumber,
-				Parts:  []common.MatchedEntryPart{part},
+				Parts:  []common.MatchedMediaPart{part},
 				Size:   part.MediaPart.Size,
 			}
 			mappedSeries.Seasons = append(mappedSeries.Seasons, seasonObj)

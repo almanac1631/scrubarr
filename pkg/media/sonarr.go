@@ -40,12 +40,12 @@ func NewSonarrRetriever(appUrl string, apiKey string, dryRun bool) (*SonarrRetri
 	return &SonarrRetriever{client, appUrl, dryRun}, nil
 }
 
-func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
+func (r *SonarrRetriever) GetMedia() ([]common.MediaEntry, error) {
 	seriesList, err := r.client.GetAllSeries()
 	if err != nil {
 		return nil, fmt.Errorf("could not get sonarr series: %w", err)
 	}
-	mediaList := make([]common.Media, 0)
+	mediaList := make([]common.MediaEntry, 0)
 	for _, series := range seriesList {
 		if series.Statistics.SizeOnDisk == 0 {
 			continue
@@ -63,7 +63,7 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 				Size:             seriesEpisodeFile.Size,
 			})
 		}
-		media := common.Media{
+		media := common.MediaEntry{
 			MediaMetadata: common.MediaMetadata{
 				Id:    series.ID,
 				Type:  common.MediaTypeSeries,
@@ -71,7 +71,7 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 				Url:   path.Join(r.appUrl, fmt.Sprintf("series/%s", series.TitleSlug)),
 				Added: series.Added,
 			},
-			Parts: parts,
+			MediaParts: parts,
 		}
 		mediaList = append(mediaList, media)
 	}

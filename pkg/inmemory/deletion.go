@@ -22,7 +22,7 @@ func (m *Manager) DeleteSeason(id int64, season int) error {
 	if err != nil {
 		return err
 	}
-	seasonParts := make([]common.MatchedEntryPart, 0)
+	seasonParts := make([]common.MatchedMediaPart, 0)
 	for _, part := range filteredMatchedMedia.Parts {
 		if part.MediaPart.Season != season {
 			continue
@@ -32,7 +32,7 @@ func (m *Manager) DeleteSeason(id int64, season int) error {
 	return m.deleteMediaParts(id, common.MediaTypeSeries, seasonParts)
 }
 
-func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, parts []common.MatchedEntryPart) error {
+func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, parts []common.MatchedMediaPart) error {
 	type torrent struct {
 		client string
 		id     string
@@ -71,16 +71,16 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 		return err
 	}
 	slog.Debug("Successfully deleted delete media files from media manager.", "mediaId", mediaId)
-	mediaIndex := slices.IndexFunc(m.matchedEntriesCache, func(media common.MatchedEntry) bool {
+	mediaIndex := slices.IndexFunc(m.matchedMediasCache, func(media common.MatchedMedia) bool {
 		return media.Type == mediaType && media.Id == mediaId
 	})
 	if mediaIndex == -1 {
 		slog.Warn("No matched media found for this media.", "mediaType", mediaType, "mediaId", mediaId)
 		return nil
 	}
-	mediaEntry := m.matchedEntriesCache[mediaIndex]
+	mediaEntry := m.matchedMediasCache[mediaIndex]
 	for partId := range fileIdsToDeleteMap {
-		index := slices.IndexFunc(mediaEntry.Parts, func(mediaPart common.MatchedEntryPart) bool {
+		index := slices.IndexFunc(mediaEntry.Parts, func(mediaPart common.MatchedMediaPart) bool {
 			return mediaPart.MediaPart.Id == partId
 		})
 		if index == -1 {
@@ -89,9 +89,9 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 		mediaEntry.Parts = append(mediaEntry.Parts[:index], mediaEntry.Parts[index+1:]...)
 	}
 	if len(mediaEntry.Parts) > 0 {
-		m.matchedEntriesCache[mediaIndex] = mediaEntry
+		m.matchedMediasCache[mediaIndex] = mediaEntry
 	} else {
-		m.matchedEntriesCache = append(m.matchedEntriesCache[:mediaIndex], m.matchedEntriesCache[mediaIndex+1:]...)
+		m.matchedMediasCache = append(m.matchedMediasCache[:mediaIndex], m.matchedMediasCache[mediaIndex+1:]...)
 	}
 	return nil
 }

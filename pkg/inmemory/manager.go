@@ -12,7 +12,7 @@ import (
 var _ common.Manager = (*Manager)(nil)
 
 type Manager struct {
-	matchedEntriesCache []common.MatchedEntry
+	matchedMediasCache []common.MatchedMedia
 
 	mediaManager common.MediaManager
 
@@ -30,7 +30,7 @@ func NewManager(mediaManager common.MediaManager, torrentManager common.TorrentC
 const pageSize = 10
 
 func (m *Manager) refreshCache() error {
-	m.matchedEntriesCache = make([]common.MatchedEntry, 0)
+	m.matchedMediasCache = make([]common.MatchedMedia, 0)
 	medias, err := m.mediaManager.GetMedia()
 	if err != nil {
 		return fmt.Errorf("could not retrieve media from media manager: %w", err)
@@ -38,9 +38,9 @@ func (m *Manager) refreshCache() error {
 
 	for _, mediaEntry := range medias {
 		size := int64(0)
-		parts := make([]common.MatchedEntryPart, 0, len(mediaEntry.Parts))
+		parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.MediaParts))
 		added := mediaEntry.Added
-		for _, part := range mediaEntry.Parts {
+		for _, part := range mediaEntry.MediaParts {
 			size += part.Size
 			torrentFinding, err := m.torrentManager.SearchForMedia(part.OriginalFilePath, part.Size)
 			if err != nil {
@@ -67,7 +67,7 @@ func (m *Manager) refreshCache() error {
 			ratioStatus, ratio := m.getRatioStatus(torrentFinding, tracker)
 			ageStatus, age := m.getAgeStatus(torrentFinding, tracker)
 
-			mediaPart := common.MatchedEntryPart{
+			mediaPart := common.MatchedMediaPart{
 				MediaPart: part,
 				TorrentInformation: common.TorrentInformation{
 					Client:      torrentClient,
@@ -82,18 +82,18 @@ func (m *Manager) refreshCache() error {
 			}
 			parts = append(parts, mediaPart)
 		}
-		matchedEntries := common.MatchedEntry{
+		matchedMedias := common.MatchedMedia{
 			MediaMetadata: mediaEntry.MediaMetadata,
 			Parts:         parts,
 			Size:          size,
 		}
-		matchedEntries.Added = added
-		m.matchedEntriesCache = append(m.matchedEntriesCache, matchedEntries)
+		matchedMedias.Added = added
+		m.matchedMediasCache = append(m.matchedMediasCache, matchedMedias)
 	}
 	return nil
 }
 
-func (m *Manager) getTracker(torrentFinding *common.TorrentEntry, mediaEntry common.Media) (common.Tracker, error) {
+func (m *Manager) getTracker(torrentFinding *common.TorrentEntry, mediaEntry common.MediaEntry) (common.Tracker, error) {
 	if torrentFinding != nil {
 		tracker, err := m.trackerManager.GetTracker(torrentFinding.Trackers)
 		if err != nil {

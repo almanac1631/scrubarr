@@ -24,19 +24,19 @@ type MediaPart struct {
 	Size             int64
 }
 
-type Media struct {
+type MediaEntry struct {
 	MediaMetadata
-	Parts []MediaPart
+	MediaParts []MediaPart
 }
 
 type MediaManager interface {
 	CachedRetriever
-	GetMedia() ([]Media, error)
+	GetMedia() ([]MediaEntry, error)
 	DeleteMediaFiles(mediaType MediaType, fileIds []int64, stopParentMonitoring bool) error
 }
 
 type MediaRetriever interface {
-	GetMedia() ([]Media, error)
+	GetMedia() ([]MediaEntry, error)
 	SupportedMediaType() MediaType
 	DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error
 }

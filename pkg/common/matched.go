@@ -4,13 +4,13 @@ import (
 	"time"
 )
 
-type MatchedEntry struct {
+type MatchedMedia struct {
 	MediaMetadata
 	Size  int64
-	Parts []MatchedEntryPart
+	Parts []MatchedMediaPart
 }
 
-type MatchedEntryPart struct {
+type MatchedMediaPart struct {
 	MediaPart          MediaPart
 	TorrentInformation TorrentInformation
 }

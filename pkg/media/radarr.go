@@ -30,7 +30,7 @@ func NewRadarrRetriever(appUrl string, apiKey string, dryRun bool) (*RadarrRetri
 	return &RadarrRetriever{client, appUrl, dryRun}, nil
 }
 
-func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
+func (r *RadarrRetriever) GetMedia() ([]common.MediaEntry, error) {
 	movies, err := r.client.GetMovie(&radarr.GetMovie{
 		TMDBID:             0,
 		ExcludeLocalCovers: true,
@@ -38,12 +38,12 @@ func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not get radarr movies: %w", err)
 	}
-	var mappedMovies []common.Media
+	var mappedMovies []common.MediaEntry
 	for _, movie := range movies {
 		if !movie.HasFile {
 			continue
 		}
-		mappedMovies = append(mappedMovies, common.Media{
+		mappedMovies = append(mappedMovies, common.MediaEntry{
 			MediaMetadata: common.MediaMetadata{
 				Id:    movie.ID,
 				Type:  common.MediaTypeMovie,
@@ -51,7 +51,7 @@ func (r *RadarrRetriever) GetMedia() ([]common.Media, error) {
 				Url:   path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
 				Added: movie.Added,
 			},
-			Parts: []common.MediaPart{
+			MediaParts: []common.MediaPart{
 				{
 					Id:               movie.MovieFile.ID,
 					OriginalFilePath: filepath.Base(movie.MovieFile.OriginalFilePath),
