@@ -8,12 +8,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
 const cacheDir = "./cache"
 
-func warmupCaches(saveCache, useCache bool, cachedRetrievers ...common.CachedRetriever) error {
+func warmupCaches(saveCache, useCache bool, cachedRetrievers ...domain.CachedRetriever) error {
 	if saveCache && useCache {
 		return errors.New("cannot save and use cache simultaneously")
 	}
@@ -44,7 +44,7 @@ func warmupCaches(saveCache, useCache bool, cachedRetrievers ...common.CachedRet
 	return nil
 }
 
-func saveToCache(cachedRetrievers []common.CachedRetriever) error {
+func saveToCache(cachedRetrievers []domain.CachedRetriever) error {
 	if err := os.Mkdir(cacheDir, 0777); err != nil && !os.IsExist(err) {
 		return fmt.Errorf("could not create cache directory (%s): %w", cacheDir, err)
 	}
@@ -71,7 +71,7 @@ func saveToCache(cachedRetrievers []common.CachedRetriever) error {
 	return nil
 }
 
-func loadFromCache(cachedRetrievers []common.CachedRetriever) error {
+func loadFromCache(cachedRetrievers []domain.CachedRetriever) error {
 	for _, cachedRetriever := range cachedRetrievers {
 		loadCache := func() error {
 			sha1Name := sha1.Sum([]byte(fmt.Sprintf("%T", cachedRetriever)))

@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 	delugeclient "github.com/gdm85/go-libdeluge"
 )
 
-var _ common.TorrentClientRetriever = (*DelugeRetriever)(nil)
+var _ domain.TorrentClientRetriever = (*DelugeRetriever)(nil)
 
 type DelugeRetriever struct {
 	client *delugeclient.ClientV2
@@ -31,24 +31,24 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	return &DelugeRetriever{client, dryRun}, nil
 }
 
-func (retriever *DelugeRetriever) GetTorrentEntries() ([]*common.TorrentEntry, error) {
+func (retriever *DelugeRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, error) {
 	torrentList, err := retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get torrent list from deluge rpc api: %w", err)
 	}
-	torrentEntries := make([]*common.TorrentEntry, 0, len(torrentList))
+	torrentEntries := make([]*domain.TorrentEntry, 0, len(torrentList))
 	for hash, torrent := range torrentList {
-		torrentEntry := &common.TorrentEntry{
+		torrentEntry := &domain.TorrentEntry{
 			Client:   retriever.Name(),
 			Id:       hash,
 			Name:     torrent.Name,
 			Added:    time.Unix(torrent.CompletedTime, 0).In(time.UTC),
-			Files:    []*common.TorrentFile{},
+			Files:    []*domain.TorrentFile{},
 			Trackers: []string{torrent.TrackerHost},
 			Ratio:    float64(torrent.Ratio),
 		}
 		for _, file := range torrent.Files {
-			torrentEntry.Files = append(torrentEntry.Files, &common.TorrentFile{
+			torrentEntry.Files = append(torrentEntry.Files, &domain.TorrentFile{
 				Path: file.Path,
 				Size: file.Size,
 			})
@@ -67,7 +67,7 @@ func (retriever *DelugeRetriever) DeleteTorrent(id string) error {
 	if err != nil {
 		var wrappedErr delugeclient.RPCError
 		if errors.As(err, &wrappedErr) && wrappedErr.ExceptionType == "InvalidTorrentError" {
-			return common.ErrTorrentNotFound
+			return domain.ErrTorrentNotFound
 		}
 		return fmt.Errorf("could not remove torrent from deluge rpc api: %w", err)
 	} else if !ok {

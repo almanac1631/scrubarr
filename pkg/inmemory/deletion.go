@@ -6,10 +6,10 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
-func (m *Manager) DeleteMedia(mediaType common.MediaType, id int64) error {
+func (m *Manager) DeleteMedia(mediaType domain.MediaType, id int64) error {
 	matchedMedia, err := m.getSingleMatchedMediaEntry(mediaType, id)
 	if err != nil {
 		return err
@@ -22,17 +22,17 @@ func (m *Manager) DeleteSeason(id int64, season int) error {
 	if err != nil {
 		return err
 	}
-	seasonParts := make([]common.MatchedMediaPart, 0)
+	seasonParts := make([]domain.MatchedMediaPart, 0)
 	for _, part := range filteredMatchedMedia.Parts {
 		if part.MediaPart.Season != season {
 			continue
 		}
 		seasonParts = append(seasonParts, part)
 	}
-	return m.deleteMediaParts(id, common.MediaTypeSeries, seasonParts)
+	return m.deleteMediaParts(id, domain.MediaTypeSeries, seasonParts)
 }
 
-func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, parts []common.MatchedMediaPart) error {
+func (m *Manager) deleteMediaParts(mediaId int64, mediaType domain.MediaType, parts []domain.MatchedMediaPart) error {
 	type torrent struct {
 		client string
 		id     string
@@ -43,7 +43,7 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 		if _, ok := fileIdsToDeleteMap[part.MediaPart.Id]; !ok {
 			fileIdsToDeleteMap[part.MediaPart.Id] = struct{}{}
 		}
-		if part.TorrentInformation.Status == common.TorrentStatusMissing {
+		if part.TorrentInformation.Status == domain.TorrentStatusMissing {
 			continue
 		}
 		partTorrent := torrent{
@@ -51,7 +51,7 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 			id:     part.TorrentInformation.Id,
 		}
 		if !slices.ContainsFunc(torrentsToDelete, func(compareTorrent torrent) bool {
-			if part.TorrentInformation.Status == common.TorrentStatusMissing {
+			if part.TorrentInformation.Status == domain.TorrentStatusMissing {
 				return false
 			}
 			return partTorrent.client == compareTorrent.client && partTorrent.id == compareTorrent.id
@@ -71,7 +71,7 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 		return err
 	}
 	slog.Debug("Successfully deleted delete media files from media manager.", "mediaId", mediaId)
-	mediaIndex := slices.IndexFunc(m.matchedMediasCache, func(media common.MatchedMedia) bool {
+	mediaIndex := slices.IndexFunc(m.matchedMediasCache, func(media domain.MatchedMedia) bool {
 		return media.Type == mediaType && media.Id == mediaId
 	})
 	if mediaIndex == -1 {
@@ -80,7 +80,7 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType common.MediaType, pa
 	}
 	mediaEntry := m.matchedMediasCache[mediaIndex]
 	for partId := range fileIdsToDeleteMap {
-		index := slices.IndexFunc(mediaEntry.Parts, func(mediaPart common.MatchedMediaPart) bool {
+		index := slices.IndexFunc(mediaEntry.Parts, func(mediaPart domain.MatchedMediaPart) bool {
 			return mediaPart.MediaPart.Id == partId
 		})
 		if index == -1 {

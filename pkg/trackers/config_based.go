@@ -5,14 +5,14 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 	"github.com/knadh/koanf/v2"
 )
 
-var _ common.TrackerManager = (*ConfigBasedTrackerManager)(nil)
+var _ domain.TrackerManager = (*ConfigBasedTrackerManager)(nil)
 
 type trackerConfig struct {
-	common.Tracker
+	domain.Tracker
 	Pattern *regexp.Regexp
 }
 
@@ -41,7 +41,7 @@ func NewConfigBasedTrackerManager(config *koanf.Koanf) (*ConfigBasedTrackerManag
 			return nil, fmt.Errorf("could not compile pattern for tracker %q: %w", trackerKey, err)
 		}
 		manager.trackerConfigs = append(manager.trackerConfigs, trackerConfig{
-			Tracker: common.Tracker{
+			Tracker: domain.Tracker{
 				Name:     name,
 				MinRatio: minRatio,
 				MinAge:   minAge,
@@ -72,7 +72,7 @@ func getSetConfigValue[V float64 | time.Duration](config *koanf.Koanf, key strin
 	}
 }
 
-func (c ConfigBasedTrackerManager) GetTracker(trackers []string) (common.Tracker, error) {
+func (c ConfigBasedTrackerManager) GetTracker(trackers []string) (domain.Tracker, error) {
 	for _, config := range c.trackerConfigs {
 		for _, tracker := range trackers {
 			if config.Pattern.MatchString(tracker) {
@@ -80,5 +80,5 @@ func (c ConfigBasedTrackerManager) GetTracker(trackers []string) (common.Tracker
 			}
 		}
 	}
-	return common.Tracker{}, common.ErrTrackerNotFound
+	return domain.Tracker{}, domain.ErrTrackerNotFound
 }

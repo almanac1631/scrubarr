@@ -6,22 +6,22 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
-var _ common.Manager = (*Manager)(nil)
+var _ domain.Manager = (*Manager)(nil)
 
 type Manager struct {
-	matchedMediasCache []common.MatchedMedia
+	matchedMediasCache []domain.MatchedMedia
 
-	mediaManager common.MediaManager
+	mediaManager domain.MediaManager
 
-	torrentManager common.TorrentClientManager
+	torrentManager domain.TorrentClientManager
 
-	trackerManager common.TrackerManager
+	trackerManager domain.TrackerManager
 }
 
-func NewManager(mediaManager common.MediaManager, torrentManager common.TorrentClientManager, trackerManager common.TrackerManager) *Manager {
+func NewManager(mediaManager domain.MediaManager, torrentManager domain.TorrentClientManager, trackerManager domain.TrackerManager) *Manager {
 	return &Manager{
 		nil, mediaManager, torrentManager, trackerManager,
 	}
@@ -30,7 +30,7 @@ func NewManager(mediaManager common.MediaManager, torrentManager common.TorrentC
 const pageSize = 10
 
 func (m *Manager) refreshCache() error {
-	m.matchedMediasCache = make([]common.MatchedMedia, 0)
+	m.matchedMediasCache = make([]domain.MatchedMedia, 0)
 	medias, err := m.mediaManager.GetMedia()
 	if err != nil {
 		return fmt.Errorf("could not retrieve media from media manager: %w", err)
@@ -38,7 +38,7 @@ func (m *Manager) refreshCache() error {
 
 	for _, mediaEntry := range medias {
 		size := int64(0)
-		parts := make([]common.MatchedMediaPart, 0, len(mediaEntry.MediaParts))
+		parts := make([]domain.MatchedMediaPart, 0, len(mediaEntry.MediaParts))
 		added := mediaEntry.Added
 		for _, part := range mediaEntry.MediaParts {
 			size += part.Size
@@ -56,10 +56,10 @@ func (m *Manager) refreshCache() error {
 				return err
 			}
 
-			torrentStatus := common.TorrentStatusMissing
+			torrentStatus := domain.TorrentStatusMissing
 			var torrentClient, torrentId string
 			if torrentFinding != nil {
-				torrentStatus = common.TorrentStatusPresent
+				torrentStatus = domain.TorrentStatusPresent
 				torrentClient = torrentFinding.Client
 				torrentId = torrentFinding.Id
 			}
@@ -67,9 +67,9 @@ func (m *Manager) refreshCache() error {
 			ratioStatus, ratio := m.getRatioStatus(torrentFinding, tracker)
 			ageStatus, age := m.getAgeStatus(torrentFinding, tracker)
 
-			mediaPart := common.MatchedMediaPart{
+			mediaPart := domain.MatchedMediaPart{
 				MediaPart: part,
-				TorrentInformation: common.TorrentInformation{
+				TorrentInformation: domain.TorrentInformation{
 					Client:      torrentClient,
 					Id:          torrentId,
 					Status:      torrentStatus,
@@ -82,7 +82,7 @@ func (m *Manager) refreshCache() error {
 			}
 			parts = append(parts, mediaPart)
 		}
-		matchedMedias := common.MatchedMedia{
+		matchedMedias := domain.MatchedMedia{
 			MediaMetadata: mediaEntry.MediaMetadata,
 			Parts:         parts,
 			Size:          size,
@@ -93,46 +93,46 @@ func (m *Manager) refreshCache() error {
 	return nil
 }
 
-func (m *Manager) getTracker(torrentFinding *common.TorrentEntry, mediaEntry common.MediaEntry) (common.Tracker, error) {
+func (m *Manager) getTracker(torrentFinding *domain.TorrentEntry, mediaEntry domain.MediaEntry) (domain.Tracker, error) {
 	if torrentFinding != nil {
 		tracker, err := m.trackerManager.GetTracker(torrentFinding.Trackers)
 		if err != nil {
-			if errors.Is(err, common.ErrTrackerNotFound) {
+			if errors.Is(err, domain.ErrTrackerNotFound) {
 				slog.Warn("Could not find tracker name for media entry.",
 					"mediaType", mediaEntry.Type, "mediaId", mediaEntry.Id, "part", torrentFinding.Name,
 					"trackers", torrentFinding.Trackers, "findingId", torrentFinding.Id, "findingClient", torrentFinding.Client)
-				return common.Tracker{}, nil
+				return domain.Tracker{}, nil
 			}
-			return common.Tracker{}, err
+			return domain.Tracker{}, err
 		}
 		return tracker, nil
 	}
-	return common.Tracker{}, nil
+	return domain.Tracker{}, nil
 }
 
-func (m *Manager) getRatioStatus(torrentFinding *common.TorrentEntry, tracker common.Tracker) (ratioStatus common.TorrentAttributeStatus, ratio float64) {
-	ratioStatus = common.TorrentAttributeStatusUnknown
+func (m *Manager) getRatioStatus(torrentFinding *domain.TorrentEntry, tracker domain.Tracker) (ratioStatus domain.TorrentAttributeStatus, ratio float64) {
+	ratioStatus = domain.TorrentAttributeStatusUnknown
 	ratio = -1.0
 	if tracker.IsValid() && torrentFinding != nil {
 		ratio = torrentFinding.Ratio
 		if torrentFinding.Ratio >= tracker.MinRatio {
-			ratioStatus = common.TorrentAttributeStatusFulfilled
+			ratioStatus = domain.TorrentAttributeStatusFulfilled
 		} else {
-			ratioStatus = common.TorrentAttributeStatusPending
+			ratioStatus = domain.TorrentAttributeStatusPending
 		}
 	}
 	return ratioStatus, ratio
 }
 
-func (m *Manager) getAgeStatus(torrentFinding *common.TorrentEntry, tracker common.Tracker) (ageStatus common.TorrentAttributeStatus, age time.Duration) {
-	ageStatus = common.TorrentAttributeStatusUnknown
+func (m *Manager) getAgeStatus(torrentFinding *domain.TorrentEntry, tracker domain.Tracker) (ageStatus domain.TorrentAttributeStatus, age time.Duration) {
+	ageStatus = domain.TorrentAttributeStatusUnknown
 	age = time.Duration(-1)
 	if tracker.IsValid() && torrentFinding != nil {
 		age = time.Since(torrentFinding.Added)
 		if time.Since(torrentFinding.Added) > tracker.MinAge {
-			ageStatus = common.TorrentAttributeStatusFulfilled
+			ageStatus = domain.TorrentAttributeStatusFulfilled
 		} else {
-			ageStatus = common.TorrentAttributeStatusPending
+			ageStatus = domain.TorrentAttributeStatusPending
 		}
 	}
 	return ageStatus, age

@@ -8,27 +8,27 @@ import (
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
 type mediaEndpointData struct {
 	MappedMedia []*MappedMedia
-	SortInfo    common.SortInfo
+	SortInfo    domain.SortInfo
 	NextPage    int
 	Version     string
 }
 
 type MappedMedia struct {
-	common.MatchedMedia
-	TorrentInformation common.TorrentInformation
+	domain.MatchedMedia
+	TorrentInformation domain.TorrentInformation
 	Size               int64
 }
 
 type MappedMediaSeason struct {
 	Season             int
 	Size               int64
-	TorrentInformation common.TorrentInformation
-	Parts              []common.MatchedMediaPart
+	TorrentInformation domain.TorrentInformation
+	Parts              []domain.MatchedMediaPart
 }
 
 type MappedMediaSeries struct {
@@ -85,7 +85,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	}
 	mediaEntries := handler.getMatchedMediaList(matchedMediaList)
 	for _, mediaEntry := range mediaEntries {
-		mediaEntry.Parts = []common.MatchedMediaPart{}
+		mediaEntry.Parts = []domain.MatchedMediaPart{}
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
 		MappedMedia: mediaEntries,
@@ -98,7 +98,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	return
 }
 
-func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMedia) []*MappedMedia {
+func (handler *handler) getMatchedMediaList(matchedMediaList []domain.MatchedMedia) []*MappedMedia {
 	mediaEntries := make([]*MappedMedia, 0, len(matchedMediaList))
 	for _, matchedMedia := range matchedMediaList {
 		torrentInformation := getBundledTorrentInformationFromParts(matchedMedia.Parts)
@@ -111,13 +111,13 @@ func (handler *handler) getMatchedMediaList(matchedMediaList []common.MatchedMed
 	return mediaEntries
 }
 
-func getBundledTorrentInformationFromParts(parts []common.MatchedMediaPart) common.TorrentInformation {
-	torrentInformation := &common.TorrentInformation{
-		Status:      common.TorrentStatusPresent,
-		Tracker:     common.Tracker{},
-		RatioStatus: common.TorrentAttributeStatusFulfilled,
+func getBundledTorrentInformationFromParts(parts []domain.MatchedMediaPart) domain.TorrentInformation {
+	torrentInformation := &domain.TorrentInformation{
+		Status:      domain.TorrentStatusPresent,
+		Tracker:     domain.Tracker{},
+		RatioStatus: domain.TorrentAttributeStatusFulfilled,
 		Ratio:       -1,
-		AgeStatus:   common.TorrentAttributeStatusFulfilled,
+		AgeStatus:   domain.TorrentAttributeStatusFulfilled,
 		Age:         -1,
 	}
 	missingTorrents := 0
@@ -125,13 +125,13 @@ func getBundledTorrentInformationFromParts(parts []common.MatchedMediaPart) comm
 		torrentInformation.RatioStatus = getNewTorrentAttributeStatus(torrentInformation.RatioStatus, part.TorrentInformation.RatioStatus)
 		torrentInformation.AgeStatus = getNewTorrentAttributeStatus(torrentInformation.AgeStatus, part.TorrentInformation.AgeStatus)
 
-		if part.TorrentInformation.Status == common.TorrentStatusMissing {
+		if part.TorrentInformation.Status == domain.TorrentStatusMissing {
 			missingTorrents++
 		}
 
 		if len(parts) == 1 {
 			torrentInformation.Tracker = part.TorrentInformation.Tracker
-			if part.TorrentInformation.Status == common.TorrentStatusPresent {
+			if part.TorrentInformation.Status == domain.TorrentStatusPresent {
 				torrentInformation.Ratio = part.TorrentInformation.Ratio
 				torrentInformation.Age = part.TorrentInformation.Age
 			}
@@ -143,37 +143,37 @@ func getBundledTorrentInformationFromParts(parts []common.MatchedMediaPart) comm
 		}
 	}
 	if missingTorrents == len(parts) {
-		torrentInformation.Status = common.TorrentStatusMissing
+		torrentInformation.Status = domain.TorrentStatusMissing
 	} else if missingTorrents != 0 {
-		torrentInformation.Status = common.TorrentStatusIncomplete
+		torrentInformation.Status = domain.TorrentStatusIncomplete
 	}
 	return *torrentInformation
 }
 
-func getNewTorrentAttributeStatus(torrentInformationStatus, torrentStatus common.TorrentAttributeStatus) common.TorrentAttributeStatus {
-	if torrentInformationStatus == common.TorrentAttributeStatusUnknown || torrentStatus == common.TorrentAttributeStatusUnknown {
-		return common.TorrentAttributeStatusUnknown
-	} else if torrentInformationStatus == common.TorrentAttributeStatusFulfilled && torrentStatus == common.TorrentAttributeStatusFulfilled {
-		return common.TorrentAttributeStatusFulfilled
+func getNewTorrentAttributeStatus(torrentInformationStatus, torrentStatus domain.TorrentAttributeStatus) domain.TorrentAttributeStatus {
+	if torrentInformationStatus == domain.TorrentAttributeStatusUnknown || torrentStatus == domain.TorrentAttributeStatusUnknown {
+		return domain.TorrentAttributeStatusUnknown
+	} else if torrentInformationStatus == domain.TorrentAttributeStatusFulfilled && torrentStatus == domain.TorrentAttributeStatusFulfilled {
+		return domain.TorrentAttributeStatusFulfilled
 	}
-	return common.TorrentAttributeStatusPending
+	return domain.TorrentAttributeStatusPending
 }
 
-func getSortInfoFromUrlQuery(values url.Values) common.SortInfo {
-	sortInfo := common.SortInfo{}
+func getSortInfoFromUrlQuery(values url.Values) domain.SortInfo {
+	sortInfo := domain.SortInfo{}
 	sortKeyRaw := values.Get("sortKey")
-	switch common.SortKey(sortKeyRaw) {
-	case common.SortKeyName, common.SortKeySize, common.SortKeyAdded, common.SortKeyTorrentStatus:
-		sortInfo.Key = common.SortKey(sortKeyRaw)
+	switch domain.SortKey(sortKeyRaw) {
+	case domain.SortKeyName, domain.SortKeySize, domain.SortKeyAdded, domain.SortKeyTorrentStatus:
+		sortInfo.Key = domain.SortKey(sortKeyRaw)
 	default:
-		sortInfo.Key = common.SortKeyName
+		sortInfo.Key = domain.SortKeyName
 	}
 	sortOrderRaw := values.Get("sortOrder")
-	switch common.SortOrder(sortOrderRaw) {
-	case common.SortOrderAsc, common.SortOrderDesc:
-		sortInfo.Order = common.SortOrder(sortOrderRaw)
+	switch domain.SortOrder(sortOrderRaw) {
+	case domain.SortOrderAsc, domain.SortOrderDesc:
+		sortInfo.Order = domain.SortOrder(sortOrderRaw)
 	default:
-		sortInfo.Order = common.SortOrderAsc
+		sortInfo.Order = domain.SortOrderAsc
 	}
 	return sortInfo
 }
@@ -192,7 +192,7 @@ func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, re
 func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, request *http.Request, seriesId int64, collapsed bool) {
 	logger := getRequestLogger(request)
 	media, err := handler.manager.GetMatchedMediaBySeriesId(seriesId)
-	if errors.Is(err, common.ErrMediaNotFound) {
+	if errors.Is(err, domain.ErrMediaNotFound) {
 		// write 200 because of HTMX request
 		writer.WriteHeader(http.StatusOK)
 		return
@@ -201,14 +201,14 @@ func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, reques
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	mappedMedias := handler.getMatchedMediaList([]common.MatchedMedia{media})
+	mappedMedias := handler.getMatchedMediaList([]domain.MatchedMedia{media})
 	if len(mappedMedias) == 0 {
 		http.NotFound(writer, request)
 		return
 	}
 	mappedMedia := mappedMedias[0]
 	if collapsed {
-		mappedMedia.Parts = []common.MatchedMediaPart{}
+		mappedMedia.Parts = []domain.MatchedMediaPart{}
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entry", mappedMedia); err != nil {
 		logger.Error(err.Error())
@@ -222,7 +222,7 @@ func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
 		MappedMedia: mappedMedia,
 		Seasons:     make([]*MappedMediaSeason, 0),
 	}
-	partsNoSeason := make([]common.MatchedMediaPart, 0)
+	partsNoSeason := make([]domain.MatchedMediaPart, 0)
 	for _, part := range mappedMedia.Parts {
 		seasonNumber := part.MediaPart.Season
 		if seasonNumber == 0 {
@@ -236,7 +236,7 @@ func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
 		if index == -1 {
 			seasonObj = &MappedMediaSeason{
 				Season: seasonNumber,
-				Parts:  []common.MatchedMediaPart{part},
+				Parts:  []domain.MatchedMediaPart{part},
 				Size:   part.MediaPart.Size,
 			}
 			mappedSeries.Seasons = append(mappedSeries.Seasons, seasonObj)
@@ -253,7 +253,7 @@ func getSeasonGroupedParts(mappedMedia *MappedMedia) MappedMediaSeries {
 	return mappedSeries
 }
 
-func (handler *handler) getMediaDeletionHandler(mediaType common.MediaType) http.HandlerFunc {
+func (handler *handler) getMediaDeletionHandler(mediaType domain.MediaType) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		logger := getRequestLogger(request)
 		if !utils.IsHTMXRequest(request) {
@@ -298,7 +298,7 @@ func (handler *handler) getMediaSeasonDeletionHandler() http.HandlerFunc {
 			http.Error(writer, "400 Bad Request", http.StatusBadRequest)
 			return
 		}
-		logger = logger.With("mediaType", common.MediaTypeSeries, "season", season, "id", id)
+		logger = logger.With("mediaType", domain.MediaTypeSeries, "season", season, "id", id)
 		logger.Debug("Deleting series season...")
 		if err = handler.manager.DeleteSeason(id, season); err != nil {
 			logger.Error("Could not delete series season.", "error", err)

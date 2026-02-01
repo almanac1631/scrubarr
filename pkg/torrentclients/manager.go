@@ -9,20 +9,20 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
-var _ common.TorrentClientManager = (*DefaultTorrentManager)(nil)
+var _ domain.TorrentClientManager = (*DefaultTorrentManager)(nil)
 
 type DefaultTorrentManager struct {
-	Entries    map[string][]*common.TorrentEntry
+	Entries    map[string][]*domain.TorrentEntry
 	entryLock  *sync.Mutex
-	retrievers map[string]common.TorrentClientRetriever
+	retrievers map[string]domain.TorrentClientRetriever
 }
 
-func NewDefaultTorrentManager(retrievers ...common.TorrentClientRetriever) *DefaultTorrentManager {
+func NewDefaultTorrentManager(retrievers ...domain.TorrentClientRetriever) *DefaultTorrentManager {
 	manager := &DefaultTorrentManager{
-		retrievers: make(map[string]common.TorrentClientRetriever),
+		retrievers: make(map[string]domain.TorrentClientRetriever),
 		entryLock:  new(sync.Mutex),
 	}
 	for _, retriever := range retrievers {
@@ -31,7 +31,7 @@ func NewDefaultTorrentManager(retrievers ...common.TorrentClientRetriever) *Defa
 	return manager
 }
 
-func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string, size int64) (finding *common.TorrentEntry, err error) {
+func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string, size int64) (finding *domain.TorrentEntry, err error) {
 	for _, entries := range manager.Entries {
 		for _, entry := range entries {
 			if matches(entry, originalFilePath, size) {
@@ -42,7 +42,7 @@ func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string, si
 	return nil, err
 }
 
-func matches(entry *common.TorrentEntry, originalFilePath string, size int64) bool {
+func matches(entry *domain.TorrentEntry, originalFilePath string, size int64) bool {
 	if entry.Name == originalFilePath {
 		return true
 	}
@@ -75,7 +75,7 @@ func (manager *DefaultTorrentManager) DeleteFinding(client, id string) error {
 	if err := retriever.DeleteTorrent(id); err != nil {
 		return fmt.Errorf("could not delete torrent %q from client %q: %w", id, client, err)
 	}
-	manager.Entries[client] = slices.DeleteFunc(manager.Entries[client], func(entrySearch *common.TorrentEntry) bool {
+	manager.Entries[client] = slices.DeleteFunc(manager.Entries[client], func(entrySearch *domain.TorrentEntry) bool {
 		return entrySearch.Id == id
 	})
 	return nil
@@ -84,7 +84,7 @@ func (manager *DefaultTorrentManager) DeleteFinding(client, id string) error {
 func (manager *DefaultTorrentManager) RefreshCache() error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
-	manager.Entries = make(map[string][]*common.TorrentEntry)
+	manager.Entries = make(map[string][]*domain.TorrentEntry)
 	for name, retriever := range manager.retrievers {
 		slog.Debug("Refreshing torrent cache...", "client", name)
 		retrieverEntries, err := retriever.GetTorrentEntries()
@@ -101,6 +101,6 @@ func (manager *DefaultTorrentManager) SaveCache(writer io.Writer) error {
 }
 
 func (manager *DefaultTorrentManager) LoadCache(reader io.ReadSeeker) error {
-	manager.Entries = make(map[string][]*common.TorrentEntry)
+	manager.Entries = make(map[string][]*domain.TorrentEntry)
 	return json.NewDecoder(reader).Decode(&manager.Entries)
 }
