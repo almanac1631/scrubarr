@@ -14,7 +14,7 @@ require (
 	github.com/knadh/koanf/v2 v2.3.2
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.47.0
-	golang.org/x/term v0.39.0
+	golang.org/x/term v0.40.0
 	golift.io/starr v1.3.0
 )
 
@@ -31,7 +31,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 )
 
 replace github.com/autobrr/go-rtorrent v1.12.0 => github.com/almanac1631/go-rtorrent v1.16.0
