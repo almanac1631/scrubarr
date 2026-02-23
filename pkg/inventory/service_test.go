@@ -424,12 +424,14 @@ func Test_applyEvaluationReport(t *testing.T) {
 				TorrentInformation: webserver.TorrentInformation{
 					LinkStatus: webserver.TorrentLinkPresent,
 				},
+				AllowDeletion: true,
 				ChildMediaRows: []webserver.MediaRow{{
 					Id: "movie-10-1337",
 					TorrentInformation: webserver.TorrentInformation{
 						LinkStatus: webserver.TorrentLinkPresent,
 					},
-					Decision: domain.DecisionSafeToDelete,
+					Decision:      domain.DecisionSafeToDelete,
+					AllowDeletion: true,
 				}},
 			},
 		},
@@ -508,22 +510,26 @@ func Test_applyEvaluationReport(t *testing.T) {
 				Id:                 "series-10",
 				Decision:           domain.DecisionSafeToDelete,
 				TorrentInformation: testTorrentInformationMissing,
+				AllowDeletion:      true,
 				ChildMediaRows: []webserver.MediaRow{
 					{
 						Id:                 "series-10-s-1",
 						Title:              "Season 1",
 						TorrentInformation: testTorrentInformationMissing,
 						Decision:           domain.DecisionSafeToDelete,
+						AllowDeletion:      true,
 						ChildMediaRows: []webserver.MediaRow{
 							{
 								Id:                 "series-10-13371",
 								TorrentInformation: testTorrentInformationMissing,
 								Decision:           domain.DecisionSafeToDelete,
+								AllowDeletion:      true,
 							},
 							{
 								Id:                 "series-10-13372",
 								TorrentInformation: testTorrentInformationMissing,
 								Decision:           domain.DecisionSafeToDelete,
+								AllowDeletion:      true,
 							},
 						},
 					},
@@ -532,11 +538,13 @@ func Test_applyEvaluationReport(t *testing.T) {
 						Title:              "Season 2",
 						TorrentInformation: testTorrentInformationMissing,
 						Decision:           domain.DecisionSafeToDelete,
+						AllowDeletion:      true,
 						ChildMediaRows: []webserver.MediaRow{
 							{
 								Id:                 "series-10-13373",
 								TorrentInformation: testTorrentInformationMissing,
 								Decision:           domain.DecisionSafeToDelete,
+								AllowDeletion:      true,
 							},
 						},
 					},
@@ -544,6 +552,7 @@ func Test_applyEvaluationReport(t *testing.T) {
 						Id:                 "series-10-13374",
 						TorrentInformation: testTorrentInformationMissing,
 						Decision:           domain.DecisionSafeToDelete,
+						AllowDeletion:      true,
 					},
 				},
 			},
@@ -613,6 +622,7 @@ func Test_applyEvaluationReport(t *testing.T) {
 				Id:                 "series-10",
 				Decision:           domain.DecisionSafeToDelete,
 				TorrentInformation: testTorrentInformationMissing,
+				AllowDeletion:      true,
 				ChildMediaRows: []webserver.MediaRow{
 					{
 						Id:                 "series-10-s-1",
@@ -620,18 +630,21 @@ func Test_applyEvaluationReport(t *testing.T) {
 						TorrentInformation: testTorrentInformationMissing,
 						Decision:           domain.DecisionSafeToDelete,
 						Size:               2500,
+						AllowDeletion:      true,
 						ChildMediaRows: []webserver.MediaRow{
 							{
 								Id:                 "series-10-13371",
 								TorrentInformation: testTorrentInformationMissing,
 								Size:               1000,
 								Decision:           domain.DecisionSafeToDelete,
+								AllowDeletion:      true,
 							},
 							{
 								Id:                 "series-10-13372",
 								TorrentInformation: testTorrentInformationMissing,
 								Size:               1500,
 								Decision:           domain.DecisionSafeToDelete,
+								AllowDeletion:      true,
 							},
 						},
 					},
@@ -701,6 +714,7 @@ func Test_applyEvaluationReport(t *testing.T) {
 				Id:                 "series-10",
 				Decision:           domain.DecisionSafeToDelete,
 				TorrentInformation: torrentInfoPresentTracker1,
+				AllowDeletion:      true,
 				ChildMediaRows: []webserver.MediaRow{
 					{
 						Id:                 "series-10-s-1",
@@ -708,6 +722,7 @@ func Test_applyEvaluationReport(t *testing.T) {
 						TorrentInformation: torrentInfoPresentTracker1,
 						Added:              util.MustParseDate("2020-08-12 00:00:00"),
 						Decision:           domain.DecisionSafeToDelete,
+						AllowDeletion:      true,
 						ChildMediaRows: []webserver.MediaRow{
 							{
 								Id:                 "series-10-13371",
@@ -798,6 +813,7 @@ func Test_applyEvaluationReport(t *testing.T) {
 					Ratio:      -1.0,
 					Age:        time.Duration(-1),
 				},
+				AllowDeletion: true,
 				ChildMediaRows: []webserver.MediaRow{
 					{
 						Id:    "series-10-s-1",
@@ -808,19 +824,22 @@ func Test_applyEvaluationReport(t *testing.T) {
 							Ratio:      -1.0,
 							Age:        time.Duration(-1),
 						},
-						Decision: domain.DecisionPending,
+						Decision:      domain.DecisionPending,
+						AllowDeletion: true,
 						ChildMediaRows: []webserver.MediaRow{
 							{
 								Id:                 "series-10-13371",
 								TorrentInformation: torrentInfoPresentTracker1,
 								Added:              util.MustParseDate("2020-08-12 00:00:00"),
 								Decision:           domain.DecisionSafeToDelete,
+								AllowDeletion:      true,
 							},
 							{
 								Id:                 "series-10-13372",
 								TorrentInformation: torrentInfoPresentTracker2,
 								Added:              util.MustParseDate("2020-08-13 00:00:00"),
 								Decision:           domain.DecisionPending,
+								AllowDeletion:      true,
 							},
 						},
 					},
@@ -898,6 +917,7 @@ func Test_applyEvaluationReport(t *testing.T) {
 					Ratio:      -1.0,
 					Age:        time.Duration(-1),
 				},
+				AllowDeletion: true,
 				ChildMediaRows: []webserver.MediaRow{
 					{
 						Id:    "series-10-s-1",
@@ -907,13 +927,15 @@ func Test_applyEvaluationReport(t *testing.T) {
 							Ratio:      -1.0,
 							Age:        time.Duration(-1),
 						},
-						Decision: domain.DecisionPending,
+						Decision:      domain.DecisionPending,
+						AllowDeletion: true,
 						ChildMediaRows: []webserver.MediaRow{
 							{
 								Id:                 "series-10-13371",
 								TorrentInformation: torrentInfoPresentTracker1,
 								Added:              util.MustParseDate("2020-08-12 00:00:00"),
 								Decision:           domain.DecisionSafeToDelete,
+								AllowDeletion:      true,
 							},
 							{
 								Id: "series-10-13372",
@@ -923,8 +945,9 @@ func Test_applyEvaluationReport(t *testing.T) {
 									Ratio:      2.5,
 									Age:        time.Hour * 24 * 15,
 								},
-								Added:    util.MustParseDate("2020-08-13 00:00:00"),
-								Decision: domain.DecisionPending,
+								Added:         util.MustParseDate("2020-08-13 00:00:00"),
+								Decision:      domain.DecisionPending,
+								AllowDeletion: true,
 							},
 						},
 					},
