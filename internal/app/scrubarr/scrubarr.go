@@ -91,6 +91,20 @@ func serve(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	go func() {
+		exitChan := make(chan os.Signal, 1)
+		signal.Notify(exitChan, os.Interrupt)
+		<-exitChan
+		slog.Info("Received exit signal. Shutting down...")
+		cancelFunc()
+		if err := listener.Close(); err != nil {
+			slog.Error("Could not close listener.", "error", err)
+		}
+		slog.Info("Goodbye!")
+	}()
+
 	radarrRetriever, err := media.NewRadarrRetriever(
 		k.MustString("connections.radarr.hostname"),
 		k.MustString("connections.radarr.api_key"),
@@ -156,8 +170,6 @@ func serve(cmd *cobra.Command, args []string) {
 		slog.Debug("Refreshed retriever data.")
 	}
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
 	if refreshInterval != 0 {
 		slog.Info("Starting retriever refresh automation...", "interval", refreshInterval)
 		go func() {
@@ -179,18 +191,6 @@ func serve(cmd *cobra.Command, args []string) {
 	router := webserver.SetupWebserver(k, version, inventoryService)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
-
-	go func() {
-		exitChan := make(chan os.Signal, 1)
-		signal.Notify(exitChan, os.Interrupt)
-		<-exitChan
-		slog.Info("Received exit signal. Shutting down...")
-		cancelFunc()
-		if err := listener.Close(); err != nil {
-			slog.Error("Could not close listener.", "error", err)
-		}
-		slog.Info("Goodbye!")
-	}()
 
 	srv := &http.Server{
 		Handler:           handlers.CompressHandler(router),
