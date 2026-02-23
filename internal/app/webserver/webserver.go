@@ -12,7 +12,6 @@ import (
 	"path"
 	"syscall"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
 	internal "github.com/almanac1631/scrubarr/web"
 	"github.com/knadh/koanf/v2"
 )
@@ -28,8 +27,7 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func SetupWebserver(config *koanf.Koanf, version string,
-	mediaManager common.MediaManager, torrentManager common.TorrentClientManager, trackerManager common.TrackerManager) http.Handler {
+func SetupWebserver(config *koanf.Koanf, version string, inventoryService InventoryService) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
 		slog.Error("Could not create template cache.", "error", err)
@@ -42,7 +40,7 @@ func SetupWebserver(config *koanf.Koanf, version string,
 		slog.Error("Could not create auth provider.", "error", err)
 		os.Exit(1)
 	}
-	handler, err := newHandler(config, version, pathPrefix, authProvider, templateCache, mediaManager, torrentManager, trackerManager)
+	handler, err := newHandler(config, version, pathPrefix, authProvider, templateCache, inventoryService)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("Could not create webserver handler.", "error", err)
@@ -55,10 +53,8 @@ func SetupWebserver(config *koanf.Koanf, version string,
 	authorizedRouter := http.NewServeMux()
 	authorizedRouter.HandleFunc("GET /media", handler.handleMediaEndpoint)
 	authorizedRouter.HandleFunc("GET /media/entries", handler.handleMediaEntriesEndpoint)
-	authorizedRouter.HandleFunc("GET /media/series/{id}", handler.handleMediaSeriesEndpoint)
-	authorizedRouter.HandleFunc("DELETE /media/series/{id}", handler.getMediaDeletionHandler(common.MediaTypeSeries))
-	authorizedRouter.HandleFunc("DELETE /media/series/{id}/season/{season}", handler.getMediaSeasonDeletionHandler())
-	authorizedRouter.HandleFunc("DELETE /media/movie/{id}", handler.getMediaDeletionHandler(common.MediaTypeMovie))
+	authorizedRouter.HandleFunc("GET /media/entries/{id}", handler.handleMediaSeriesEndpoint)
+	authorizedRouter.HandleFunc("DELETE /media/entries/{id}", handler.handleMediaDeletionEndpoint)
 	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/" {
 			http.NotFound(writer, request)

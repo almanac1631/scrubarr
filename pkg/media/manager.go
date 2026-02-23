@@ -6,39 +6,42 @@ import (
 	"io"
 	"sync"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
-var _ common.MediaManager = (*DefaultMediaManager)(nil)
+var _ domain.MediaSourceManager = (*DefaultMediaManager)(nil)
 
 type DefaultMediaManager struct {
-	Entries    map[common.MediaType][]common.Media
+	Entries    map[domain.MediaType][]domain.MediaEntry
 	entryLock  *sync.Mutex
-	retrievers map[common.MediaType]common.MediaRetriever
+	retrievers map[domain.MediaType]domain.MediaSource
 }
 
-func NewDefaultMediaManager(retrievers ...common.MediaRetriever) *DefaultMediaManager {
-	manager := &DefaultMediaManager{nil, &sync.Mutex{}, make(map[common.MediaType]common.MediaRetriever)}
+func NewDefaultMediaManager(retrievers ...domain.MediaSource) *DefaultMediaManager {
+	manager := &DefaultMediaManager{nil, &sync.Mutex{}, make(map[domain.MediaType]domain.MediaSource)}
 	for _, retriever := range retrievers {
 		manager.retrievers[retriever.SupportedMediaType()] = retriever
 	}
 	return manager
 }
 
-func (manager *DefaultMediaManager) GetMedia() ([]common.Media, error) {
+func (manager *DefaultMediaManager) GetMedia() ([]*domain.MediaEntry, error) {
 	if manager.Entries == nil {
 		if err := manager.RefreshCache(); err != nil {
 			return nil, err
 		}
 	}
-	mediaList := make([]common.Media, 0)
+
+	mediaList := make([]*domain.MediaEntry, 0)
 	for _, mediaEntries := range manager.Entries {
-		mediaList = append(mediaList, mediaEntries...)
+		for _, mediaEntry := range mediaEntries {
+			mediaList = append(mediaList, &mediaEntry)
+		}
 	}
 	return mediaList, nil
 }
 
-func (manager *DefaultMediaManager) DeleteMediaFiles(mediaType common.MediaType, fileIds []int64, stopParentMonitoring bool) error {
+func (manager *DefaultMediaManager) DeleteMediaFiles(mediaType domain.MediaType, fileIds []int64, stopParentMonitoring bool) error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
 	retriever, ok := manager.retrievers[mediaType]
@@ -51,7 +54,7 @@ func (manager *DefaultMediaManager) DeleteMediaFiles(mediaType common.MediaType,
 func (manager *DefaultMediaManager) RefreshCache() error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
-	manager.Entries = make(map[common.MediaType][]common.Media)
+	manager.Entries = make(map[domain.MediaType][]domain.MediaEntry)
 	for mediaType, retriever := range manager.retrievers {
 		var err error
 		manager.Entries[mediaType], err = retriever.GetMedia()
@@ -71,6 +74,6 @@ func (manager *DefaultMediaManager) SaveCache(writer io.Writer) error {
 func (manager *DefaultMediaManager) LoadCache(reader io.ReadSeeker) error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
-	manager.Entries = make(map[common.MediaType][]common.Media)
+	manager.Entries = make(map[domain.MediaType][]domain.MediaEntry)
 	return json.NewDecoder(reader).Decode(&manager.Entries)
 }

@@ -7,11 +7,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 	"github.com/autobrr/go-rtorrent"
 )
 
-var _ common.TorrentClientRetriever = (*RtorrentRetriever)(nil)
+var _ domain.TorrentSource = (*RtorrentRetriever)(nil)
 
 type RtorrentRetriever struct {
 	client *rtorrent.Client
@@ -31,19 +31,19 @@ func NewRtorrentRetriever(hostname string, username string, password string, dry
 	return &RtorrentRetriever{client, dryRun}, nil
 }
 
-func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry, error) {
+func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, error) {
 	torrentList, err := retriever.client.GetTorrents(context.Background(), rtorrent.ViewMain)
 	if err != nil {
 		return nil, fmt.Errorf("could not get torrent list from rtorrent: %w", err)
 	}
-	torrentEntries := make([]*common.TorrentEntry, 0, len(torrentList))
+	torrentEntries := make([]*domain.TorrentEntry, 0, len(torrentList))
 	for _, torrent := range torrentList {
-		torrentEntry := &common.TorrentEntry{
+		torrentEntry := &domain.TorrentEntry{
 			Client:   retriever.Name(),
 			Id:       torrent.Hash,
 			Name:     torrent.Name,
 			Added:    torrent.Finished,
-			Files:    []*common.TorrentFile{},
+			Files:    []*domain.TorrentFile{},
 			Trackers: []string{},
 			Ratio:    torrent.Ratio,
 		}
@@ -52,7 +52,7 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 			return nil, fmt.Errorf("could not get torrent files from rtorrent: %w", err)
 		}
 		for _, torrentFile := range torrentFiles {
-			torrentEntry.Files = append(torrentEntry.Files, &common.TorrentFile{
+			torrentEntry.Files = append(torrentEntry.Files, &domain.TorrentFile{
 				Path: torrentFile.Path,
 				Size: int64(torrentFile.Size),
 			})
@@ -60,7 +60,7 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*common.TorrentEntry,
 		torrentEntries = append(torrentEntries, torrentEntry)
 		torrentTrackers, err := retriever.client.GetTrackers(context.Background(), torrent)
 		if err != nil {
-			return nil, fmt.Errorf("could not get trackers from rtorrent: %w", err)
+			return nil, fmt.Errorf("could not get trackerresolver from rtorrent: %w", err)
 		}
 		for _, tracker := range torrentTrackers {
 			if !slices.Contains(torrentEntry.Trackers, tracker) {
@@ -81,7 +81,7 @@ func (retriever *RtorrentRetriever) DeleteTorrent(id string) error {
 	if err := retriever.client.SetForceDelete(context.Background(), torrent, true); err != nil {
 		errString := err.Error()
 		if strings.Contains(errString, "Could not find info-hash") || strings.Contains(errString, "info-hash not found") {
-			return common.ErrTorrentNotFound
+			return domain.ErrTorrentNotFound
 		}
 		return fmt.Errorf("could not force deletion for torrent %q: %w", hash, err)
 	}

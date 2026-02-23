@@ -12,9 +12,12 @@ import (
 	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
+	"github.com/almanac1631/scrubarr/pkg/inventory"
+	"github.com/almanac1631/scrubarr/pkg/linker"
 	"github.com/almanac1631/scrubarr/pkg/media"
+	"github.com/almanac1631/scrubarr/pkg/retentionpolicy"
 	"github.com/almanac1631/scrubarr/pkg/torrentclients"
-	"github.com/almanac1631/scrubarr/pkg/trackers"
+	"github.com/almanac1631/scrubarr/pkg/trackerresolver"
 	"github.com/gorilla/handlers"
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/providers/file"
@@ -135,11 +138,13 @@ func serve(cmd *cobra.Command, args []string) {
 
 	torrentManager := torrentclients.NewDefaultTorrentManager(delugeRetriever, rtorrentRetriever)
 
-	trackerManager, err := trackers.NewConfigBasedTrackerManager(k)
+	trackerResolver, err := trackerresolver.NewServiceFromKoanf(k)
 	if err != nil {
 		slog.Error("Could not setup tracker manager", "error", err)
 		os.Exit(1)
 	}
+
+	retentionPolicy := retentionpolicy.NewService(trackerResolver)
 
 	refreshInterval := k.Duration("general.refresh_interval")
 	refreshCaches := func() {
@@ -169,7 +174,9 @@ func serve(cmd *cobra.Command, args []string) {
 	refreshCaches()
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, version, mediaManager, torrentManager, trackerManager)
+	inventoryService := inventory.NewService(mediaManager, torrentManager, linker.NewService(), retentionPolicy)
+
+	router := webserver.SetupWebserver(k, version, inventoryService)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 

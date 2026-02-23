@@ -1,4 +1,4 @@
-package common
+package domain
 
 import "time"
 
@@ -17,26 +17,26 @@ type MediaMetadata struct {
 	Added time.Time
 }
 
-type MediaPart struct {
+type MediaFile struct {
 	Id               int64
 	Season           int
 	OriginalFilePath string
 	Size             int64
 }
 
-type Media struct {
+type MediaEntry struct {
 	MediaMetadata
-	Parts []MediaPart
+	Files []MediaFile
 }
 
-type MediaManager interface {
-	CachedRetriever
-	GetMedia() ([]Media, error)
+type MediaSourceManager interface {
+	CachedManager
+	GetMedia() ([]*MediaEntry, error)
 	DeleteMediaFiles(mediaType MediaType, fileIds []int64, stopParentMonitoring bool) error
 }
 
-type MediaRetriever interface {
-	GetMedia() ([]Media, error)
+type MediaSource interface {
+	GetMedia() ([]MediaEntry, error)
 	SupportedMediaType() MediaType
 	DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error
 }

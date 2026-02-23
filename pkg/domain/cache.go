@@ -1,8 +1,8 @@
-package common
+package domain
 
 import "io"
 
-type CachedRetriever interface {
+type CachedManager interface {
 	RefreshCache() error
 
 	SaveCache(writer io.Writer) error

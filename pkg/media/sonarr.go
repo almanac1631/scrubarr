@@ -12,12 +12,12 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/almanac1631/scrubarr/pkg/common"
+	"github.com/almanac1631/scrubarr/pkg/domain"
 	"golift.io/starr"
 	"golift.io/starr/sonarr"
 )
 
-var _ common.MediaRetriever = (*SonarrRetriever)(nil)
+var _ domain.MediaSource = (*SonarrRetriever)(nil)
 
 type SonarrRetriever struct {
 	client *sonarr.Sonarr
@@ -40,12 +40,12 @@ func NewSonarrRetriever(appUrl string, apiKey string, dryRun bool) (*SonarrRetri
 	return &SonarrRetriever{client, appUrl, dryRun}, nil
 }
 
-func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
+func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 	seriesList, err := r.client.GetAllSeries()
 	if err != nil {
 		return nil, fmt.Errorf("could not get sonarr series: %w", err)
 	}
-	mediaList := make([]common.Media, 0)
+	mediaList := make([]domain.MediaEntry, 0)
 	for _, series := range seriesList {
 		if series.Statistics.SizeOnDisk == 0 {
 			continue
@@ -54,24 +54,24 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not get series episode files: %w", err)
 		}
-		parts := make([]common.MediaPart, 0, len(seriesEpisodeFiles))
+		parts := make([]domain.MediaFile, 0, len(seriesEpisodeFiles))
 		for _, seriesEpisodeFile := range seriesEpisodeFiles {
-			parts = append(parts, common.MediaPart{
+			parts = append(parts, domain.MediaFile{
 				Id:               seriesEpisodeFile.ID,
 				Season:           seriesEpisodeFile.SeasonNumber,
 				OriginalFilePath: filepath.Base(seriesEpisodeFile.RelativePath),
 				Size:             seriesEpisodeFile.Size,
 			})
 		}
-		media := common.Media{
-			MediaMetadata: common.MediaMetadata{
+		media := domain.MediaEntry{
+			MediaMetadata: domain.MediaMetadata{
 				Id:    series.ID,
-				Type:  common.MediaTypeSeries,
+				Type:  domain.MediaTypeSeries,
 				Title: series.Title,
 				Url:   path.Join(r.appUrl, fmt.Sprintf("series/%s", series.TitleSlug)),
 				Added: series.Added,
 			},
-			Parts: parts,
+			Files: parts,
 		}
 		mediaList = append(mediaList, media)
 	}
@@ -81,7 +81,7 @@ func (r *SonarrRetriever) GetMedia() ([]common.Media, error) {
 func (r *SonarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
 	episodeFiles, err := r.getEpisodeFiles(fileIds)
 	if err != nil {
-		return fmt.Errorf("could not get sonarr episode files: %w", err)
+		return fmt.Errorf("could not get sonarr episode files (file ids: %+v): %w", fileIds, err)
 	}
 	seriesSeasonMap := make(map[int64][]int)
 	if stopParentMonitoring {
@@ -126,8 +126,8 @@ func (r *SonarrRetriever) getEpisodeFiles(fileIds []int64) ([]*sonarr.EpisodeFil
 	return output, nil
 }
 
-func (r *SonarrRetriever) SupportedMediaType() common.MediaType {
-	return common.MediaTypeSeries
+func (r *SonarrRetriever) SupportedMediaType() domain.MediaType {
+	return domain.MediaTypeSeries
 }
 
 func (r *SonarrRetriever) deleteEpisodeFiles(fileIds []int64) error {

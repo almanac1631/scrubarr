@@ -1,0 +1,367 @@
+package inventory
+
+import (
+	"cmp"
+	"errors"
+	"fmt"
+	"log/slog"
+	"path"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/almanac1631/scrubarr/internal/app/webserver"
+	"github.com/almanac1631/scrubarr/pkg/domain"
+)
+
+var now = time.Now
+
+const pageSize = 10
+
+type enrichedLinkedMedia struct {
+	linkedMedia      LinkedMedia
+	evaluationReport EvaluationReport
+	size             int64
+	added            time.Time
+}
+
+func (m enrichedLinkedMedia) getScore() int {
+	switch m.evaluationReport.Result.Decision {
+	case domain.DecisionSafeToDelete:
+		return 0
+	case domain.DecisionPending:
+		return 1
+	default:
+		return -1
+	}
+}
+
+type Service struct {
+	enrichedLinkedMediaCache []enrichedLinkedMedia
+	mediaSourceManager       domain.MediaSourceManager
+	torrentSourceManager     domain.TorrentSourceManager
+	linker                   Linker
+	retentionPolicy          RetentionPolicy
+}
+
+func NewService(mediaSourceManager domain.MediaSourceManager, torrentSourceManager domain.TorrentSourceManager, linker Linker, retentionPolicy RetentionPolicy) *Service {
+	return &Service{mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
+}
+
+func (s *Service) refreshCache() error {
+	media, err := s.mediaSourceManager.GetMedia()
+	if err != nil {
+		return fmt.Errorf("unable to get media: %w", err)
+	}
+	torrents, err := s.torrentSourceManager.GetTorrents()
+	if err != nil {
+		return fmt.Errorf("unable to get torrents: %w", err)
+	}
+	linkedMediaList, err := s.linker.LinkMedia(media, torrents)
+	if err != nil {
+		return fmt.Errorf("unable to link media with torrents: %w", err)
+	}
+	s.enrichedLinkedMediaCache = make([]enrichedLinkedMedia, len(linkedMediaList))
+	for i, linkedMedia := range linkedMediaList {
+		evaluationReport, err := s.retentionPolicy.Evaluate(linkedMedia)
+		if err != nil {
+			return fmt.Errorf("unable to evaluate retention policy: %w", err)
+		}
+		s.enrichedLinkedMediaCache[i] = enrichedLinkedMedia{
+			linkedMedia:      linkedMedia,
+			evaluationReport: evaluationReport,
+			size:             getSize(linkedMedia),
+			added:            getAdded(linkedMedia),
+		}
+	}
+	return nil
+}
+
+func getAdded(linkedMedia LinkedMedia) time.Time {
+	added := linkedMedia.Added
+	for _, file := range linkedMedia.Files {
+		torrentEntry := file.TorrentEntry
+		if torrentEntry != nil && !torrentEntry.Added.IsZero() && torrentEntry.Added.After(added) {
+			added = torrentEntry.Added
+		}
+	}
+	return added
+}
+
+func getSize(linkedMedia LinkedMedia) int64 {
+	size := int64(0)
+	for _, file := range linkedMedia.Files {
+		size += file.Size
+	}
+	return size
+}
+
+func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (mediaRows []webserver.MediaRow, hasNext bool, err error) {
+	if s.enrichedLinkedMediaCache == nil {
+		if err := s.refreshCache(); err != nil {
+			return nil, false, err
+		}
+	}
+	enrichedLinkedMediaList := slices.Clone(s.enrichedLinkedMediaCache)
+	slices.SortFunc(enrichedLinkedMediaList, func(a, b enrichedLinkedMedia) int {
+		var result int
+		switch sortInfo.Key {
+		case webserver.SortKeyName:
+			result = strings.Compare(strings.ToLower(a.linkedMedia.Title), strings.ToLower(b.linkedMedia.Title))
+			break
+		case webserver.SortKeySize:
+			result = cmp.Compare(a.size, b.size)
+			break
+		case webserver.SortKeyAdded:
+			result = cmp.Compare(a.added.Unix(), b.added.Unix())
+			break
+		case webserver.SortKeyStatus:
+			result = cmp.Compare(a.getScore(), b.getScore())
+			break
+		default:
+			slog.Error("Received unknown sort key.", "sortKey", sortInfo.Key)
+			result = 0 // mark as incomparable
+		}
+		if sortInfo.Order == webserver.SortOrderDesc {
+			result = -result
+		}
+		return result
+	})
+	if pageSize*page < len(enrichedLinkedMediaList) {
+		hasNext = true
+		enrichedLinkedMediaList = enrichedLinkedMediaList[pageSize*(page-1) : pageSize*page]
+	} else {
+		enrichedLinkedMediaList = enrichedLinkedMediaList[pageSize*(page-1):]
+	}
+
+	mediaRows = make([]webserver.MediaRow, len(enrichedLinkedMediaList))
+	for i, media := range enrichedLinkedMediaList {
+		mediaRow := getMediaRow(media)
+		mediaRow.ChildMediaRows = []webserver.MediaRow{}
+		mediaRows[i] = mediaRow
+	}
+	return mediaRows, hasNext, nil
+}
+
+func (s *Service) GetExpandedMediaRow(rawId string) (mediaRowExpanded webserver.MediaRow, err error) {
+	id, err := parseMediaId(rawId)
+	if err != nil {
+		return mediaRowExpanded, err
+	}
+	for _, mediaIter := range s.enrichedLinkedMediaCache {
+		if mediaIter.linkedMedia.Type != id.MediaType || mediaIter.linkedMedia.Id != id.Id {
+			continue
+		}
+		return getMediaRow(mediaIter), nil
+	}
+	return webserver.MediaRow{}, webserver.ErrMediaNotFound
+}
+
+// getMediaRow combines the raw media row generation and evaluation report apply logic to return an enriched media row.
+func getMediaRow(media enrichedLinkedMedia) webserver.MediaRow {
+	row := generateRawMediaRowFromLinkedMedia(media)
+	row = applyEvaluationReport(media, row)
+	if row.Title == "F1" {
+		fmt.Printf("%+v\n", row)
+	}
+	return row
+}
+
+// getRawFileBasedMedia parses the given media and returns a webserver.MediaRow with a file list. This function does not
+// respect tracker information, deletion decision or hierarchies like seasons.
+func generateRawMediaRowFromLinkedMedia(media enrichedLinkedMedia) webserver.MediaRow {
+	linkedMedia := media.linkedMedia
+	id := fmt.Sprintf("%s-%d", linkedMedia.Type, linkedMedia.Id)
+	var torrentInformation webserver.TorrentInformation
+	childMediaRows := make([]webserver.MediaRow, 0)
+	currentTime := now()
+	for i, file := range linkedMedia.Files {
+		fileMediaRow := getRawMediaRowFromFile(currentTime, id, file)
+
+		if i == 0 && torrentInformation.LinkStatus == "" {
+			torrentInformation = fileMediaRow.TorrentInformation
+		} else if i > 0 && torrentInformation != fileMediaRow.TorrentInformation {
+			torrentInformation = webserver.TorrentInformation{
+				LinkStatus: getCombinedTorrentLinkStatus(torrentInformation.LinkStatus, fileMediaRow.TorrentInformation.LinkStatus),
+				Ratio:      -1.0,
+				Age:        time.Duration(-1),
+			}
+		}
+		childMediaRows = append(childMediaRows, fileMediaRow)
+	}
+	if torrentInformation.LinkStatus != webserver.TorrentLinkPresent {
+		torrentInformation.Ratio = -1.0
+		torrentInformation.Age = time.Duration(-1)
+	}
+	return webserver.MediaRow{
+		Id:                 id,
+		Type:               linkedMedia.Type,
+		Title:              linkedMedia.Title,
+		Url:                linkedMedia.Url,
+		Size:               media.size,
+		Added:              media.added,
+		TorrentInformation: torrentInformation,
+		ChildMediaRows:     childMediaRows,
+	}
+}
+
+// getRawMediaRowFromFile returns a new webserver.MediaRow using the passed id and file. It uses the torrent information
+// but does not respect tracker information or the deletion decision.
+func getRawMediaRowFromFile(currentTime time.Time, id string, file LinkedMediaFile) webserver.MediaRow {
+	fileId := fmt.Sprintf("%s-%d", id, file.Id)
+	fileTorrentInformation := webserver.TorrentInformation{
+		LinkStatus: webserver.TorrentLinkMissing,
+		Ratio:      -1.0,
+		Age:        time.Duration(-1),
+	}
+	var added time.Time
+	if file.TorrentEntry != nil {
+		fileTorrentInformation = webserver.TorrentInformation{
+			LinkStatus: webserver.TorrentLinkPresent,
+			Ratio:      file.TorrentEntry.Ratio,
+			Age:        currentTime.Sub(file.TorrentEntry.Added),
+		}
+		added = file.TorrentEntry.Added
+	}
+	fileMediaRow := webserver.MediaRow{
+		Id:                 fileId,
+		Title:              path.Base(file.OriginalFilePath),
+		Size:               file.Size,
+		Added:              added,
+		TorrentInformation: fileTorrentInformation,
+		ChildMediaRows:     make([]webserver.MediaRow, 0),
+	}
+	return fileMediaRow
+}
+
+// applyEvaluationReport takes the media and row params the maps the evaluation report of the media param onto the given
+// row param. This includes applying the season hierarchy, calculating season based attributes and adding the decision
+// derived from the report. For this function to work properly, the row`s child rows and the media`s files have to be in
+// the same order.
+func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) webserver.MediaRow {
+	row.Decision = media.evaluationReport.Result.Decision
+	childMediaRows := make([]webserver.MediaRow, 0)
+	for i, mediaRow := range row.ChildMediaRows {
+		file := media.linkedMedia.Files[i]
+		report := media.evaluationReport.Files[file.Id]
+		mediaRow.Decision = report.Decision
+		if report.Tracker != nil {
+			mediaRow.TorrentInformation.Tracker = *report.Tracker
+		}
+		if i == 0 {
+			row.TorrentInformation.Tracker = mediaRow.TorrentInformation.Tracker
+		} else if row.TorrentInformation.Tracker != mediaRow.TorrentInformation.Tracker {
+			row.TorrentInformation.Tracker = domain.Tracker{}
+		}
+
+		seasonId := fmt.Sprintf("%s-s-%d", row.Id, file.Season)
+		if file.Season > 0 {
+			seasonRowIndex := slices.IndexFunc(childMediaRows, func(row webserver.MediaRow) bool {
+				return row.Id == seasonId
+			})
+			var seasonRow webserver.MediaRow
+			if seasonRowIndex == -1 {
+				seasonRow = mediaRow
+				seasonRow.ChildMediaRows = []webserver.MediaRow{mediaRow}
+				seasonRow.Id = seasonId
+				seasonRow.Title = fmt.Sprintf("Season %d", file.Season)
+				seasonReport := media.evaluationReport.Seasons[file.Season]
+				seasonRow.Decision = seasonReport.Decision
+				if seasonReport.Tracker != nil {
+					seasonRow.TorrentInformation.Tracker = *seasonReport.Tracker
+				}
+				childMediaRows = append(childMediaRows, seasonRow)
+			} else {
+				seasonRow = childMediaRows[seasonRowIndex]
+				seasonRow.ChildMediaRows = append(seasonRow.ChildMediaRows, mediaRow)
+				seasonRow.Size = seasonRow.Size + file.Size
+				if seasonRow.TorrentInformation != mediaRow.TorrentInformation {
+					seasonRowTracker := seasonRow.TorrentInformation.Tracker
+					if seasonRowTracker != mediaRow.TorrentInformation.Tracker {
+						seasonRowTracker = domain.Tracker{}
+					}
+					seasonRow.TorrentInformation = webserver.TorrentInformation{
+						LinkStatus: getCombinedTorrentLinkStatus(seasonRow.TorrentInformation.LinkStatus, mediaRow.TorrentInformation.LinkStatus),
+						Tracker:    seasonRowTracker,
+						Ratio:      -1.0,
+						Age:        time.Duration(-1),
+					}
+					seasonRow.Added = time.Time{}
+				}
+				childMediaRows[seasonRowIndex] = seasonRow
+			}
+		} else {
+			childMediaRows = append(childMediaRows, mediaRow)
+		}
+	}
+	row.ChildMediaRows = childMediaRows
+	return row
+}
+
+func getCombinedTorrentLinkStatus(groupStatus, entryStatus webserver.TorrentLinkStatus) webserver.TorrentLinkStatus {
+	if groupStatus == webserver.TorrentLinkMissing &&
+		entryStatus == webserver.TorrentLinkPresent {
+		return webserver.TorrentLinkIncomplete
+	}
+	return entryStatus
+}
+
+func (s *Service) DeleteMedia(rawId string) error {
+	id, err := parseMediaId(rawId)
+	if err != nil {
+		return err
+	}
+	// retrieve entry
+	entryIndex := slices.IndexFunc(s.enrichedLinkedMediaCache, func(media enrichedLinkedMedia) bool {
+		return media.linkedMedia.Type == id.MediaType && media.linkedMedia.Id == id.Id
+	})
+	if entryIndex == -1 {
+		return webserver.ErrMediaNotFound
+	}
+	entry := s.enrichedLinkedMediaCache[entryIndex]
+
+	// retrieve affected file indexes
+	affectedFileIndexes := id.getMatchingLinkedMediaIndexes(entry.linkedMedia.Files)
+	if len(affectedFileIndexes) == 0 {
+		return webserver.ErrMediaNotFound
+	}
+
+	deletedTorrentEntries := make(map[*domain.TorrentEntry]struct{})
+	fileIdsToDelete := make([]int64, 0)
+
+	// delete torrent entries
+	for _, affectedFileIndex := range affectedFileIndexes {
+		affectedFile := entry.linkedMedia.Files[affectedFileIndex]
+		if affectedFile.TorrentEntry != nil {
+			_, ok := deletedTorrentEntries[affectedFile.TorrentEntry]
+			if !ok {
+				err = s.torrentSourceManager.DeleteTorrent(affectedFile.TorrentEntry.Client, affectedFile.TorrentEntry.Id)
+				if errors.Is(err, domain.ErrTorrentNotFound) {
+					slog.Warn("could not find torrent entry for deletion", "linkedMediaTitle", entry.linkedMedia.Title, "file", affectedFile)
+				} else if err != nil {
+					return fmt.Errorf("could not delete torrent for linked media %q (file: %+v): %w", entry.linkedMedia.Title, affectedFile, err)
+				}
+				deletedTorrentEntries[affectedFile.TorrentEntry] = struct{}{}
+			}
+		}
+		fileIdsToDelete = append(fileIdsToDelete, affectedFile.Id)
+	}
+
+	// delete media files
+	err = s.mediaSourceManager.DeleteMediaFiles(entry.linkedMedia.Type, fileIdsToDelete, true)
+	if err != nil {
+		return fmt.Errorf("could not delete media files: %w", err)
+	}
+
+	// adjust entry in cache
+	if len(affectedFileIndexes) == len(entry.linkedMedia.Files) {
+		s.enrichedLinkedMediaCache = append(s.enrichedLinkedMediaCache[:entryIndex], s.enrichedLinkedMediaCache[entryIndex+1:]...)
+	} else {
+		for counter, affectedFileIndex := range affectedFileIndexes {
+			entry.linkedMedia.Files = append(entry.linkedMedia.Files[:(affectedFileIndex-counter)], entry.linkedMedia.Files[(affectedFileIndex-counter)+1:]...)
+		}
+		s.enrichedLinkedMediaCache[entryIndex] = entry
+	}
+
+	return nil
+}
