@@ -18,14 +18,14 @@ func generatePasswordHash(cmd *cobra.Command, args []string) {
 	slog.Info("Starting scrubarr password generation")
 	slog.Info("This utility will generate a random salt and a password hash from a given password.")
 	fmt.Print("Enter Password: ")
-	bytePassword, err := term.ReadPassword(syscall.Stdin)
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Println()
 	if err != nil {
 		slog.Error("Error reading password.", "error", err)
 		os.Exit(1)
 	}
 	fmt.Print("Re-enter Password: ")
-	bytePasswordCheck, err := term.ReadPassword(syscall.Stdin)
+	bytePasswordCheck, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Println()
 	if err != nil {
 		slog.Error("Error reading password.", "error", err)
