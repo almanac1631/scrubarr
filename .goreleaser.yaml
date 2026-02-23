@@ -28,6 +28,9 @@ builds:
         goarch: '386'
       - goos: 'windows'
         goarch: 'arm'
+      # term#ReadPassword does not work the way intended
+      - goos: 'windows'
+        goarch: '386'
     main: ./cmd/scrubarr/main.go
     binary: '{{ .ProjectName }}_v{{ .Version }}'
 
