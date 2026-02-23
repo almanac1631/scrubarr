@@ -18,6 +18,7 @@ import (
 	"github.com/almanac1631/scrubarr/pkg/retentionpolicy"
 	"github.com/almanac1631/scrubarr/pkg/torrentclients"
 	"github.com/almanac1631/scrubarr/pkg/trackerresolver"
+	"github.com/gorilla/handlers"
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
@@ -191,7 +192,14 @@ func serve(cmd *cobra.Command, args []string) {
 		slog.Info("Goodbye!")
 	}()
 
-	err = http.Serve(listener, router)
+	srv := &http.Server{
+		Handler:           handlers.CompressHandler(router),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	err = srv.Serve(listener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) && err.Error() != "" {
 		var opErr *net.OpError
 		if errors.As(err, &opErr) && opErr.Err.Error() != "use of closed network connection" {
