@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"syscall"
 
 	internal "github.com/almanac1631/scrubarr/web"
@@ -34,6 +35,12 @@ func SetupWebserver(config *koanf.Koanf, version string, inventoryService Invent
 		os.Exit(1)
 	}
 	pathPrefix := config.String("general.path_prefix")
+	if !strings.HasSuffix(pathPrefix, "/") {
+		pathPrefix += "/"
+	}
+	if !strings.HasPrefix(pathPrefix, "/") {
+		pathPrefix = "/" + pathPrefix
+	}
 	realIpHeaderName := config.String("general.real_ip_header_name")
 	authProvider, err := GetAuthProvider(config)
 	if err != nil {
@@ -87,7 +94,7 @@ func SetupWebserver(config *koanf.Koanf, version string, inventoryService Invent
 		authorizedRouter.ServeHTTP(writer, request)
 	}))
 
-	var realIpHandler http.Handler = router
+	realIpRouter := router
 
 	if realIpHeaderName != "" {
 		slog.Info("Using real ip header.", "realIpHeaderName", realIpHeaderName)
@@ -101,14 +108,14 @@ func SetupWebserver(config *koanf.Koanf, version string, inventoryService Invent
 			request.RemoteAddr = realIp
 			router.ServeHTTP(writer, request)
 		}))
-		realIpHandler = wrapperRouter
+		realIpRouter = wrapperRouter
 	}
 
 	if pathPrefix != "" {
 		slog.Info("Applying path prefix stripping.", "path_prefix", pathPrefix)
-		return http.StripPrefix(pathPrefix, realIpHandler)
+		return http.StripPrefix(strings.TrimSuffix(pathPrefix, "/"), realIpRouter)
 	}
-	return realIpHandler
+	return realIpRouter
 }
 
 func isErrAndNoBrokenPipe(err error) bool {
