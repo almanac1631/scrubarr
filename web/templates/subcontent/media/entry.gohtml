@@ -85,18 +85,22 @@
                     <td class="py-3 px-1">
                     </td>
                     <td class="py-3 px-1 [&_svg]:w-4 [&_svg]:h-4">
-                        {{ template "media_entry_status" . }}
+                        {{ if .AllowDeletion }}
+                            {{ template "media_entry_status" . }}
+                        {{ end }}
                     </td>
                     <td class="py-2 px-1 flex justify-center">
-                        <button class="cursor-pointer hover:bg-stone-200 p-1 rounded disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-200"
-                                hx-delete="media/entries/{{ .Id }}"
-                                hx-target="#{{ $.Id }}" hx-swap="outerHTML"
-                                hx-confirm="Do you really want to delete {{ .Title }} of the entry '{{ $.Title }}'?"
-                                hx-disabled-elt="this">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3">
-                                <use href="#icon-delete"></use>
-                            </svg>
-                        </button>
+                        {{ if .AllowDeletion }}
+                            <button class="cursor-pointer hover:bg-stone-200 p-1 rounded disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-200"
+                                    hx-delete="media/entries/{{ .Id }}"
+                                    hx-target="#{{ $.Id }}" hx-swap="outerHTML"
+                                    hx-confirm="Do you really want to delete {{ .Title }} of the entry '{{ $.Title }}'?"
+                                    hx-disabled-elt="this">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3">
+                                    <use href="#icon-delete"></use>
+                                </svg>
+                            </button>
+                        {{ end }}
                     </td>
                 </tr>
             {{ end }}

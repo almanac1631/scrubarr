@@ -27,6 +27,8 @@ type MediaRow struct {
 	TorrentInformation TorrentInformation
 	Decision           domain.Decision
 
+	AllowDeletion bool
+
 	ChildMediaRows []MediaRow
 }
 
