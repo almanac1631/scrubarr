@@ -5,24 +5,23 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"path/filepath"
 	"slices"
 	"sync"
 
 	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
-var _ domain.TorrentClientManager = (*DefaultTorrentManager)(nil)
+var _ domain.TorrentSourceManager = (*DefaultTorrentManager)(nil)
 
 type DefaultTorrentManager struct {
 	Entries    map[string][]*domain.TorrentEntry
 	entryLock  *sync.Mutex
-	retrievers map[string]domain.TorrentClientRetriever
+	retrievers map[string]domain.TorrentSource
 }
 
-func NewDefaultTorrentManager(retrievers ...domain.TorrentClientRetriever) *DefaultTorrentManager {
+func NewDefaultTorrentManager(retrievers ...domain.TorrentSource) *DefaultTorrentManager {
 	manager := &DefaultTorrentManager{
-		retrievers: make(map[string]domain.TorrentClientRetriever),
+		retrievers: make(map[string]domain.TorrentSource),
 		entryLock:  new(sync.Mutex),
 	}
 	for _, retriever := range retrievers {
@@ -31,41 +30,23 @@ func NewDefaultTorrentManager(retrievers ...domain.TorrentClientRetriever) *Defa
 	return manager
 }
 
-func (manager *DefaultTorrentManager) SearchForMedia(originalFilePath string, size int64) (finding *domain.TorrentEntry, err error) {
-	for _, entries := range manager.Entries {
-		for _, entry := range entries {
-			if matches(entry, originalFilePath, size) {
-				return entry, nil
-			}
+func (manager *DefaultTorrentManager) GetTorrents() ([]*domain.TorrentEntry, error) {
+	if manager.Entries == nil {
+		if err := manager.RefreshCache(); err != nil {
+			return nil, err
 		}
 	}
-	return nil, err
+
+	torrentList := make([]*domain.TorrentEntry, 0)
+	for _, torrentEntries := range manager.Entries {
+		for _, torrentEntry := range torrentEntries {
+			torrentList = append(torrentList, torrentEntry)
+		}
+	}
+	return torrentList, nil
 }
 
-func matches(entry *domain.TorrentEntry, originalFilePath string, size int64) bool {
-	if entry.Name == originalFilePath {
-		return true
-	}
-	torrentNameWithExt := entry.Name + filepath.Ext(originalFilePath)
-	if torrentNameWithExt == originalFilePath {
-		return true
-	}
-	for _, file := range entry.Files {
-		if file.Size != size {
-			continue
-		}
-		if file.Path == originalFilePath {
-			return true
-		}
-		fileNameCmp := filepath.Base(file.Path)
-		if fileNameCmp == originalFilePath {
-			return true
-		}
-	}
-	return false
-}
-
-func (manager *DefaultTorrentManager) DeleteFinding(client, id string) error {
+func (manager *DefaultTorrentManager) DeleteTorrent(client, id string) error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
 	retriever, ok := manager.retrievers[client]

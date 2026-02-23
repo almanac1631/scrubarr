@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 .htmx-indicator {
     display: none;
     opacity: 0;

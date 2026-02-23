@@ -1,27 +1,18 @@
-package inmemory
+package matching_manager
 
-import (
-	"cmp"
-	"fmt"
-	"log/slog"
-	"slices"
-	"strings"
-
-	"github.com/almanac1631/scrubarr/pkg/domain"
-)
-
-func (m *Manager) GetMatchedMedia(page int, sortInfo domain.SortInfo) ([]domain.MatchedMedia, bool, error) {
-	if m.matchedMediasCache == nil {
+/*
+func (m *Linker) GetMatchedMedia(page int, sortInfo domain.SortInfo) ([]domain.MatchedMedia, bool, error) {
+	if m.linkedMediaCache == nil {
 		if err := m.refreshCache(); err != nil {
 			return nil, false, err
 		}
 	}
 	hasNext := false
-	matchedMedias := make([]domain.MatchedMedia, len(m.matchedMediasCache))
-	copy(matchedMedias, m.matchedMediasCache)
+	matchedMedias := make([]domain.MatchedMedia, len(m.linkedMediaCache))
+	copy(matchedMedias, m.linkedMediaCache)
 
 	torrentStatusScores := map[string]int{}
-	for _, entry := range m.matchedMediasCache {
+	for _, entry := range m.linkedMediaCache {
 		totalScore := 0
 		for _, part := range entry.Parts {
 			totalScore += part.TorrentInformation.GetScore()
@@ -62,11 +53,11 @@ func (m *Manager) GetMatchedMedia(page int, sortInfo domain.SortInfo) ([]domain.
 	return matchedMedias, hasNext, nil
 }
 
-func (m *Manager) GetMatchedMediaBySeriesId(seriesId int64) (media domain.MatchedMedia, err error) {
+func (m *Linker) GetMatchedMediaBySeriesId(seriesId int64) (media domain.MatchedMedia, err error) {
 	return m.getSingleMatchedMediaEntry(domain.MediaTypeSeries, seriesId)
 }
 
-func (m *Manager) getSingleMatchedMediaEntry(mediaType domain.MediaType, id int64) (media domain.MatchedMedia, err error) {
+func (m *Linker) getSingleMatchedMediaEntry(mediaType domain.MediaType, id int64) (media domain.MatchedMedia, err error) {
 	matchedMediaList, err := m.getFilteredMatchedMediaFunc(func(media domain.MatchedMedia) bool {
 		return media.Type == mediaType && media.Id == id
 	})
@@ -81,17 +72,18 @@ func (m *Manager) getSingleMatchedMediaEntry(mediaType domain.MediaType, id int6
 	return matchedMediaList[0], nil
 }
 
-func (m *Manager) getFilteredMatchedMediaFunc(filterFunc func(media domain.MatchedMedia) bool) (media []domain.MatchedMedia, err error) {
-	if m.matchedMediasCache == nil {
+func (m *Linker) getFilteredMatchedMediaFunc(filterFunc func(media domain.MatchedMedia) bool) (media []domain.MatchedMedia, err error) {
+	if m.linkedMediaCache == nil {
 		if err := m.refreshCache(); err != nil {
 			return nil, err
 		}
 	}
 	filteredMediaList := make([]domain.MatchedMedia, 0)
-	for _, mediaEntry := range m.matchedMediasCache {
+	for _, mediaEntry := range m.linkedMediaCache {
 		if filterFunc(mediaEntry) {
 			filteredMediaList = append(filteredMediaList, mediaEntry)
 		}
 	}
 	return filteredMediaList, nil
 }
+*/

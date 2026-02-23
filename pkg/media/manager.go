@@ -9,31 +9,34 @@ import (
 	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
-var _ domain.MediaManager = (*DefaultMediaManager)(nil)
+var _ domain.MediaSourceManager = (*DefaultMediaManager)(nil)
 
 type DefaultMediaManager struct {
 	Entries    map[domain.MediaType][]domain.MediaEntry
 	entryLock  *sync.Mutex
-	retrievers map[domain.MediaType]domain.MediaRetriever
+	retrievers map[domain.MediaType]domain.MediaSource
 }
 
-func NewDefaultMediaManager(retrievers ...domain.MediaRetriever) *DefaultMediaManager {
-	manager := &DefaultMediaManager{nil, &sync.Mutex{}, make(map[domain.MediaType]domain.MediaRetriever)}
+func NewDefaultMediaManager(retrievers ...domain.MediaSource) *DefaultMediaManager {
+	manager := &DefaultMediaManager{nil, &sync.Mutex{}, make(map[domain.MediaType]domain.MediaSource)}
 	for _, retriever := range retrievers {
 		manager.retrievers[retriever.SupportedMediaType()] = retriever
 	}
 	return manager
 }
 
-func (manager *DefaultMediaManager) GetMedia() ([]domain.MediaEntry, error) {
+func (manager *DefaultMediaManager) GetMedia() ([]*domain.MediaEntry, error) {
 	if manager.Entries == nil {
 		if err := manager.RefreshCache(); err != nil {
 			return nil, err
 		}
 	}
-	mediaList := make([]domain.MediaEntry, 0)
+
+	mediaList := make([]*domain.MediaEntry, 0)
 	for _, mediaEntries := range manager.Entries {
-		mediaList = append(mediaList, mediaEntries...)
+		for _, mediaEntry := range mediaEntries {
+			mediaList = append(mediaList, &mediaEntry)
+		}
 	}
 	return mediaList, nil
 }

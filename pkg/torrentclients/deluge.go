@@ -10,7 +10,7 @@ import (
 	delugeclient "github.com/gdm85/go-libdeluge"
 )
 
-var _ domain.TorrentClientRetriever = (*DelugeRetriever)(nil)
+var _ domain.TorrentSource = (*DelugeRetriever)(nil)
 
 type DelugeRetriever struct {
 	client *delugeclient.ClientV2

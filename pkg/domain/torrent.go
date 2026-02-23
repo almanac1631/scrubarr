@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -16,18 +17,23 @@ type TorrentEntry struct {
 	Client   string
 	Id       string
 	Name     string
-	Added    time.Time
-	Files    []*TorrentFile
-	Trackers []string
 	Ratio    float64
+	Added    time.Time
+	Trackers []string
+	Files    []*TorrentFile
 }
 
-type TorrentClientManager interface {
-	SearchForMedia(originalFilePath string, size int64) (finding *TorrentEntry, err error)
-	DeleteFinding(client string, id string) error
+func (t TorrentEntry) String() string {
+	return fmt.Sprintf("{Client:%s Id:%s Name:%s Trackers: %+v}", t.Client, t.Id, t.Name, t.Trackers)
 }
 
-type TorrentClientRetriever interface {
+type TorrentSourceManager interface {
+	CachedManager
+	GetTorrents() ([]*TorrentEntry, error)
+	DeleteTorrent(client string, id string) error
+}
+
+type TorrentSource interface {
 	GetTorrentEntries() ([]*TorrentEntry, error)
 	DeleteTorrent(id string) error
 	Name() string

@@ -1,4 +1,4 @@
-package trackers
+package trackerresolver
 
 import (
 	"fmt"
@@ -6,23 +6,30 @@ import (
 	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/domain"
+	"github.com/almanac1631/scrubarr/pkg/retentionpolicy"
 	"github.com/knadh/koanf/v2"
 )
 
-var _ domain.TrackerManager = (*ConfigBasedTrackerManager)(nil)
+var _ retentionpolicy.TrackerResolver = (*Service)(nil)
 
-type trackerConfig struct {
-	domain.Tracker
+type TrackerConfig struct {
+	*domain.Tracker
 	Pattern *regexp.Regexp
 }
 
-type ConfigBasedTrackerManager struct {
-	trackerConfigs []trackerConfig
+type Service struct {
+	trackerConfigs []TrackerConfig
 }
 
-func NewConfigBasedTrackerManager(config *koanf.Koanf) (*ConfigBasedTrackerManager, error) {
-	manager := &ConfigBasedTrackerManager{
-		trackerConfigs: make([]trackerConfig, 0),
+func NewService(trackerConfigs []TrackerConfig) *Service {
+	return &Service{
+		trackerConfigs: trackerConfigs,
+	}
+}
+
+func NewServiceFromKoanf(config *koanf.Koanf) (*Service, error) {
+	manager := &Service{
+		trackerConfigs: make([]TrackerConfig, 0),
 	}
 	for _, trackerKey := range config.MapKeys("trackers") {
 		name := config.MustString(fmt.Sprintf("trackers.%s.name", trackerKey))
@@ -40,8 +47,8 @@ func NewConfigBasedTrackerManager(config *koanf.Koanf) (*ConfigBasedTrackerManag
 		if err != nil {
 			return nil, fmt.Errorf("could not compile pattern for tracker %q: %w", trackerKey, err)
 		}
-		manager.trackerConfigs = append(manager.trackerConfigs, trackerConfig{
-			Tracker: domain.Tracker{
+		manager.trackerConfigs = append(manager.trackerConfigs, TrackerConfig{
+			Tracker: &domain.Tracker{
 				Name:     name,
 				MinRatio: minRatio,
 				MinAge:   minAge,
@@ -50,6 +57,17 @@ func NewConfigBasedTrackerManager(config *koanf.Koanf) (*ConfigBasedTrackerManag
 		})
 	}
 	return manager, nil
+}
+
+func (c Service) Resolve(trackers []string) (*domain.Tracker, error) {
+	for _, config := range c.trackerConfigs {
+		for _, tracker := range trackers {
+			if config.Pattern.MatchString(tracker) {
+				return config.Tracker, nil
+			}
+		}
+	}
+	return nil, retentionpolicy.ErrTrackerNotFound
 }
 
 func getSetConfigValue[V float64 | time.Duration](config *koanf.Koanf, key string) (V, error) {
@@ -70,15 +88,4 @@ func getSetConfigValue[V float64 | time.Duration](config *koanf.Koanf, key strin
 	default:
 		return zero, fmt.Errorf("invalid type for key %q found", key)
 	}
-}
-
-func (c ConfigBasedTrackerManager) GetTracker(trackers []string) (domain.Tracker, error) {
-	for _, config := range c.trackerConfigs {
-		for _, tracker := range trackers {
-			if config.Pattern.MatchString(tracker) {
-				return config.Tracker, nil
-			}
-		}
-	}
-	return domain.Tracker{}, domain.ErrTrackerNotFound
 }

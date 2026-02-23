@@ -17,7 +17,7 @@ import (
 	"golift.io/starr/sonarr"
 )
 
-var _ domain.MediaRetriever = (*SonarrRetriever)(nil)
+var _ domain.MediaSource = (*SonarrRetriever)(nil)
 
 type SonarrRetriever struct {
 	client *sonarr.Sonarr
@@ -54,9 +54,9 @@ func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not get series episode files: %w", err)
 		}
-		parts := make([]domain.MediaPart, 0, len(seriesEpisodeFiles))
+		parts := make([]domain.MediaFile, 0, len(seriesEpisodeFiles))
 		for _, seriesEpisodeFile := range seriesEpisodeFiles {
-			parts = append(parts, domain.MediaPart{
+			parts = append(parts, domain.MediaFile{
 				Id:               seriesEpisodeFile.ID,
 				Season:           seriesEpisodeFile.SeasonNumber,
 				OriginalFilePath: filepath.Base(seriesEpisodeFile.RelativePath),
@@ -71,7 +71,7 @@ func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 				Url:   path.Join(r.appUrl, fmt.Sprintf("series/%s", series.TitleSlug)),
 				Added: series.Added,
 			},
-			MediaParts: parts,
+			Files: parts,
 		}
 		mediaList = append(mediaList, media)
 	}
@@ -81,7 +81,7 @@ func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 func (r *SonarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
 	episodeFiles, err := r.getEpisodeFiles(fileIds)
 	if err != nil {
-		return fmt.Errorf("could not get sonarr episode files: %w", err)
+		return fmt.Errorf("could not get sonarr episode files (file ids: %+v): %w", fileIds, err)
 	}
 	seriesSeasonMap := make(map[int64][]int)
 	if stopParentMonitoring {

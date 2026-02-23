@@ -1,5 +1,5 @@
 {{ define "media_entries" }}
-    {{ range .MappedMedia }}
+    {{ range .MediaRows }}
         {{ template "media_entry" . }}
     {{ end }}
     {{ if ne .NextPage -1 }}

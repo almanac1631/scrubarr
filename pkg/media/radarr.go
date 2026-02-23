@@ -12,7 +12,7 @@ import (
 	"golift.io/starr/radarr"
 )
 
-var _ domain.MediaRetriever = (*RadarrRetriever)(nil)
+var _ domain.MediaSource = (*RadarrRetriever)(nil)
 
 type RadarrRetriever struct {
 	client *radarr.Radarr
@@ -51,7 +51,7 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 				Url:   path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
 				Added: movie.Added,
 			},
-			MediaParts: []domain.MediaPart{
+			Files: []domain.MediaFile{
 				{
 					Id:               movie.MovieFile.ID,
 					OriginalFilePath: filepath.Base(movie.MovieFile.OriginalFilePath),
@@ -66,7 +66,7 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 func (r *RadarrRetriever) DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error {
 	movieFiles, err := r.client.GetMovieFiles(fileIds)
 	if err != nil {
-		return fmt.Errorf("could not get radarr movie files: %w", err)
+		return fmt.Errorf("could not get radarr movie files (file ids: %+v): %w", fileIds, err)
 	}
 	movies := make(map[int64]struct{})
 	if stopParentMonitoring {

@@ -17,7 +17,7 @@ type MediaMetadata struct {
 	Added time.Time
 }
 
-type MediaPart struct {
+type MediaFile struct {
 	Id               int64
 	Season           int
 	OriginalFilePath string
@@ -26,16 +26,16 @@ type MediaPart struct {
 
 type MediaEntry struct {
 	MediaMetadata
-	MediaParts []MediaPart
+	Files []MediaFile
 }
 
-type MediaManager interface {
-	CachedRetriever
-	GetMedia() ([]MediaEntry, error)
+type MediaSourceManager interface {
+	CachedManager
+	GetMedia() ([]*MediaEntry, error)
 	DeleteMediaFiles(mediaType MediaType, fileIds []int64, stopParentMonitoring bool) error
 }
 
-type MediaRetriever interface {
+type MediaSource interface {
 	GetMedia() ([]MediaEntry, error)
 	SupportedMediaType() MediaType
 	DeleteMediaFiles(fileIds []int64, stopParentMonitoring bool) error

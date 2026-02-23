@@ -1,0 +1,26 @@
+{{ define "media_entry_status" }}
+    <div class="flex justify-center">
+        <div class="w-6 flex justify-center"
+             data-tooltip="status-info"
+             data-decision="{{ .Decision }}"
+             data-torrent-status="{{ .TorrentInformation.LinkStatus }}"
+             data-torrent-ratio="{{ .TorrentInformation.Ratio }}"
+             data-torrent-age="{{ .TorrentInformation.Age | durationToNanoseconds }}"
+             data-tracker-name="{{ .TorrentInformation.Tracker.Name }}"
+             data-tracker-min-ratio="{{ .TorrentInformation.Tracker.MinRatio }}"
+             data-tracker-min-age="{{ .TorrentInformation.Tracker.MinAge | durationToNanoseconds }}"
+        >
+            {{ if eq .Decision "safe_to_delete" }}
+                <svg xmlns="http://www.w3.org/2000/svg" class="text-green-600" title="Safe to delete">
+                    <use href="#icon-safe-to-delete"></use>
+                </svg>
+            {{ else if eq .Decision "pending" }}
+                <svg xmlns="http://www.w3.org/2000/svg" class="text-yellow-600" title="Pending">
+                    <use href="#icon-pending"></use>
+                </svg>
+            {{ else }}
+                ???
+            {{ end }}
+        </div>
+    </div>
+{{ end }}

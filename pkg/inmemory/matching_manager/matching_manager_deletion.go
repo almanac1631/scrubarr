@@ -1,15 +1,7 @@
-package inmemory
+package matching_manager
 
-import (
-	"fmt"
-	"log/slog"
-	"maps"
-	"slices"
-
-	"github.com/almanac1631/scrubarr/pkg/domain"
-)
-
-func (m *Manager) DeleteMedia(mediaType domain.MediaType, id int64) error {
+/*
+func (m *Linker) DeleteMedia(mediaType domain.MediaType, id int64) error {
 	matchedMedia, err := m.getSingleMatchedMediaEntry(mediaType, id)
 	if err != nil {
 		return err
@@ -17,7 +9,7 @@ func (m *Manager) DeleteMedia(mediaType domain.MediaType, id int64) error {
 	return m.deleteMediaParts(id, mediaType, matchedMedia.Parts)
 }
 
-func (m *Manager) DeleteSeason(id int64, season int) error {
+func (m *Linker) DeleteSeason(id int64, season int) error {
 	filteredMatchedMedia, err := m.GetMatchedMediaBySeriesId(id)
 	if err != nil {
 		return err
@@ -32,7 +24,7 @@ func (m *Manager) DeleteSeason(id int64, season int) error {
 	return m.deleteMediaParts(id, domain.MediaTypeSeries, seasonParts)
 }
 
-func (m *Manager) deleteMediaParts(mediaId int64, mediaType domain.MediaType, parts []domain.MatchedMediaPart) error {
+func (m *Linker) deleteMediaParts(mediaId int64, mediaType domain.MediaType, parts []domain.MatchedMediaPart) error {
 	type torrent struct {
 		client string
 		id     string
@@ -61,7 +53,7 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType domain.MediaType, pa
 	}
 	for _, torrentToDelete := range torrentsToDelete {
 		slog.Debug("Deleting torrent...", "client", torrentToDelete.client, "torrentId", torrentToDelete.id)
-		if err := m.torrentManager.DeleteFinding(torrentToDelete.client, torrentToDelete.id); err != nil {
+		if err := m.torrentManager.DeleteTorrent(torrentToDelete.client, torrentToDelete.id); err != nil {
 			return fmt.Errorf("could not delete %s (id: %d) from torrent client %q (torrent id: %q): %w",
 				mediaType, mediaId, torrentToDelete.client, torrentToDelete.id, err)
 		}
@@ -71,14 +63,14 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType domain.MediaType, pa
 		return err
 	}
 	slog.Debug("Successfully deleted delete media files from media manager.", "mediaId", mediaId)
-	mediaIndex := slices.IndexFunc(m.matchedMediasCache, func(media domain.MatchedMedia) bool {
+	mediaIndex := slices.IndexFunc(m.linkedMediaCache, func(media domain.MatchedMedia) bool {
 		return media.Type == mediaType && media.Id == mediaId
 	})
 	if mediaIndex == -1 {
 		slog.Warn("No matched media found for this media.", "mediaType", mediaType, "mediaId", mediaId)
 		return nil
 	}
-	mediaEntry := m.matchedMediasCache[mediaIndex]
+	mediaEntry := m.linkedMediaCache[mediaIndex]
 	for partId := range fileIdsToDeleteMap {
 		index := slices.IndexFunc(mediaEntry.Parts, func(mediaPart domain.MatchedMediaPart) bool {
 			return mediaPart.MediaPart.Id == partId
@@ -89,9 +81,10 @@ func (m *Manager) deleteMediaParts(mediaId int64, mediaType domain.MediaType, pa
 		mediaEntry.Parts = append(mediaEntry.Parts[:index], mediaEntry.Parts[index+1:]...)
 	}
 	if len(mediaEntry.Parts) > 0 {
-		m.matchedMediasCache[mediaIndex] = mediaEntry
+		m.linkedMediaCache[mediaIndex] = mediaEntry
 	} else {
-		m.matchedMediasCache = append(m.matchedMediasCache[:mediaIndex], m.matchedMediasCache[mediaIndex+1:]...)
+		m.linkedMediaCache = append(m.linkedMediaCache[:mediaIndex], m.linkedMediaCache[mediaIndex+1:]...)
 	}
 	return nil
 }
+*/

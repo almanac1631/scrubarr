@@ -1,5 +1,3 @@
-const nanosecondsToDays = (ns) => Math.floor(ns / 86_400_000_000_000);
-
 document.addEventListener('DOMContentLoaded', () => {
     const tooltip = document.getElementById('global-tooltip');
 
@@ -13,30 +11,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tooltipKey = trigger.dataset.tooltip;
 
-        if (tooltipKey === "torrent-info") {
+        if (tooltipKey === "status-info") {
+            tooltip.innerHTML = "";
+            const decision = getDecisionStr(trigger.dataset.decision);
             const torrentStatus = trigger.dataset.torrentStatus;
-            tooltip.textContent = `Torrent link ${torrentStatus}`
+            const torrentRatio = trigger.dataset.torrentRatio;
+            const torrentAge = trigger.dataset.torrentAge;
+
             const trackerName = trigger.dataset.trackerName;
-            if (trackerName !== "") {
-                tooltip.textContent += ` (${trackerName})`
-            }
-        } else if (tooltipKey === "ratio-info") {
-            const ratioStatus = trigger.dataset.ratioStatus;
-            const ratio = formatFloatStr(trigger.dataset.ratio);
-            const minRatio = formatFloatStr(trigger.dataset.minRatio);
-            tooltip.textContent = `Ratio ${ratioStatus}`
-            if (minRatio !== "-1" && ratio !== "-1") {
-                tooltip.textContent += ` (${ratio}/${minRatio})`
-            }
-        } else if (tooltipKey === "age-info") {
-            const ageStatus = trigger.dataset.ageStatus;
-            const age = trigger.dataset.age;
-            const minAge = trigger.dataset.minAge;
-            tooltip.textContent = `Age ${ageStatus}`
-            if (minAge !== "-1" && age !== "-1") {
-                const minAgeDays = nanosecondsToDays(Number(minAge))
-                const ageDays = nanosecondsToDays(Number(age));
-                tooltip.textContent += ` (${ageDays}d/${minAgeDays}d)`
+            const trackerMinRatio = formatFloatStr(trigger.dataset.trackerMinRatio);
+            const trackerMinAge = trigger.dataset.trackerMinAge;
+
+            const decisionElem = document.createElement("div");
+            decisionElem.classList.add("font-bold");
+            decisionElem.textContent = decision;
+            tooltip.append(decisionElem);
+
+            if (torrentStatus === "present") {
+                if (trackerName !== "") {
+                    const trackerNameElem = document.createElement("div");
+                    trackerNameElem.textContent = trackerName;
+                    tooltip.append(trackerNameElem);
+                }
+                if (torrentRatio !== "-1") {
+                    const ratioElem = document.createElement("div");
+                    ratioElem.textContent = `Ratio: ${formatFloatStr(torrentRatio)}`;
+                    if (trackerMinRatio !== "") {
+                        ratioElem.textContent += `/${formatFloatStr(trackerMinRatio)}`;
+                    }
+                    tooltip.append(ratioElem);
+                }
+                if (torrentAge !== "-1") {
+                    const ageElem = document.createElement("div");
+                    ageElem.textContent = `Age: ${nanosecondsToDays(Number(torrentAge))}d`;
+                    if (trackerMinAge !== "") {
+                        ageElem.textContent += `/${nanosecondsToDays(Number(trackerMinAge))}d`;
+                    }
+                    tooltip.append(ageElem);
+                }
+            } else {
+                const torrentInfoElem = document.createElement("div");
+                torrentInfoElem.textContent = "No torrent entry";
+                tooltip.append(torrentInfoElem);
             }
         } else {
             return;
@@ -62,10 +78,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+const nanosecondsToDays = (ns) => Math.floor(ns / 86_400_000_000_000);
 
-function formatFloatStr(floatStr) {
-    return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-    }).format(floatStr)
+const formatFloatStr = (floatStr) => new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+}).format(floatStr);
+
+function getDecisionStr(decision) {
+    if (decision === "safe_to_delete") {
+        return "Safe to delete"
+    } else if (decision === "pending") {
+        return "Status pending"
+    } else {
+        return "???"
+    }
 }

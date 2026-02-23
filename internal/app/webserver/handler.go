@@ -6,26 +6,21 @@ import (
 	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/auth"
-	"github.com/almanac1631/scrubarr/pkg/domain"
-	"github.com/almanac1631/scrubarr/pkg/inmemory"
 	"github.com/knadh/koanf/v2"
 )
 
 var now = time.Now
 
 type handler struct {
-	version       string
-	pathPrefix    string
-	authProvider  auth.Provider
-	templateCache TemplateCache
-	manager       domain.Manager
-	jwtConfig     *JwtConfig
+	version          string
+	pathPrefix       string
+	authProvider     auth.Provider
+	templateCache    TemplateCache
+	inventoryService InventoryService
+	jwtConfig        *JwtConfig
 }
 
-func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache,
-	mediaManager domain.MediaManager, torrentManager domain.TorrentClientManager, trackerManager domain.TrackerManager) (*handler, error) {
-	manager := inmemory.NewManager(mediaManager, torrentManager, trackerManager)
-
+func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache, inventoryService InventoryService) (*handler, error) {
 	privateKey, err := loadJwtPrivateKey(config)
 	if err != nil {
 		return nil, err
@@ -40,7 +35,7 @@ func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider au
 		pathPrefix,
 		authProvider,
 		templateCache,
-		manager,
+		inventoryService,
 		jwtConfig,
 	}, nil
 }

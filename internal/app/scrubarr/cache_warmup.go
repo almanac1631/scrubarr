@@ -13,7 +13,7 @@ import (
 
 const cacheDir = "./cache"
 
-func warmupCaches(saveCache, useCache bool, cachedRetrievers ...domain.CachedRetriever) error {
+func warmupCaches(saveCache, useCache bool, cachedRetrievers ...domain.CachedManager) error {
 	if saveCache && useCache {
 		return errors.New("cannot save and use cache simultaneously")
 	}
@@ -44,7 +44,7 @@ func warmupCaches(saveCache, useCache bool, cachedRetrievers ...domain.CachedRet
 	return nil
 }
 
-func saveToCache(cachedRetrievers []domain.CachedRetriever) error {
+func saveToCache(cachedRetrievers []domain.CachedManager) error {
 	if err := os.Mkdir(cacheDir, 0777); err != nil && !os.IsExist(err) {
 		return fmt.Errorf("could not create cache directory (%s): %w", cacheDir, err)
 	}
@@ -71,7 +71,7 @@ func saveToCache(cachedRetrievers []domain.CachedRetriever) error {
 	return nil
 }
 
-func loadFromCache(cachedRetrievers []domain.CachedRetriever) error {
+func loadFromCache(cachedRetrievers []domain.CachedManager) error {
 	for _, cachedRetriever := range cachedRetrievers {
 		loadCache := func() error {
 			sha1Name := sha1.Sum([]byte(fmt.Sprintf("%T", cachedRetriever)))

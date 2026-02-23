@@ -11,7 +11,7 @@ import (
 	"github.com/autobrr/go-rtorrent"
 )
 
-var _ domain.TorrentClientRetriever = (*RtorrentRetriever)(nil)
+var _ domain.TorrentSource = (*RtorrentRetriever)(nil)
 
 type RtorrentRetriever struct {
 	client *rtorrent.Client
@@ -60,7 +60,7 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*domain.TorrentEntry,
 		torrentEntries = append(torrentEntries, torrentEntry)
 		torrentTrackers, err := retriever.client.GetTrackers(context.Background(), torrent)
 		if err != nil {
-			return nil, fmt.Errorf("could not get trackers from rtorrent: %w", err)
+			return nil, fmt.Errorf("could not get trackerresolver from rtorrent: %w", err)
 		}
 		for _, tracker := range torrentTrackers {
 			if !slices.Contains(torrentEntry.Trackers, tracker) {
