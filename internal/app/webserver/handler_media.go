@@ -132,6 +132,7 @@ func (handler *handler) handleMediaDeletionEndpoint(writer http.ResponseWriter, 
 		return
 	}
 	id := request.PathValue("id")
+	logger = logger.With("id", id)
 	logger.Debug("Deleting media...")
 	if err := handler.inventoryService.DeleteMedia(id); err != nil {
 		logger.Error("Could not delete media.", "error", err)

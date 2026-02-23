@@ -3,13 +3,10 @@ package webserver
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/auth"
 	"github.com/knadh/koanf/v2"
 )
-
-var now = time.Now
 
 type handler struct {
 	version          string
