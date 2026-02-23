@@ -48,7 +48,7 @@
     </tr>
     {{ if and (eq .Type "series") (gt (len .ChildMediaRows) 0) }}
         {{ range .ChildMediaRows }}
-            <tr class="text-sm">
+            <tr class="text-sm hover:bg-stone-100">
                 <td></td>
                 <td class="py-3 px-1 truncate" title="{{ .Title }}">
                     {{ .Title }}
@@ -74,7 +74,7 @@
                 </td>
             </tr>
             {{ range .ChildMediaRows }}
-                <tr class="text-xs">
+                <tr class="text-xs hover:bg-stone-100">
                     <td></td>
                     <td class="py-3 px-1 truncate" title="{{ .Title }}">
                         {{ .Title }}
