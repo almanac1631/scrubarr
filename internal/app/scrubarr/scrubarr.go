@@ -160,11 +160,17 @@ func serve(cmd *cobra.Command, args []string) {
 
 	retentionPolicy := retentionpolicy.NewService(trackerResolver)
 
+	inventoryService := inventory.NewService(mediaManager, torrentManager, linker.NewService(), retentionPolicy)
+
 	refreshInterval := k.Duration("general.refresh_interval")
 	refreshCaches := func() {
 		slog.Debug("Refreshing retriever data...")
 		if err = warmupCaches(saveCache, useCache, mediaManager, torrentManager); err != nil {
-			slog.Error("Could not setup retriever caches.", "error", err)
+			slog.Error("Could not refresh retriever caches.", "error", err)
+			os.Exit(1)
+		}
+		if err := inventoryService.RefreshCache(); err != nil {
+			slog.Error("Could not refresh cache of inventory service.", "error", err)
 			os.Exit(1)
 		}
 		slog.Debug("Refreshed retriever data.")
@@ -185,8 +191,6 @@ func serve(cmd *cobra.Command, args []string) {
 	}
 	refreshCaches()
 	slog.Info("Refreshed retriever caches. Setting up webserver...")
-
-	inventoryService := inventory.NewService(mediaManager, torrentManager, linker.NewService(), retentionPolicy)
 
 	router := webserver.SetupWebserver(k, version, inventoryService)
 

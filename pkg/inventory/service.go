@@ -48,7 +48,7 @@ func NewService(mediaSourceManager domain.MediaSourceManager, torrentSourceManag
 	return &Service{mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
 }
 
-func (s *Service) refreshCache() error {
+func (s *Service) RefreshCache() error {
 	media, err := s.mediaSourceManager.GetMedia()
 	if err != nil {
 		return fmt.Errorf("unable to get media: %w", err)
@@ -98,7 +98,7 @@ func getSize(linkedMedia LinkedMedia) int64 {
 
 func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (mediaRows []webserver.MediaRow, hasNext bool, err error) {
 	if s.enrichedLinkedMediaCache == nil {
-		if err := s.refreshCache(); err != nil {
+		if err := s.RefreshCache(); err != nil {
 			return nil, false, err
 		}
 	}
@@ -240,13 +240,11 @@ func getRawMediaRowFromFile(currentTime time.Time, id string, file LinkedMediaFi
 // the same order.
 func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) webserver.MediaRow {
 	row.Decision = media.evaluationReport.Result.Decision
-	row.AllowDeletion = true
 	childMediaRows := make([]webserver.MediaRow, 0)
 	for i, mediaRow := range row.ChildMediaRows {
 		file := media.linkedMedia.Files[i]
 		report := media.evaluationReport.Files[file.Id]
 		mediaRow.Decision = report.Decision
-		mediaRow.AllowDeletion = true
 		if report.Tracker != nil {
 			mediaRow.TorrentInformation.Tracker = *report.Tracker
 		}
@@ -269,23 +267,21 @@ func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) we
 				seasonRow.Title = fmt.Sprintf("Season %d", file.Season)
 				seasonReport := media.evaluationReport.Seasons[file.Season]
 				seasonRow.Decision = seasonReport.Decision
-				seasonRow.AllowDeletion = true
 				if seasonReport.Tracker != nil {
 					seasonRow.TorrentInformation.Tracker = *seasonReport.Tracker
 				}
 				childMediaRows = append(childMediaRows, seasonRow)
 			} else {
 				seasonRow = childMediaRows[seasonRowIndex]
-				adjustedMediaRow := mediaRow
-				seasonRow.ChildMediaRows = append(seasonRow.ChildMediaRows, adjustedMediaRow)
+				seasonRow.ChildMediaRows = append(seasonRow.ChildMediaRows, mediaRow)
 				seasonRow.Size = seasonRow.Size + file.Size
-				if seasonRow.TorrentInformation != adjustedMediaRow.TorrentInformation {
+				if seasonRow.TorrentInformation != mediaRow.TorrentInformation {
 					seasonRowTracker := seasonRow.TorrentInformation.Tracker
-					if seasonRowTracker != adjustedMediaRow.TorrentInformation.Tracker {
+					if seasonRowTracker != mediaRow.TorrentInformation.Tracker {
 						seasonRowTracker = domain.Tracker{}
 					}
 					seasonRow.TorrentInformation = webserver.TorrentInformation{
-						LinkStatus: getCombinedTorrentLinkStatus(seasonRow.TorrentInformation.LinkStatus, adjustedMediaRow.TorrentInformation.LinkStatus),
+						LinkStatus: getCombinedTorrentLinkStatus(seasonRow.TorrentInformation.LinkStatus, mediaRow.TorrentInformation.LinkStatus),
 						Tracker:    seasonRowTracker,
 						Ratio:      -1.0,
 						Age:        time.Duration(-1),
@@ -296,18 +292,6 @@ func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) we
 			}
 		} else {
 			childMediaRows = append(childMediaRows, mediaRow)
-		}
-	}
-	// prevent delete button for torrent-related seasons
-	for _, mediaRow := range childMediaRows {
-		if len(mediaRow.ChildMediaRows) == 0 {
-			continue
-		}
-		if mediaRow.TorrentInformation.Ratio != -1 {
-			for i, childMediaRow := range mediaRow.ChildMediaRows {
-				childMediaRow.AllowDeletion = false
-				mediaRow.ChildMediaRows[i] = childMediaRow
-			}
 		}
 	}
 	row.ChildMediaRows = childMediaRows
