@@ -32,4 +32,6 @@ type InventoryService interface {
 	GetExpandedMediaRow(id string) (mediaRow MediaRow, err error)
 
 	DeleteMedia(id string) error
+
+	RefreshCache() error
 }

@@ -154,3 +154,19 @@ func (handler *handler) handleMediaDeletionEndpoint(writer http.ResponseWriter, 
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 	}
 }
+
+func (handler *handler) handleRefreshEndpoint(writer http.ResponseWriter, request *http.Request) {
+	logger := getRequestLogger(request)
+	if !utils.IsHTMXRequest(request) {
+		http.Error(writer, "404 Not Found", http.StatusNotFound)
+		return
+	}
+	logger.Info("Refreshing media entries cache.")
+	if err := handler.inventoryService.RefreshCache(); err != nil {
+		logger.Error(err.Error())
+		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	logger.Info("Successfully refreshed media entries cache.")
+	handler.handleMediaEndpoint(writer, request)
+}

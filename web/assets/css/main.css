@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+#media-table.htmx-request tbody:not(#loading-skeleton) {
+    display: none;
+}
+
 .htmx-indicator {
     display: none;
     opacity: 0;
