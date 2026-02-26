@@ -160,11 +160,7 @@ func (s *Service) GetExpandedMediaRow(rawId string) (mediaRowExpanded webserver.
 // getMediaRow combines the raw media row generation and evaluation report apply logic to return an enriched media row.
 func getMediaRow(media enrichedLinkedMedia) webserver.MediaRow {
 	row := generateRawMediaRowFromLinkedMedia(media)
-	row = applyEvaluationReport(media, row)
-	if row.Title == "F1" {
-		fmt.Printf("%+v\n", row)
-	}
-	return row
+	return applyEvaluationReport(media, row)
 }
 
 // getRawFileBasedMedia parses the given media and returns a webserver.MediaRow with a file list. This function does not
