@@ -8,6 +8,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
@@ -37,6 +38,7 @@ func (m enrichedLinkedMedia) getScore() int {
 }
 
 type Service struct {
+	*sync.Mutex
 	enrichedLinkedMediaCache []enrichedLinkedMedia
 	mediaSourceManager       domain.MediaSourceManager
 	torrentSourceManager     domain.TorrentSourceManager
@@ -45,10 +47,12 @@ type Service struct {
 }
 
 func NewService(mediaSourceManager domain.MediaSourceManager, torrentSourceManager domain.TorrentSourceManager, linker Linker, retentionPolicy RetentionPolicy) *Service {
-	return &Service{mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
+	return &Service{Mutex: &sync.Mutex{}, mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
 }
 
 func (s *Service) RefreshCache() error {
+	s.Lock()
+	defer s.Unlock()
 	media, err := s.mediaSourceManager.GetMedia()
 	if err != nil {
 		return fmt.Errorf("unable to get media: %w", err)
@@ -303,6 +307,8 @@ func getCombinedTorrentLinkStatus(groupStatus, entryStatus webserver.TorrentLink
 }
 
 func (s *Service) DeleteMedia(rawId string) error {
+	s.Lock()
+	defer s.Unlock()
 	id, err := parseMediaId(rawId)
 	if err != nil {
 		return err
