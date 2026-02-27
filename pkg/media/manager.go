@@ -2,8 +2,10 @@ package media
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"sync"
 
 	"github.com/almanac1631/scrubarr/pkg/domain"
@@ -54,13 +56,29 @@ func (manager *DefaultMediaManager) DeleteMediaFiles(mediaType domain.MediaType,
 func (manager *DefaultMediaManager) RefreshCache() error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
+	entryLock := sync.Mutex{}
 	manager.Entries = make(map[domain.MediaType][]domain.MediaEntry)
+	errChan := make(chan error)
+	defer close(errChan)
 	for mediaType, retriever := range manager.retrievers {
-		var err error
-		manager.Entries[mediaType], err = retriever.GetMedia()
-		if err != nil {
-			return err
-		}
+		go func() {
+			slog.Debug("Refreshing media cache", "type", mediaType)
+			mediaEntries, err := retriever.GetMedia()
+			if err == nil {
+				entryLock.Lock()
+				defer entryLock.Unlock()
+				manager.Entries[mediaType] = mediaEntries
+			}
+			if err != nil {
+				err = fmt.Errorf("could not get media entries media cache for type %q: %w", mediaType, err)
+			}
+			errChan <- err
+			slog.Debug("Refreshed media cache", "type", mediaType)
+		}()
+	}
+	var err error
+	for i := 0; i < len(manager.retrievers); i++ {
+		err = errors.Join(err, <-errChan)
 	}
 	return nil
 }

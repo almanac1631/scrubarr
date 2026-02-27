@@ -2,6 +2,7 @@ package torrentclients
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -65,16 +66,31 @@ func (manager *DefaultTorrentManager) DeleteTorrent(client, id string) error {
 func (manager *DefaultTorrentManager) RefreshCache() error {
 	manager.entryLock.Lock()
 	defer manager.entryLock.Unlock()
+	entryLock := &sync.Mutex{}
 	manager.Entries = make(map[string][]*domain.TorrentEntry)
+	errChan := make(chan error)
+	defer close(errChan)
 	for name, retriever := range manager.retrievers {
-		slog.Debug("Refreshing torrent cache...", "client", name)
-		retrieverEntries, err := retriever.GetTorrentEntries()
-		if err != nil {
-			return fmt.Errorf("could not get torrent entries for client %q: %w", name, err)
-		}
-		manager.Entries[name] = retrieverEntries
+		go func() {
+			slog.Debug("Refreshing torrent cache...", "client", name)
+			retrieverEntries, err := retriever.GetTorrentEntries()
+			if err == nil {
+				entryLock.Lock()
+				defer entryLock.Unlock()
+				manager.Entries[name] = retrieverEntries
+			}
+			if err != nil {
+				err = fmt.Errorf("could not get torrent entries for client %q: %w", name, err)
+			}
+			errChan <- err
+			slog.Debug("Refreshed torrent cache", "client", name)
+		}()
 	}
-	return nil
+	var err error
+	for i := 0; i < len(manager.retrievers); i++ {
+		err = errors.Join(err, <-errChan)
+	}
+	return err
 }
 
 func (manager *DefaultTorrentManager) SaveCache(writer io.Writer) error {

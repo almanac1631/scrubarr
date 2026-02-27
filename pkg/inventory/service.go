@@ -8,6 +8,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
@@ -37,6 +38,7 @@ func (m enrichedLinkedMedia) getScore() int {
 }
 
 type Service struct {
+	*sync.RWMutex
 	enrichedLinkedMediaCache []enrichedLinkedMedia
 	mediaSourceManager       domain.MediaSourceManager
 	torrentSourceManager     domain.TorrentSourceManager
@@ -45,10 +47,31 @@ type Service struct {
 }
 
 func NewService(mediaSourceManager domain.MediaSourceManager, torrentSourceManager domain.TorrentSourceManager, linker Linker, retentionPolicy RetentionPolicy) *Service {
-	return &Service{mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
+	return &Service{RWMutex: &sync.RWMutex{}, mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
 }
 
-func (s *Service) refreshCache() error {
+func (s *Service) RefreshCache() error {
+	s.Lock()
+	defer s.Unlock()
+	errChan := make(chan error)
+	defer close(errChan)
+	refreshManagerCache := func(manager domain.CachedManager) {
+		errChan <- manager.RefreshCache()
+	}
+	go refreshManagerCache(s.mediaSourceManager)
+	go refreshManagerCache(s.torrentSourceManager)
+	err := <-errChan
+	if refreshErr := <-errChan; refreshErr != nil {
+		if err != nil {
+			err = errors.Join(err, refreshErr)
+		} else {
+			err = refreshErr
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("refresh cache failed: %w", err)
+	}
+
 	media, err := s.mediaSourceManager.GetMedia()
 	if err != nil {
 		return fmt.Errorf("unable to get media: %w", err)
@@ -61,6 +84,7 @@ func (s *Service) refreshCache() error {
 	if err != nil {
 		return fmt.Errorf("unable to link media with torrents: %w", err)
 	}
+
 	s.enrichedLinkedMediaCache = make([]enrichedLinkedMedia, len(linkedMediaList))
 	for i, linkedMedia := range linkedMediaList {
 		evaluationReport, err := s.retentionPolicy.Evaluate(linkedMedia)
@@ -97,8 +121,10 @@ func getSize(linkedMedia LinkedMedia) int64 {
 }
 
 func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (mediaRows []webserver.MediaRow, hasNext bool, err error) {
+	s.RLock()
+	defer s.RUnlock()
 	if s.enrichedLinkedMediaCache == nil {
-		if err := s.refreshCache(); err != nil {
+		if err := s.RefreshCache(); err != nil {
 			return nil, false, err
 		}
 	}
@@ -144,6 +170,8 @@ func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (medi
 }
 
 func (s *Service) GetExpandedMediaRow(rawId string) (mediaRowExpanded webserver.MediaRow, err error) {
+	s.RLock()
+	defer s.RUnlock()
 	id, err := parseMediaId(rawId)
 	if err != nil {
 		return mediaRowExpanded, err
@@ -160,11 +188,7 @@ func (s *Service) GetExpandedMediaRow(rawId string) (mediaRowExpanded webserver.
 // getMediaRow combines the raw media row generation and evaluation report apply logic to return an enriched media row.
 func getMediaRow(media enrichedLinkedMedia) webserver.MediaRow {
 	row := generateRawMediaRowFromLinkedMedia(media)
-	row = applyEvaluationReport(media, row)
-	if row.Title == "F1" {
-		fmt.Printf("%+v\n", row)
-	}
-	return row
+	return applyEvaluationReport(media, row)
 }
 
 // getRawFileBasedMedia parses the given media and returns a webserver.MediaRow with a file list. This function does not
@@ -276,16 +300,15 @@ func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) we
 				childMediaRows = append(childMediaRows, seasonRow)
 			} else {
 				seasonRow = childMediaRows[seasonRowIndex]
-				adjustedMediaRow := mediaRow
-				seasonRow.ChildMediaRows = append(seasonRow.ChildMediaRows, adjustedMediaRow)
+				seasonRow.ChildMediaRows = append(seasonRow.ChildMediaRows, mediaRow)
 				seasonRow.Size = seasonRow.Size + file.Size
-				if seasonRow.TorrentInformation != adjustedMediaRow.TorrentInformation {
+				if seasonRow.TorrentInformation != mediaRow.TorrentInformation {
 					seasonRowTracker := seasonRow.TorrentInformation.Tracker
-					if seasonRowTracker != adjustedMediaRow.TorrentInformation.Tracker {
+					if seasonRowTracker != mediaRow.TorrentInformation.Tracker {
 						seasonRowTracker = domain.Tracker{}
 					}
 					seasonRow.TorrentInformation = webserver.TorrentInformation{
-						LinkStatus: getCombinedTorrentLinkStatus(seasonRow.TorrentInformation.LinkStatus, adjustedMediaRow.TorrentInformation.LinkStatus),
+						LinkStatus: getCombinedTorrentLinkStatus(seasonRow.TorrentInformation.LinkStatus, mediaRow.TorrentInformation.LinkStatus),
 						Tracker:    seasonRowTracker,
 						Ratio:      -1.0,
 						Age:        time.Duration(-1),
@@ -323,6 +346,8 @@ func getCombinedTorrentLinkStatus(groupStatus, entryStatus webserver.TorrentLink
 }
 
 func (s *Service) DeleteMedia(rawId string) error {
+	s.Lock()
+	defer s.Unlock()
 	id, err := parseMediaId(rawId)
 	if err != nil {
 		return err
