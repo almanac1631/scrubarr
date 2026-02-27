@@ -53,6 +53,25 @@ func NewService(mediaSourceManager domain.MediaSourceManager, torrentSourceManag
 func (s *Service) RefreshCache() error {
 	s.Lock()
 	defer s.Unlock()
+	errChan := make(chan error)
+	defer close(errChan)
+	refreshManagerCache := func(manager domain.CachedManager) {
+		errChan <- manager.RefreshCache()
+	}
+	go refreshManagerCache(s.mediaSourceManager)
+	go refreshManagerCache(s.torrentSourceManager)
+	err := <-errChan
+	if refreshErr := <-errChan; refreshErr != nil {
+		if err != nil {
+			err = errors.Join(err, refreshErr)
+		} else {
+			err = refreshErr
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("refresh cache failed: %w", err)
+	}
+
 	media, err := s.mediaSourceManager.GetMedia()
 	if err != nil {
 		return fmt.Errorf("unable to get media: %w", err)
@@ -65,6 +84,7 @@ func (s *Service) RefreshCache() error {
 	if err != nil {
 		return fmt.Errorf("unable to link media with torrents: %w", err)
 	}
+
 	s.enrichedLinkedMediaCache = make([]enrichedLinkedMedia, len(linkedMediaList))
 	for i, linkedMedia := range linkedMediaList {
 		evaluationReport, err := s.retentionPolicy.Evaluate(linkedMedia)
