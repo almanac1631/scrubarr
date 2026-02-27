@@ -38,7 +38,7 @@ func (m enrichedLinkedMedia) getScore() int {
 }
 
 type Service struct {
-	*sync.Mutex
+	*sync.RWMutex
 	enrichedLinkedMediaCache []enrichedLinkedMedia
 	mediaSourceManager       domain.MediaSourceManager
 	torrentSourceManager     domain.TorrentSourceManager
@@ -47,7 +47,7 @@ type Service struct {
 }
 
 func NewService(mediaSourceManager domain.MediaSourceManager, torrentSourceManager domain.TorrentSourceManager, linker Linker, retentionPolicy RetentionPolicy) *Service {
-	return &Service{Mutex: &sync.Mutex{}, mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
+	return &Service{RWMutex: &sync.RWMutex{}, mediaSourceManager: mediaSourceManager, torrentSourceManager: torrentSourceManager, linker: linker, retentionPolicy: retentionPolicy}
 }
 
 func (s *Service) RefreshCache() error {
@@ -121,6 +121,8 @@ func getSize(linkedMedia LinkedMedia) int64 {
 }
 
 func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (mediaRows []webserver.MediaRow, hasNext bool, err error) {
+	s.RLock()
+	defer s.RUnlock()
 	if s.enrichedLinkedMediaCache == nil {
 		if err := s.RefreshCache(); err != nil {
 			return nil, false, err
@@ -168,6 +170,8 @@ func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (medi
 }
 
 func (s *Service) GetExpandedMediaRow(rawId string) (mediaRowExpanded webserver.MediaRow, err error) {
+	s.RLock()
+	defer s.RUnlock()
 	id, err := parseMediaId(rawId)
 	if err != nil {
 		return mediaRowExpanded, err
