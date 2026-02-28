@@ -60,17 +60,21 @@ func (s *Service) RefreshCache() error {
 	errChan := make(chan error)
 	defer close(errChan)
 	refreshManagerCache := func(manager domain.CachedManager) {
+		var err error
+		defer func() {
+			errChan <- err
+		}()
 		if s.useCache {
-			errChan <- s.loadManagerCacheFromDisk(manager)
+			err = s.loadManagerCacheFromDisk(manager)
 			return
 		}
-		err := manager.RefreshCache()
+		err = manager.RefreshCache()
 		if err != nil {
-			errChan <- err
 			return
 		}
 		if s.saveCache {
-			errChan <- s.saveManagerCacheToDisk(manager)
+			err = s.saveManagerCacheToDisk(manager)
+			return
 		}
 	}
 	go refreshManagerCache(s.mediaSourceManager)
