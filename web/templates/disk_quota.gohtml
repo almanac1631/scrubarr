@@ -3,7 +3,10 @@
          data-tooltip="disk-quota"
          data-tooltip-position="bottom"
          data-disk-quota-used="{{ .UsedSpace | formatBytes }}"
-         data-disk-quota-free="{{ .FreeSpace | formatBytes }}">
+         data-disk-quota-free="{{ .FreeSpace | formatBytes }}"
+         hx-trigger="diskQuotaUpdate from:body"
+         hx-swap="outerHTML"
+         hx-get="quotas/disk">
         <div class="{{ if le .UsedSpacePercentage 50.0 }}bg-green-600{{ else if le .UsedSpacePercentage 90.0 }}bg-yellow-500{{ else }}bg-red-600{{ end }} h-4 rounded-md flex items-center justify-center text-xs"
              style="width: {{ .UsedSpacePercentage }}%">
             {{ if ge .UsedSpacePercentage 90.0 }}

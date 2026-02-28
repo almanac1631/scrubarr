@@ -58,6 +58,7 @@ func SetupWebserver(config *koanf.Koanf, version string, inventoryService Invent
 	router.HandleFunc("POST /logout", handler.handleLogout)
 
 	authorizedRouter := http.NewServeMux()
+	authorizedRouter.HandleFunc("GET /quotas/disk", handler.handleDiskQuotaEndpoint)
 	authorizedRouter.HandleFunc("GET /media", handler.handleMediaEndpoint)
 	authorizedRouter.HandleFunc("PUT /media", handler.handleRefreshEndpoint)
 	authorizedRouter.HandleFunc("GET /media/entries", handler.handleMediaEntriesEndpoint)

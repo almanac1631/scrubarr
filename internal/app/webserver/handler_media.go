@@ -147,6 +147,7 @@ func (handler *handler) handleMediaDeletionEndpoint(writer http.ResponseWriter, 
 	}
 	logger.Info("Successfully deleted media.")
 	mediaRowExpanded, err := handler.inventoryService.GetExpandedMediaRow(id)
+	writer.Header().Set("Hx-Trigger", "diskQuotaUpdate")
 	if errors.Is(err, ErrMediaNotFound) {
 		writer.WriteHeader(http.StatusOK)
 		return
@@ -174,5 +175,6 @@ func (handler *handler) handleRefreshEndpoint(writer http.ResponseWriter, reques
 		return
 	}
 	logger.Info("Successfully refreshed media entries cache.")
+	writer.Header().Set("Hx-Trigger", "diskQuotaUpdate")
 	handler.handleMediaEndpoint(writer, request)
 }
