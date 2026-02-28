@@ -8,6 +8,9 @@ import (
 
 func TestApiClient(t *testing.T) {
 	endpoint := os.Getenv("ULTRA_ENDPOINT")
+	if endpoint == "" {
+		t.Skipf("No ULTRA_ENDPOINT set, skipping")
+	}
 	authToken := []byte(os.Getenv("ULTRA_AUTH_TOKEN"))
 	apiClient := New(endpoint, authToken)
 	t.Run("can get total stats", func(t *testing.T) {
