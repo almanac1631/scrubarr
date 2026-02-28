@@ -12,16 +12,22 @@ import (
 	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
-func (s *Service) loadManagerCacheFromDisk(manager domain.CachedManager) error {
+func getLoggerAndFilepath(manager domain.CachedManager) (*slog.Logger, string) {
 	cacheDir := os.Getenv("SCRUBARR_CACHE_DIR")
 	if cacheDir == "" {
 		cacheDir = "./cache"
 	}
 	logger := slog.With("manager", fmt.Sprintf("%T", manager))
-	logger.Info("Using cache manager to refresh cache")
 	sha1Name := sha1.Sum([]byte(fmt.Sprintf("%T", manager)))
 	retrieverHash := hex.EncodeToString(sha1Name[:])
-	file, err := os.Open(filepath.Join(cacheDir, retrieverHash))
+	filePath := filepath.Join(cacheDir, retrieverHash)
+	return logger, filePath
+}
+
+func (s *Service) loadManagerCacheFromDisk(manager domain.CachedManager) error {
+	logger, filePath := getLoggerAndFilepath(manager)
+	logger.Info("Using cache manager to refresh cache")
+	file, err := os.Open(filePath)
 	if err != nil {
 		return err
 	}
@@ -32,18 +38,13 @@ func (s *Service) loadManagerCacheFromDisk(manager domain.CachedManager) error {
 }
 
 func (s *Service) saveManagerCacheToDisk(manager domain.CachedManager) error {
-	cacheDir := os.Getenv("SCRUBARR_CACHE_DIR")
-	if cacheDir == "" {
-		cacheDir = "./cache"
-	}
+	logger, filePath := getLoggerAndFilepath(manager)
+	cacheDir := filepath.Dir(filePath)
 	if err := os.Mkdir(cacheDir, 0777); err != nil && !os.IsExist(err) {
 		return fmt.Errorf("could not create cache directory (%s): %w", cacheDir, err)
 	}
-	logger := slog.With("manager", fmt.Sprintf("%T", manager))
 	logger.Info("Saving cache manager to disk")
-	sha1Name := sha1.Sum([]byte(fmt.Sprintf("%T", manager)))
-	retrieverHash := hex.EncodeToString(sha1Name[:])
-	file, err := os.Create(filepath.Join(cacheDir, retrieverHash))
+	file, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
