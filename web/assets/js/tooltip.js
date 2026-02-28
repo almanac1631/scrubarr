@@ -54,13 +54,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 torrentInfoElem.textContent = "No torrent entry";
                 tooltip.append(torrentInfoElem);
             }
+        } else if (tooltipKey === "disk-quota") {
+            const diskQuotaUsed = trigger.dataset.diskQuotaUsed;
+            const diskQuotaFree = trigger.dataset.diskQuotaFree;
+            tooltip.innerHTML = "";
+
+            const usedElem = document.createElement("div");
+            usedElem.textContent = `Used: ${diskQuotaUsed}`;
+            tooltip.append(usedElem);
+
+            const freeElem = document.createElement("div");
+            freeElem.textContent = `Free: ${diskQuotaFree}`;
+            tooltip.append(freeElem);
         } else {
             return;
         }
 
         const rect = trigger.getBoundingClientRect();
         tooltip.classList.remove('hidden');
-        const top = rect.top - tooltip.offsetHeight - 8; // 8px gap
+        let top = rect.top - tooltip.offsetHeight - 8; // 8px gap
+        if (trigger.dataset.tooltipPosition === "bottom") {
+            top = rect.bottom + 8;
+        }
         const left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
         tooltip.style.top = `${top}px`;
         tooltip.style.left = `${left}px`;

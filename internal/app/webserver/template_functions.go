@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"fmt"
 	"html/template"
 	"time"
 
@@ -18,5 +19,8 @@ var templateFunctions = template.FuncMap{
 	},
 	"durationToNanoseconds": func(duration time.Duration) int64 {
 		return duration.Nanoseconds()
+	},
+	"floatToStr": func(float float64) string {
+		return fmt.Sprintf("%.2f", float)
 	},
 }

@@ -1,0 +1,14 @@
+{{ define "disk_quota" }}
+    <div class="bg-gray-100 rounded-md h-4 w-64"
+         data-tooltip="disk-quota"
+         data-tooltip-position="bottom"
+         data-disk-quota-used="{{ .UsedSpace | formatBytes }}"
+         data-disk-quota-free="{{ .FreeSpace | formatBytes }}">
+        <div class="{{ if le .UsedSpacePercentage 50.0 }}bg-green-600{{ else if le .UsedSpacePercentage 90.0 }}bg-yellow-500{{ else }}bg-red-600{{ end }} h-4 rounded-md flex items-center justify-center text-xs"
+             style="width: {{ .UsedSpacePercentage }}%">
+            {{ if ge .UsedSpacePercentage 90.0 }}
+                {{ .UsedSpacePercentage | floatToStr }}%
+            {{ end }}
+        </div>
+    </div>
+{{ end }}

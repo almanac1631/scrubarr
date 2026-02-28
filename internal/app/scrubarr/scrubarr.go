@@ -188,7 +188,7 @@ func serve(cmd *cobra.Command, args []string) {
 	refreshCaches()
 	slog.Info("Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, version, inventoryService)
+	router := webserver.SetupWebserver(k, version, inventoryService, MockQuotaService{})
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 

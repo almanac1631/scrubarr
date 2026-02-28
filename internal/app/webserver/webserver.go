@@ -28,7 +28,7 @@ func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	return listener, nil
 }
 
-func SetupWebserver(config *koanf.Koanf, version string, inventoryService InventoryService) http.Handler {
+func SetupWebserver(config *koanf.Koanf, version string, inventoryService InventoryService, quotaService QuotaService) http.Handler {
 	templateCache, err := NewTemplateCache()
 	if err != nil {
 		slog.Error("Could not create template cache.", "error", err)
@@ -47,7 +47,7 @@ func SetupWebserver(config *koanf.Koanf, version string, inventoryService Invent
 		slog.Error("Could not create auth provider.", "error", err)
 		os.Exit(1)
 	}
-	handler, err := newHandler(config, version, pathPrefix, authProvider, templateCache, inventoryService)
+	handler, err := newHandler(config, version, pathPrefix, authProvider, templateCache, inventoryService, quotaService)
 	router := http.NewServeMux()
 	if err != nil {
 		slog.Error("Could not create webserver handler.", "error", err)
