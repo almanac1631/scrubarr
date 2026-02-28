@@ -23,6 +23,13 @@ base_url = ""
 private_key_path = ""
 public_key_path = ""
 
+[quota]
+provider = "ultraapi"
+
+[quota.ultraapi]
+endpoint = ""
+api_key = ""
+
 [connections]
 
 [connections.sonarr]
