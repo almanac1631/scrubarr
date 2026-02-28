@@ -14,6 +14,7 @@ type mediaEndpointData struct {
 	SortInfo  SortInfo
 	NextPage  int
 	Version   string
+	DiskQuota DiskQuota
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
@@ -28,9 +29,14 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 			return
 		}
 	} else {
+		diskQuota, err := handler.quotaService.GetDiskQuota()
+		if err != nil {
+			logger.Error("could not get disk quota", "err", err)
+		}
 		if err := handler.ExecuteRootTemplate(writer, "media.gohtml", mediaEndpointData{
-			SortInfo: sortInfo,
-			Version:  handler.version,
+			SortInfo:  sortInfo,
+			Version:   handler.version,
+			DiskQuota: diskQuota,
 		}); err != nil {
 			logger.Error(err.Error())
 			return
@@ -141,6 +147,7 @@ func (handler *handler) handleMediaDeletionEndpoint(writer http.ResponseWriter, 
 	}
 	logger.Info("Successfully deleted media.")
 	mediaRowExpanded, err := handler.inventoryService.GetExpandedMediaRow(id)
+	writer.Header().Set("Hx-Trigger", "diskQuotaUpdate")
 	if errors.Is(err, ErrMediaNotFound) {
 		writer.WriteHeader(http.StatusOK)
 		return
@@ -168,5 +175,6 @@ func (handler *handler) handleRefreshEndpoint(writer http.ResponseWriter, reques
 		return
 	}
 	logger.Info("Successfully refreshed media entries cache.")
+	writer.Header().Set("Hx-Trigger", "diskQuotaUpdate")
 	handler.handleMediaEndpoint(writer, request)
 }

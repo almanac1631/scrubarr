@@ -30,6 +30,7 @@ func NewTemplateCache() (TemplateCache, error) {
 
 		patterns := append([]string{
 			"templates/base.gohtml",
+			"templates/disk_quota.gohtml",
 			"templates/subcontent/**/*.gohtml",
 			page,
 		}, baseContentTemplates...)

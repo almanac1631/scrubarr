@@ -188,7 +188,13 @@ func serve(cmd *cobra.Command, args []string) {
 	refreshCaches()
 	slog.Info("Setting up webserver...")
 
-	router := webserver.SetupWebserver(k, version, inventoryService)
+	quotaService, err := getQuotaService(k)
+	if err != nil {
+		slog.Error("could not instantiate quota service", "error", err)
+		os.Exit(1)
+	}
+
+	router := webserver.SetupWebserver(k, version, inventoryService, quotaService)
 
 	slog.Info("Successfully set up webserver. Waiting for incoming connections...")
 

@@ -14,10 +14,11 @@ type handler struct {
 	authProvider     auth.Provider
 	templateCache    TemplateCache
 	inventoryService InventoryService
+	quotaService     QuotaService
 	jwtConfig        *JwtConfig
 }
 
-func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache, inventoryService InventoryService) (*handler, error) {
+func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider auth.Provider, templateCache TemplateCache, inventoryService InventoryService, quotaService QuotaService) (*handler, error) {
 	privateKey, err := loadJwtPrivateKey(config)
 	if err != nil {
 		return nil, err
@@ -33,6 +34,7 @@ func newHandler(config *koanf.Koanf, version, pathPrefix string, authProvider au
 		authProvider,
 		templateCache,
 		inventoryService,
+		quotaService,
 		jwtConfig,
 	}, nil
 }
