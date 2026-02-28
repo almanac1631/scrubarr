@@ -160,7 +160,7 @@ func serve(cmd *cobra.Command, args []string) {
 
 	retentionPolicy := retentionpolicy.NewService(trackerResolver)
 
-	inventoryService := inventory.NewService(mediaManager, torrentManager, linker.NewService(), retentionPolicy)
+	inventoryService := inventory.NewService(useCache, saveCache, mediaManager, torrentManager, linker.NewService(), retentionPolicy)
 
 	refreshInterval := k.Duration("general.refresh_interval")
 	refreshCaches := func() {
