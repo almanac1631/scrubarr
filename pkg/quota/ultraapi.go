@@ -2,22 +2,37 @@ package quota
 
 import (
 	"fmt"
+	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
 	"github.com/almanac1631/scrubarr/pkg/ultraapi"
 )
 
 type UltraApiQuotaService struct {
-	ultraApi *ultraapi.Instance
+	*sync.Mutex
+	ultraApi        *ultraapi.Instance
+	lastDiskQuota   webserver.DiskQuota
+	lastRetrievedTs time.Time
 }
 
 func NewUltraApiQuotaService(endpoint string, authToken []byte) *UltraApiQuotaService {
 	instance := ultraapi.New(endpoint, authToken)
-	return &UltraApiQuotaService{ultraApi: instance}
+	return &UltraApiQuotaService{
+		Mutex:    &sync.Mutex{},
+		ultraApi: instance,
+	}
 }
 
-func (u UltraApiQuotaService) GetDiskQuota() (webserver.DiskQuota, error) {
-	ultraDiskQuota, err := u.ultraApi.GetDiskQuota()
+func (service *UltraApiQuotaService) GetDiskQuota() (webserver.DiskQuota, error) {
+	service.Lock()
+	defer service.Unlock()
+	if !service.lastRetrievedTs.IsZero() && time.Since(service.lastRetrievedTs) < time.Second*30 {
+		return service.lastDiskQuota, nil
+	}
+	slog.Debug("Retrieving fresh disk quota from Ultra API...")
+	ultraDiskQuota, err := service.ultraApi.GetDiskQuota()
 	if err != nil {
 		return webserver.DiskQuota{}, fmt.Errorf("error getting disk quota from ultra api: %v", err)
 	}
@@ -30,12 +45,14 @@ func (u UltraApiQuotaService) GetDiskQuota() (webserver.DiskQuota, error) {
 	if err != nil {
 		return webserver.DiskQuota{}, err
 	}
-	return webserver.DiskQuota{
+	service.lastDiskQuota = webserver.DiskQuota{
 		UsedSpacePercentage: float64(usedSpace) / float64(totalSpace) * 100.0,
 		UsedSpace:           usedSpace,
 		TotalSpace:          totalSpace,
 		FreeSpace:           totalSpace - usedSpace,
-	}, nil
+	}
+	service.lastRetrievedTs = time.Now()
+	return service.lastDiskQuota, nil
 }
 
 func parseStorageValue(value int64, unit string) (int64, error) {
