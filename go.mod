@@ -1,6 +1,6 @@
 module github.com/almanac1631/scrubarr
 
-go 1.24.0
+go 1.25.7
 
 toolchain go1.26.0
 
@@ -16,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.48.0
 	golang.org/x/term v0.40.0
-	golift.io/starr v1.3.0
+	golift.io/starr v1.3.1
 )
 
 require (
