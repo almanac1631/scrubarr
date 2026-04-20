@@ -17,7 +17,7 @@ import (
 
 var now = time.Now
 
-const pageSize = 10
+const pageSize = 25
 
 type enrichedLinkedMedia struct {
 	linkedMedia      LinkedMedia
