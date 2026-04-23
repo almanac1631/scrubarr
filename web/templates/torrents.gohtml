@@ -1,0 +1,86 @@
+{{ define "content" }}
+    <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow" id="torrents-table">
+        <table class="table-fixed w-full">
+            <thead class="border-gray-300 border-b-2 text-left">
+            <tr>
+                <th class="py-3 px-1">
+                    <button class="flex items-center"
+                            hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="torrents?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Name
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "name" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "name" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+                <th class="py-3 px-1 w-28">Client</th>
+                <th class="py-3 px-1 w-32">
+                    <button class="flex items-center"
+                            hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="torrents?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Size
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "size" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "size" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+                <th class="py-3 px-1 w-32">
+                    <button class="flex items-center"
+                            hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="torrents?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Added
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "added" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "added" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+                <th class="py-3 px-1 w-16">
+                    <div class="flex justify-center">
+                        <button class="flex items-center"
+                                hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                                hx-get="torrents?sortKey=status&sortOrder={{ if checkCurrentSort "status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            Status
+                            <span class="text-slate-300">
+                                <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path {{ if checkCurrentSort "status" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                    <path {{ if checkCurrentSort "status" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </th>
+            </tr>
+            </thead>
+            <tbody class="font-medium"
+                   hx-get="torrents/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
+                   hx-swap="outerHTML" hx-trigger="load" hx-indicator="#torrents-loading-skeleton">
+            </tbody>
+            {{ template "torrents_loading_skeleton" }}
+        </table>
+        <svg style="display: none">
+            <symbol id="icon-safe-to-delete-t" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M5 12l5 5l10 -10"/>
+            </symbol>
+        </svg>
+        <svg style="display: none">
+            <symbol id="icon-pending-t" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/>
+                <path d="M12 8v4"/>
+                <path d="M12 16h.01"/>
+            </symbol>
+        </svg>
+    </div>
+{{ end }}

@@ -117,5 +117,37 @@ func (s *Service) RefreshCache() error {
 			added:            getAdded(linkedMedia),
 		}
 	}
+
+	uniqueTorrentId := func(client string, id string) string {
+		return client + "|" + id
+	}
+
+	usedTorrentKeys := make(map[string]struct{})
+	for _, lm := range linkedMediaList {
+		for _, file := range lm.Files {
+			if file.TorrentEntry != nil {
+				usedTorrentKeys[uniqueTorrentId(file.TorrentEntry.Client, file.TorrentEntry.Id)] = struct{}{}
+			}
+		}
+	}
+	s.orphanedTorrentsCache = nil
+	for _, t := range torrents {
+		if _, ok := usedTorrentKeys[uniqueTorrentId(t.Client, t.Id)]; !ok {
+			size := int64(0)
+			for _, f := range t.Files {
+				size += f.Size
+			}
+			decision, tracker, err := s.retentionPolicy.EvaluateTorrentEntry(t)
+			if err != nil {
+				return fmt.Errorf("unable to evaluate orphaned torrent entry: %w", err)
+			}
+			s.orphanedTorrentsCache = append(s.orphanedTorrentsCache, enrichedOrphanedTorrent{
+				torrentEntry: t,
+				size:         size,
+				decision:     decision,
+				tracker:      tracker,
+			})
+		}
+	}
 	return nil
 }

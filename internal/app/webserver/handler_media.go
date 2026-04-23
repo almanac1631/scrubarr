@@ -3,18 +3,18 @@ package webserver
 import (
 	"errors"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
 )
 
 type mediaEndpointData struct {
-	MediaRows []MediaRow
+	Rows      []MediaRow
 	SortInfo  SortInfo
 	NextPage  int
 	Version   string
 	DiskQuota DiskQuota
+	PageTitle string
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
@@ -23,7 +23,8 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	if utils.IsHTMXRequest(request) {
 		if err := handler.ExecuteSubTemplate(writer, "media.gohtml", "content", mediaEndpointData{
-			SortInfo: sortInfo,
+			SortInfo:  sortInfo,
+			PageTitle: "Media",
 		}); err != nil {
 			logger.Error(err.Error())
 			return
@@ -37,6 +38,7 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 			SortInfo:  sortInfo,
 			Version:   handler.version,
 			DiskQuota: diskQuota,
+			PageTitle: "Media",
 		}); err != nil {
 			logger.Error(err.Error())
 			return
@@ -70,33 +72,14 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		nextPage = page + 1
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
-		MediaRows: mediaRows,
-		SortInfo:  sortInfo,
-		NextPage:  nextPage,
+		Rows:     mediaRows,
+		SortInfo: sortInfo,
+		NextPage: nextPage,
 	}); err != nil {
 		logger.Error(err.Error())
 		return
 	}
 	return
-}
-
-func getSortInfoFromUrlQuery(values url.Values) SortInfo {
-	sortInfo := SortInfo{}
-	sortKeyRaw := values.Get("sortKey")
-	switch SortKey(sortKeyRaw) {
-	case SortKeyName, SortKeySize, SortKeyAdded, SortKeyStatus:
-		sortInfo.Key = SortKey(sortKeyRaw)
-	default:
-		sortInfo.Key = SortKeyName
-	}
-	sortOrderRaw := values.Get("sortOrder")
-	switch SortOrder(sortOrderRaw) {
-	case SortOrderAsc, SortOrderDesc:
-		sortInfo.Order = SortOrder(sortOrderRaw)
-	default:
-		sortInfo.Order = SortOrderAsc
-	}
-	return sortInfo
 }
 
 func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, request *http.Request) {

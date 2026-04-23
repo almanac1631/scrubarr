@@ -43,6 +43,13 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 		if !movie.HasFile {
 			continue
 		}
+		originalFilePath := movie.MovieFile.OriginalFilePath
+		if originalFilePath == "" {
+			slog.Warn("original file path for radarr movie could not be retrieved, falling back to radarr path",
+				"movieTitle", movie.Title, "movieId", movie.ID, "radarrMovieFilePath", movie.MovieFile.Path)
+			originalFilePath = movie.MovieFile.Path
+		}
+		originalFilePath = filepath.Base(originalFilePath)
 		mappedMovies = append(mappedMovies, domain.MediaEntry{
 			MediaMetadata: domain.MediaMetadata{
 				Id:    movie.ID,
@@ -54,7 +61,7 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 			Files: []domain.MediaFile{
 				{
 					Id:               movie.MovieFile.ID,
-					OriginalFilePath: filepath.Base(movie.MovieFile.OriginalFilePath),
+					OriginalFilePath: originalFilePath,
 					Size:             movie.SizeOnDisk,
 				},
 			},

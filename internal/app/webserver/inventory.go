@@ -34,4 +34,6 @@ type InventoryService interface {
 	DeleteMedia(id string) error
 
 	RefreshCache() error
+
+	GetOrphanedTorrents(page int, sortInfo SortInfo) (rows []OrphanedTorrentRow, hasNext bool, err error)
 }
