@@ -43,3 +43,12 @@ const (
 	TorrentLinkMissing    TorrentLinkStatus = "missing"
 	TorrentLinkIncomplete TorrentLinkStatus = "incomplete"
 )
+
+type OrphanedTorrentRow struct {
+	Name     string
+	Client   string
+	Trackers []string
+	Ratio    float64
+	Added    time.Time
+	Size     int64
+}

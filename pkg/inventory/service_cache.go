@@ -117,5 +117,24 @@ func (s *Service) RefreshCache() error {
 			added:            getAdded(linkedMedia),
 		}
 	}
+
+	uniqueTorrentId := func(client string, id string) string {
+		return client + "|" + id
+	}
+
+	usedTorrentKeys := make(map[string]struct{})
+	for _, lm := range linkedMediaList {
+		for _, file := range lm.Files {
+			if file.TorrentEntry != nil {
+				usedTorrentKeys[uniqueTorrentId(file.TorrentEntry.Client, file.TorrentEntry.Id)] = struct{}{}
+			}
+		}
+	}
+	s.orphanedTorrentsCache = nil
+	for _, t := range torrents {
+		if _, ok := usedTorrentKeys[uniqueTorrentId(t.Client, t.Id)]; !ok {
+			s.orphanedTorrentsCache = append(s.orphanedTorrentsCache, t)
+		}
+	}
 	return nil
 }

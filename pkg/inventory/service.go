@@ -41,6 +41,7 @@ type Service struct {
 	*sync.RWMutex
 	useCache, saveCache      bool
 	enrichedLinkedMediaCache []enrichedLinkedMedia
+	orphanedTorrentsCache    []*domain.TorrentEntry
 	mediaSourceManager       domain.MediaSourceManager
 	torrentSourceManager     domain.TorrentSourceManager
 	linker                   Linker
@@ -285,6 +286,42 @@ func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) we
 	}
 	row.ChildMediaRows = childMediaRows
 	return row
+}
+
+func (s *Service) GetOrphanedTorrents(page int) (rows []webserver.OrphanedTorrentRow, hasNext bool, err error) {
+	s.RLock()
+	defer s.RUnlock()
+	if s.enrichedLinkedMediaCache == nil {
+		if err := s.RefreshCache(); err != nil {
+			return nil, false, err
+		}
+	}
+	all := s.orphanedTorrentsCache
+	start := pageSize * (page - 1)
+	if start >= len(all) {
+		return []webserver.OrphanedTorrentRow{}, false, nil
+	}
+	end := start + pageSize
+	if end < len(all) {
+		hasNext = true
+	} else {
+		end = len(all)
+	}
+	for _, t := range all[start:end] {
+		size := int64(0)
+		for _, f := range t.Files {
+			size += f.Size
+		}
+		rows = append(rows, webserver.OrphanedTorrentRow{
+			Name:     t.Name,
+			Client:   t.Client,
+			Trackers: t.Trackers,
+			Ratio:    t.Ratio,
+			Added:    t.Added,
+			Size:     size,
+		})
+	}
+	return rows, hasNext, nil
 }
 
 func getCombinedTorrentLinkStatus(groupStatus, entryStatus webserver.TorrentLinkStatus) webserver.TorrentLinkStatus {

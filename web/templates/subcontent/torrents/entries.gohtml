@@ -1,0 +1,58 @@
+{{ define "torrent_entries" }}
+    {{ if .Rows }}
+        <tbody>
+        {{ range .Rows }}
+            <tr class="border-t border-t-gray-200">
+                <td class="py-3 px-1 truncate" title="{{ .Name }}">{{ .Name }}</td>
+                <td class="py-3 px-1 text-sm text-gray-600">{{ .Client }}</td>
+                <td class="py-3 px-1 text-sm text-gray-600 truncate" title="{{ range $i, $t := .Trackers }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}">
+                    {{ range $i, $t := .Trackers }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}
+                </td>
+                <td class="py-3 px-1 text-sm">{{ floatToStr .Ratio }}</td>
+                <td class="py-3 px-1 text-sm">{{ formatDate .Added }}</td>
+                <td class="py-3 px-1 text-sm">{{ formatBytes .Size }}</td>
+            </tr>
+        {{ end }}
+        </tbody>
+        {{ if ne .NextPage -1 }}
+            <tbody hx-get="torrents/entries?page={{ .NextPage }}"
+                   hx-trigger="revealed" hx-swap="outerHTML" hx-indicator="#torrents-loading-skeleton">
+            </tbody>
+        {{ end }}
+    {{ else }}
+        <tbody>
+        <tr>
+            <td colspan="6" class="py-6 px-1 text-center text-gray-400">No orphaned torrents found.</td>
+        </tr>
+        </tbody>
+    {{ end }}
+{{ end }}
+
+{{ define "torrents_loading_skeleton" }}
+    <tbody id="torrents-loading-skeleton" class="htmx-indicator">
+    <tr class="border-t border-t-gray-200">
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+    </tr>
+    <tr class="border-t border-t-gray-200">
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+    </tr>
+    <tr class="border-t border-t-gray-200">
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+    </tr>
+    </tbody>
+{{ end }}

@@ -15,6 +15,7 @@ type mediaEndpointData struct {
 	NextPage  int
 	Version   string
 	DiskQuota DiskQuota
+	PageTitle string
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
@@ -23,7 +24,8 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	if utils.IsHTMXRequest(request) {
 		if err := handler.ExecuteSubTemplate(writer, "media.gohtml", "content", mediaEndpointData{
-			SortInfo: sortInfo,
+			SortInfo:  sortInfo,
+			PageTitle: "Media",
 		}); err != nil {
 			logger.Error(err.Error())
 			return
@@ -37,6 +39,7 @@ func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request 
 			SortInfo:  sortInfo,
 			Version:   handler.version,
 			DiskQuota: diskQuota,
+			PageTitle: "Media",
 		}); err != nil {
 			logger.Error(err.Error())
 			return
