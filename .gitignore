@@ -6,3 +6,6 @@ dist/
 bruno
 # cache dir
 cache
+
+# npm dependencies
+node_modules
