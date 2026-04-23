@@ -27,14 +27,7 @@ type enrichedLinkedMedia struct {
 }
 
 func (m enrichedLinkedMedia) getScore() int {
-	switch m.evaluationReport.Result.Decision {
-	case domain.DecisionSafeToDelete:
-		return 0
-	case domain.DecisionPending:
-		return 1
-	default:
-		return -1
-	}
+	return decisionScore(m.evaluationReport.Result.Decision)
 }
 
 type enrichedOrphanedTorrent struct {
@@ -45,7 +38,11 @@ type enrichedOrphanedTorrent struct {
 }
 
 func (e enrichedOrphanedTorrent) getScore() int {
-	switch e.decision {
+	return decisionScore(e.decision)
+}
+
+func decisionScore(d domain.Decision) int {
+	switch d {
 	case domain.DecisionSafeToDelete:
 		return 0
 	case domain.DecisionPending:
