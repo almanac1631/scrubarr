@@ -9,7 +9,7 @@ import (
 )
 
 type mediaEndpointData struct {
-	MediaRows []MediaRow
+	Rows      []MediaRow
 	SortInfo  SortInfo
 	NextPage  int
 	Version   string
@@ -72,9 +72,9 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		nextPage = page + 1
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
-		MediaRows: mediaRows,
-		SortInfo:  sortInfo,
-		NextPage:  nextPage,
+		Rows:     mediaRows,
+		SortInfo: sortInfo,
+		NextPage: nextPage,
 	}); err != nil {
 		logger.Error(err.Error())
 		return
