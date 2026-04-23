@@ -3,17 +3,65 @@
         <table class="table-fixed w-full">
             <thead class="border-gray-300 border-b-2 text-left">
             <tr>
-                <th class="py-3 px-1">Name</th>
+                <th class="py-3 px-1">
+                    <button class="flex items-center"
+                            hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="torrents?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Name
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "name" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "name" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
                 <th class="py-3 px-1 w-28">Client</th>
-                <th class="py-3 px-1 w-32">Size</th>
-                <th class="py-3 px-1 w-32">Added</th>
+                <th class="py-3 px-1 w-32">
+                    <button class="flex items-center"
+                            hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="torrents?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Size
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "size" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "size" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
+                <th class="py-3 px-1 w-32">
+                    <button class="flex items-center"
+                            hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                            hx-get="torrents?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                        Added
+                        <span class="text-slate-300">
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "added" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "added" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </th>
                 <th class="py-3 px-1 w-16">
-                    <div class="flex justify-center">Status</div>
+                    <div class="flex justify-center">
+                        <button class="flex items-center"
+                                hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
+                                hx-get="torrents?sortKey=status&sortOrder={{ if checkCurrentSort "status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            Status
+                            <span class="text-slate-300">
+                                <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path {{ if checkCurrentSort "status" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
+                                    <path {{ if checkCurrentSort "status" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
                 </th>
             </tr>
             </thead>
             <tbody class="font-medium"
-                   hx-get="torrents/entries?page=1"
+                   hx-get="torrents/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
                    hx-swap="outerHTML" hx-trigger="load" hx-indicator="#torrents-loading-skeleton">
             </tbody>
             {{ template "torrents_loading_skeleton" }}

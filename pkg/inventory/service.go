@@ -37,11 +37,29 @@ func (m enrichedLinkedMedia) getScore() int {
 	}
 }
 
+type enrichedOrphanedTorrent struct {
+	torrentEntry *domain.TorrentEntry
+	size         int64
+	decision     domain.Decision
+	tracker      *domain.Tracker
+}
+
+func (e enrichedOrphanedTorrent) getScore() int {
+	switch e.decision {
+	case domain.DecisionSafeToDelete:
+		return 0
+	case domain.DecisionPending:
+		return 1
+	default:
+		return -1
+	}
+}
+
 type Service struct {
 	*sync.RWMutex
 	useCache, saveCache      bool
 	enrichedLinkedMediaCache []enrichedLinkedMedia
-	orphanedTorrentsCache    []*domain.TorrentEntry
+	orphanedTorrentsCache    []enrichedOrphanedTorrent
 	mediaSourceManager       domain.MediaSourceManager
 	torrentSourceManager     domain.TorrentSourceManager
 	linker                   Linker
@@ -288,7 +306,7 @@ func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) we
 	return row
 }
 
-func (s *Service) GetOrphanedTorrents(page int) (rows []webserver.OrphanedTorrentRow, hasNext bool, err error) {
+func (s *Service) GetOrphanedTorrents(page int, sortInfo webserver.SortInfo) (rows []webserver.OrphanedTorrentRow, hasNext bool, err error) {
 	s.RLock()
 	defer s.RUnlock()
 	if s.enrichedLinkedMediaCache == nil {
@@ -296,7 +314,27 @@ func (s *Service) GetOrphanedTorrents(page int) (rows []webserver.OrphanedTorren
 			return nil, false, err
 		}
 	}
-	all := s.orphanedTorrentsCache
+	all := slices.Clone(s.orphanedTorrentsCache)
+	slices.SortFunc(all, func(a, b enrichedOrphanedTorrent) int {
+		var result int
+		switch sortInfo.Key {
+		case webserver.SortKeyName:
+			result = strings.Compare(strings.ToLower(a.torrentEntry.Name), strings.ToLower(b.torrentEntry.Name))
+		case webserver.SortKeySize:
+			result = cmp.Compare(a.size, b.size)
+		case webserver.SortKeyAdded:
+			result = cmp.Compare(a.torrentEntry.Added.Unix(), b.torrentEntry.Added.Unix())
+		case webserver.SortKeyStatus:
+			result = cmp.Compare(a.getScore(), b.getScore())
+		default:
+			slog.Error("Received unknown sort key.", "sortKey", sortInfo.Key)
+			result = 0
+		}
+		if sortInfo.Order == webserver.SortOrderDesc {
+			result = -result
+		}
+		return result
+	})
 	start := pageSize * (page - 1)
 	if start >= len(all) {
 		return []webserver.OrphanedTorrentRow{}, false, nil
@@ -308,26 +346,19 @@ func (s *Service) GetOrphanedTorrents(page int) (rows []webserver.OrphanedTorren
 		end = len(all)
 	}
 	currentTime := now()
-	for _, t := range all[start:end] {
-		size := int64(0)
-		for _, f := range t.Files {
-			size += f.Size
-		}
-		decision, tracker, err := s.retentionPolicy.EvaluateTorrentEntry(t)
-		if err != nil {
-			return nil, false, fmt.Errorf("unable to evaluate torrent entry: %w", err)
-		}
+	for _, e := range all[start:end] {
+		t := e.torrentEntry
 		row := webserver.OrphanedTorrentRow{
 			Name:     t.Name,
 			Client:   t.Client,
 			Ratio:    t.Ratio,
 			Added:    t.Added,
 			Age:      currentTime.Sub(t.Added),
-			Size:     size,
-			Decision: decision,
+			Size:     e.size,
+			Decision: e.decision,
 		}
-		if tracker != nil {
-			row.Tracker = *tracker
+		if e.tracker != nil {
+			row.Tracker = *e.tracker
 		}
 		rows = append(rows, row)
 	}

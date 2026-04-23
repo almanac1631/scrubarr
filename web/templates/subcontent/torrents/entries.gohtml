@@ -35,7 +35,7 @@
         {{ end }}
         </tbody>
         {{ if ne .NextPage -1 }}
-            <tbody hx-get="torrents/entries?page={{ .NextPage }}"
+            <tbody hx-get="torrents/entries?page={{ .NextPage }}&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
                    hx-trigger="revealed" hx-swap="outerHTML" hx-indicator="#torrents-loading-skeleton">
             </tbody>
         {{ end }}

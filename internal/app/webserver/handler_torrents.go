@@ -10,6 +10,7 @@ import (
 type torrentsEndpointData struct {
 	Rows      []OrphanedTorrentRow
 	NextPage  int
+	SortInfo  SortInfo
 	Version   string
 	DiskQuota DiskQuota
 	PageTitle string
@@ -18,8 +19,10 @@ type torrentsEndpointData struct {
 func (handler *handler) handleTorrentsEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	if utils.IsHTMXRequest(request) {
 		if err := handler.ExecuteSubTemplate(writer, "torrents.gohtml", "content", torrentsEndpointData{
+			SortInfo:  sortInfo,
 			PageTitle: "Torrents",
 		}); err != nil {
 			logger.Error(err.Error())
@@ -31,6 +34,7 @@ func (handler *handler) handleTorrentsEndpoint(writer http.ResponseWriter, reque
 		logger.Error("could not get disk quota", "err", err)
 	}
 	if err := handler.ExecuteRootTemplate(writer, "torrents.gohtml", torrentsEndpointData{
+		SortInfo:  sortInfo,
 		Version:   handler.version,
 		DiskQuota: diskQuota,
 		PageTitle: "Torrents",
@@ -45,13 +49,14 @@ func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter,
 		http.Error(writer, "404 Not Found", http.StatusNotFound)
 		return
 	}
+	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	pageRaw := request.URL.Query().Get("page")
 	page, _ := strconv.Atoi(pageRaw)
 	if page < 1 {
 		page = 1
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	rows, hasNext, err := handler.inventoryService.GetOrphanedTorrents(page)
+	rows, hasNext, err := handler.inventoryService.GetOrphanedTorrents(page, sortInfo)
 	if err != nil {
 		logger.Error("Failed to get orphaned torrents.", "error", err)
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
@@ -64,6 +69,7 @@ func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter,
 	if err = handler.ExecuteSubTemplate(writer, "torrents.gohtml", "torrent_entries", torrentsEndpointData{
 		Rows:     rows,
 		NextPage: nextPage,
+		SortInfo: sortInfo,
 	}); err != nil {
 		logger.Error(err.Error())
 	}

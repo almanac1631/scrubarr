@@ -133,7 +133,20 @@ func (s *Service) RefreshCache() error {
 	s.orphanedTorrentsCache = nil
 	for _, t := range torrents {
 		if _, ok := usedTorrentKeys[uniqueTorrentId(t.Client, t.Id)]; !ok {
-			s.orphanedTorrentsCache = append(s.orphanedTorrentsCache, t)
+			size := int64(0)
+			for _, f := range t.Files {
+				size += f.Size
+			}
+			decision, tracker, err := s.retentionPolicy.EvaluateTorrentEntry(t)
+			if err != nil {
+				return fmt.Errorf("unable to evaluate orphaned torrent entry: %w", err)
+			}
+			s.orphanedTorrentsCache = append(s.orphanedTorrentsCache, enrichedOrphanedTorrent{
+				torrentEntry: t,
+				size:         size,
+				decision:     decision,
+				tracker:      tracker,
+			})
 		}
 	}
 	return nil
