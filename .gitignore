@@ -5,4 +5,4 @@ dist/
 # bruno files
 bruno
 # cache dir
-./cache
+cache
