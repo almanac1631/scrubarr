@@ -3,7 +3,6 @@ package webserver
 import (
 	"errors"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
@@ -81,25 +80,6 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		return
 	}
 	return
-}
-
-func getSortInfoFromUrlQuery(values url.Values) SortInfo {
-	sortInfo := SortInfo{}
-	sortKeyRaw := values.Get("sortKey")
-	switch SortKey(sortKeyRaw) {
-	case SortKeyName, SortKeySize, SortKeyAdded, SortKeyStatus:
-		sortInfo.Key = SortKey(sortKeyRaw)
-	default:
-		sortInfo.Key = SortKeyName
-	}
-	sortOrderRaw := values.Get("sortOrder")
-	switch SortOrder(sortOrderRaw) {
-	case SortOrderAsc, SortOrderDesc:
-		sortInfo.Order = SortOrder(sortOrderRaw)
-	default:
-		sortInfo.Order = SortOrderAsc
-	}
-	return sortInfo
 }
 
 func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, request *http.Request) {
