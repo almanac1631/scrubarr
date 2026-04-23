@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Link media files from Sonarr/Radarr with active torrents in Deluge/rTorrent
 - Enforce retention policies based on tracker rules (minimum ratio, minimum age)
 - Provide a web dashboard to safely review and delete media with associated torrent cleanup
+- Show orphaned torrents (torrents not linked to any *arr media) with tracker-based retention decisions
 - Support dry-run mode to preview deletions without actually removing files
 
 ---
@@ -128,9 +129,9 @@ go test -v -race ./...
    - `cache.go` - `CachedManager` interface for caching
 
 #### 2. **pkg/inventory/** - Main Orchestrator
-   - `service.go` - **Core Service**: Manages enriched linked media cache, evaluates retention policy
-   - `service_cache.go` - Cache loading/saving from disk
-   - `retention_policy.go` - Implements `RetentionPolicy` interface
+   - `service.go` - **Core Service**: Manages enriched linked media and orphaned torrent caches
+   - `service_cache.go` - `RefreshCache()`: parallel fetch, linking, retention evaluation, orphan detection
+   - `retention_policy.go` - `RetentionPolicy` interface with `Evaluate()` (linked media) and `EvaluateTorrentEntry()` (standalone torrents)
    - `linker.go` - Interfaces for linking
    - `media_id.go` - ID parsing for media entries
 
@@ -156,8 +157,11 @@ go test -v -race ./...
 
 #### 8. **internal/app/webserver/** - HTTP Server
    - `webserver.go` - Routes setup, auth middleware, listener
-   - `handler_media.go` - GET /media, PUT /media (refresh), DELETE /media/{id}
+   - `handler_media.go` - GET /media, DELETE /media/{id}, GET /media/refresh
+   - `handler_torrents.go` - GET /torrents, GET /torrents/entries (orphaned torrents page)
+   - `handler_utils.go` - Shared handler helpers (e.g., `getSortInfoFromUrlQuery`)
    - `handler_auth.go` - POST /login, POST /logout, JWT validation
+   - `inventory.go` - `InventoryService` interface (dependency inversion for the handler)
    - `auth_setup.go` - Auth provider initialization (passwordhash or Jellyfin)
    - `template_cache.go` - Embedded HTML template loading
 
@@ -207,6 +211,17 @@ All services are initialized in `internal/app/scrubarr/scrubarr.go` (the `serve(
 - Global decision is aggregated from file decisions (any "pending" = media is "pending")
 - Files without torrent entries are always safe to delete
 - Deletion blocked if tracker rules not met (ratio/age thresholds)
+- Orphaned torrents (not linked to any media) are evaluated via `EvaluateTorrentEntry()` — returns `Pending` when the tracker cannot be determined
+
+### 8. **Orphaned Torrent Detection**
+- During `RefreshCache()`, after linking, a set of used torrent IDs (`Client+"|"+Id`) is built from all linked media files
+- Any torrent not in that set is an orphaned torrent; it gets enriched with size and a retention decision and stored in `orphanedTorrentsCache`
+- `GetOrphanedTorrents()` clones, sorts, and paginates the cache — mirrors the `GetMediaInventory()` pattern
+
+### 9. **Frontend Template Conventions**
+- Templates live in `web/templates/`; subcontent partials in `web/templates/subcontent/<page>/`
+- All templates in the directory tree are loaded together into one `template.Template` set — SVG `<symbol>` IDs must be globally unique; use a page suffix (e.g., `-t` for the torrents page) to avoid collisions
+- HTMX drives all dynamic updates; sort state is passed as `sortKey`/`sortOrder` URL query params; infinite scroll uses `hx-trigger="revealed"`
 
 ### 7. **Authentication & Authorization**
 - JWT-based stateless auth (tokens stored in cookies)
@@ -249,6 +264,7 @@ All services are initialized in `internal/app/scrubarr/scrubarr.go` (the `serve(
   - `pkg/retentionpolicy/service_test.go` - Retention policy evaluation
   - `pkg/linker/service_test.go` - Media-torrent linking
   - `internal/app/webserver/handler_auth_test.go` - Auth endpoints
+  - `internal/app/webserver/handler_utils_test.go` - Shared handler utilities
   - `pkg/ultraapi/api_test.go` - Quota API
 
 ### Testing Utilities
