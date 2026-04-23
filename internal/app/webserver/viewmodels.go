@@ -50,5 +50,8 @@ type OrphanedTorrentRow struct {
 	Trackers []string
 	Ratio    float64
 	Added    time.Time
+	Age      time.Duration
 	Size     int64
+	Decision domain.Decision
+	Tracker  domain.Tracker
 }

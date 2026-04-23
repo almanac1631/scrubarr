@@ -307,19 +307,30 @@ func (s *Service) GetOrphanedTorrents(page int) (rows []webserver.OrphanedTorren
 	} else {
 		end = len(all)
 	}
+	currentTime := now()
 	for _, t := range all[start:end] {
 		size := int64(0)
 		for _, f := range t.Files {
 			size += f.Size
 		}
-		rows = append(rows, webserver.OrphanedTorrentRow{
+		decision, tracker, err := s.retentionPolicy.EvaluateTorrentEntry(t)
+		if err != nil {
+			return nil, false, fmt.Errorf("unable to evaluate torrent entry: %w", err)
+		}
+		row := webserver.OrphanedTorrentRow{
 			Name:     t.Name,
 			Client:   t.Client,
 			Trackers: t.Trackers,
 			Ratio:    t.Ratio,
 			Added:    t.Added,
+			Age:      currentTime.Sub(t.Added),
 			Size:     size,
-		})
+			Decision: decision,
+		}
+		if tracker != nil {
+			row.Tracker = *tracker
+		}
+		rows = append(rows, row)
 	}
 	return rows, hasNext, nil
 }

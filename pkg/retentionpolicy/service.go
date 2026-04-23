@@ -86,6 +86,21 @@ func (s Service) Evaluate(media inventory.LinkedMedia) (inventory.EvaluationRepo
 	}, nil
 }
 
+func (s Service) EvaluateTorrentEntry(torrent *domain.TorrentEntry) (domain.Decision, *domain.Tracker, error) {
+	tracker, err := s.trackerResolver.Resolve(torrent.Trackers)
+	if errors.Is(err, ErrTrackerNotFound) {
+		return domain.DecisionPending, nil, nil
+	}
+	if err != nil {
+		slog.Warn("tracker not found for torrent entry", "torrentEntry", torrent)
+		return domain.DecisionPending, nil, nil
+	}
+	if isTorrentEntrySafeToDelete(torrent, tracker) {
+		return domain.DecisionSafeToDelete, tracker, nil
+	}
+	return domain.DecisionPending, tracker, nil
+}
+
 func isTorrentEntrySafeToDelete(torrentEntry *domain.TorrentEntry, tracker *domain.Tracker) bool {
 	if torrentEntry.Ratio < tracker.MinRatio {
 		return false

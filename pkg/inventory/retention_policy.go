@@ -16,4 +16,5 @@ type EvaluationReportPart struct {
 
 type RetentionPolicy interface {
 	Evaluate(media LinkedMedia) (EvaluationReport, error)
+	EvaluateTorrentEntry(torrent *domain.TorrentEntry) (domain.Decision, *domain.Tracker, error)
 }

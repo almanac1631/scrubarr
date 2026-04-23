@@ -11,6 +11,30 @@
                 <td class="py-3 px-1 text-sm">{{ floatToStr .Ratio }}</td>
                 <td class="py-3 px-1 text-sm">{{ formatDate .Added }}</td>
                 <td class="py-3 px-1 text-sm">{{ formatBytes .Size }}</td>
+                <td class="py-3 px-1 [&_svg]:w-6 [&_svg]:h-6">
+                    <div class="flex justify-center">
+                        <div class="w-6 flex justify-center"
+                             data-tooltip="status-info"
+                             data-decision="{{ .Decision }}"
+                             data-torrent-status="present"
+                             data-torrent-ratio="{{ .Ratio }}"
+                             data-torrent-age="{{ .Age | durationToNanoseconds }}"
+                             data-tracker-name="{{ .Tracker.Name }}"
+                             data-tracker-min-ratio="{{ .Tracker.MinRatio }}"
+                             data-tracker-min-age="{{ .Tracker.MinAge | durationToNanoseconds }}"
+                        >
+                            {{ if eq .Decision "safe_to_delete" }}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="text-green-600" title="Safe to delete">
+                                    <use href="#icon-safe-to-delete-t"></use>
+                                </svg>
+                            {{ else }}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="text-yellow-600" title="Pending">
+                                    <use href="#icon-pending-t"></use>
+                                </svg>
+                            {{ end }}
+                        </div>
+                    </div>
+                </td>
             </tr>
         {{ end }}
         </tbody>
@@ -22,7 +46,7 @@
     {{ else }}
         <tbody>
         <tr>
-            <td colspan="6" class="py-6 px-1 text-center text-gray-400">No orphaned torrents found.</td>
+            <td colspan="7" class="py-6 px-1 text-center text-gray-400">No orphaned torrents found.</td>
         </tr>
         </tbody>
     {{ end }}
@@ -37,16 +61,19 @@
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-    </tr>
-    <tr class="border-t border-t-gray-200">
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
     </tr>
     <tr class="border-t border-t-gray-200">
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+    </tr>
+    <tr class="border-t border-t-gray-200">
+        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
