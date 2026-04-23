@@ -320,7 +320,6 @@ func (s *Service) GetOrphanedTorrents(page int) (rows []webserver.OrphanedTorren
 		row := webserver.OrphanedTorrentRow{
 			Name:     t.Name,
 			Client:   t.Client,
-			Trackers: t.Trackers,
 			Ratio:    t.Ratio,
 			Added:    t.Added,
 			Age:      currentTime.Sub(t.Added),

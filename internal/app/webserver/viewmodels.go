@@ -47,7 +47,6 @@ const (
 type OrphanedTorrentRow struct {
 	Name     string
 	Client   string
-	Trackers []string
 	Ratio    float64
 	Added    time.Time
 	Age      time.Duration

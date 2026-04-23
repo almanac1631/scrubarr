@@ -5,10 +5,6 @@
             <tr class="border-t border-t-gray-200">
                 <td class="py-3 px-1 truncate" title="{{ .Name }}">{{ .Name }}</td>
                 <td class="py-3 px-1 text-sm text-gray-600">{{ .Client }}</td>
-                <td class="py-3 px-1 text-sm text-gray-600 truncate" title="{{ range $i, $t := .Trackers }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}">
-                    {{ range $i, $t := .Trackers }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}
-                </td>
-                <td class="py-3 px-1 text-sm">{{ floatToStr .Ratio }}</td>
                 <td class="py-3 px-1 text-sm">{{ formatDate .Added }}</td>
                 <td class="py-3 px-1 text-sm">{{ formatBytes .Size }}</td>
                 <td class="py-3 px-1 [&_svg]:w-6 [&_svg]:h-6">
@@ -46,7 +42,7 @@
     {{ else }}
         <tbody>
         <tr>
-            <td colspan="7" class="py-6 px-1 text-center text-gray-400">No orphaned torrents found.</td>
+            <td colspan="5" class="py-6 px-1 text-center text-gray-400">No orphaned torrents found.</td>
         </tr>
         </tbody>
     {{ end }}
@@ -60,8 +56,6 @@
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
     </tr>
     <tr class="border-t border-t-gray-200">
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
@@ -69,12 +63,8 @@
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
     </tr>
     <tr class="border-t border-t-gray-200">
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
         <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
