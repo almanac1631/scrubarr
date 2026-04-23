@@ -9,8 +9,8 @@ import (
 
 type torrentsEndpointData struct {
 	Rows      []OrphanedTorrentRow
-	NextPage  int
 	SortInfo  SortInfo
+	NextPage  int
 	Version   string
 	DiskQuota DiskQuota
 	PageTitle string
