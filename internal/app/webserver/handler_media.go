@@ -4,56 +4,22 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-
-	"github.com/almanac1631/scrubarr/internal/utils"
 )
 
 type mediaEndpointData struct {
-	Rows      []MediaRow
-	SortInfo  SortInfo
-	NextPage  int
-	Version   string
-	DiskQuota DiskQuota
-	PageTitle string
+	basePageData
+	Rows []MediaRow
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
-	logger := getRequestLogger(request)
-	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
-	if utils.IsHTMXRequest(request) {
-		if err := handler.ExecuteSubTemplate(writer, "media.gohtml", "content", mediaEndpointData{
-			SortInfo:  sortInfo,
-			PageTitle: "Media",
-		}); err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	} else {
-		diskQuota, err := handler.quotaService.GetDiskQuota()
-		if err != nil {
-			logger.Error("could not get disk quota", "err", err)
-		}
-		if err := handler.ExecuteRootTemplate(writer, "media.gohtml", mediaEndpointData{
-			SortInfo:  sortInfo,
-			Version:   handler.version,
-			DiskQuota: diskQuota,
-			PageTitle: "Media",
-		}); err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}
+	handler.renderPage(writer, request, "media.gohtml", "Media", func(base basePageData) any {
+		return mediaEndpointData{basePageData: base}
+	})
 }
 
 func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
-	if !utils.IsHTMXRequest(request) {
-		writer.WriteHeader(http.StatusNotFound)
-		_, _ = writer.Write([]byte("404 Not Found"))
-		return
-	}
 	pageRaw := request.URL.Query().Get("page")
 	page, _ := strconv.Atoi(pageRaw)
 	if page < 1 {
@@ -63,8 +29,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	mediaRows, hasNext, err := handler.inventoryService.GetMediaInventory(page, sortInfo)
 	if err != nil {
 		logger.Error("Failed to get media mapping.", "error", err)
-		writer.WriteHeader(http.StatusInternalServerError)
-		_, _ = writer.Write([]byte("500 Internal Server Error"))
+		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	nextPage := -1
@@ -72,21 +37,14 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 		nextPage = page + 1
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
-		Rows:     mediaRows,
-		SortInfo: sortInfo,
-		NextPage: nextPage,
+		basePageData: basePageData{SortInfo: sortInfo, NextPage: nextPage},
+		Rows:         mediaRows,
 	}); err != nil {
 		logger.Error(err.Error())
-		return
 	}
-	return
 }
 
 func (handler *handler) handleMediaSeriesEndpoint(writer http.ResponseWriter, request *http.Request) {
-	if !utils.IsHTMXRequest(request) {
-		http.Error(writer, "404 Not Found", http.StatusNotFound)
-		return
-	}
 	collapsed := request.URL.Query().Get("collapsed") == "true"
 	id := request.PathValue("id")
 	handler.serveMediaSeriesEntry(writer, request, id, collapsed)
@@ -109,17 +67,11 @@ func (handler *handler) serveMediaSeriesEntry(writer http.ResponseWriter, reques
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entry", mediaRowExpanded); err != nil {
 		logger.Error(err.Error())
-		return
 	}
-	return
 }
 
 func (handler *handler) handleMediaDeletionEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
-	if !utils.IsHTMXRequest(request) {
-		http.Error(writer, "404 Not Found", http.StatusNotFound)
-		return
-	}
 	id := request.PathValue("id")
 	logger = logger.With("id", id)
 	logger.Debug("Deleting media...")
@@ -147,10 +99,6 @@ func (handler *handler) handleMediaDeletionEndpoint(writer http.ResponseWriter, 
 
 func (handler *handler) handleRefreshEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
-	if !utils.IsHTMXRequest(request) {
-		http.Error(writer, "404 Not Found", http.StatusNotFound)
-		return
-	}
 	logger.Info("Refreshing media entries cache.")
 	if err := handler.inventoryService.RefreshCache(); err != nil {
 		logger.Error(err.Error())

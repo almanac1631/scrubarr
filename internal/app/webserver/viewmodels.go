@@ -7,6 +7,14 @@ import (
 	"github.com/almanac1631/scrubarr/pkg/domain"
 )
 
+type basePageData struct {
+	SortInfo  SortInfo
+	NextPage  int
+	Version   string
+	DiskQuota DiskQuota
+	PageTitle string
+}
+
 type TorrentInformation struct {
 	LinkStatus TorrentLinkStatus
 
