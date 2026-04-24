@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"path"
 	"slices"
 	"strings"
@@ -346,13 +347,15 @@ func (s *Service) GetOrphanedTorrents(page int, sortInfo webserver.SortInfo) (ro
 	for _, e := range all[start:end] {
 		t := e.torrentEntry
 		row := webserver.OrphanedTorrentRow{
-			Name:     t.Name,
-			Client:   t.Client,
-			Ratio:    t.Ratio,
-			Added:    t.Added,
-			Age:      currentTime.Sub(t.Added),
-			Size:     e.size,
-			Decision: e.decision,
+			Id:            url.PathEscape(t.Client + "-" + t.Id),
+			Name:          t.Name,
+			Client:        t.Client,
+			Ratio:         t.Ratio,
+			Added:         t.Added,
+			Age:           currentTime.Sub(t.Added),
+			Size:          e.size,
+			Decision:      e.decision,
+			AllowDeletion: true,
 		}
 		if e.tracker != nil {
 			row.Tracker = *e.tracker
@@ -429,5 +432,30 @@ func (s *Service) DeleteMedia(rawId string) error {
 		s.enrichedLinkedMediaCache[entryIndex] = entry
 	}
 
+	return nil
+}
+
+func (s *Service) DeleteOrphanedTorrent(rawId string) error {
+	s.Lock()
+	defer s.Unlock()
+	parts := strings.SplitN(rawId, "-", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid orphaned torrent id: %q", rawId)
+	}
+	client, torrentId := parts[0], parts[1]
+
+	entryIndex := slices.IndexFunc(s.orphanedTorrentsCache, func(e enrichedOrphanedTorrent) bool {
+		return e.torrentEntry.Client == client && e.torrentEntry.Id == torrentId
+	})
+	if entryIndex == -1 {
+		return webserver.ErrMediaNotFound
+	}
+
+	err := s.torrentSourceManager.DeleteTorrent(client, torrentId)
+	if err != nil && !errors.Is(err, domain.ErrTorrentNotFound) {
+		return fmt.Errorf("could not delete orphaned torrent %q/%q: %w", client, torrentId, err)
+	}
+
+	s.orphanedTorrentsCache = append(s.orphanedTorrentsCache[:entryIndex], s.orphanedTorrentsCache[entryIndex+1:]...)
 	return nil
 }
