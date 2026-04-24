@@ -4,52 +4,21 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-
-	"github.com/almanac1631/scrubarr/internal/utils"
 )
 
 type torrentsEndpointData struct {
-	Rows      []OrphanedTorrentRow
-	SortInfo  SortInfo
-	NextPage  int
-	Version   string
-	DiskQuota DiskQuota
-	PageTitle string
+	basePageData
+	Rows []OrphanedTorrentRow
 }
 
 func (handler *handler) handleTorrentsEndpoint(writer http.ResponseWriter, request *http.Request) {
-	logger := getRequestLogger(request)
-	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
-	if utils.IsHTMXRequest(request) {
-		if err := handler.ExecuteSubTemplate(writer, "torrents.gohtml", "content", torrentsEndpointData{
-			SortInfo:  sortInfo,
-			PageTitle: "Torrents",
-		}); err != nil {
-			logger.Error(err.Error())
-		}
-		return
-	}
-	diskQuota, err := handler.quotaService.GetDiskQuota()
-	if err != nil {
-		logger.Error("could not get disk quota", "err", err)
-	}
-	if err := handler.ExecuteRootTemplate(writer, "torrents.gohtml", torrentsEndpointData{
-		SortInfo:  sortInfo,
-		Version:   handler.version,
-		DiskQuota: diskQuota,
-		PageTitle: "Torrents",
-	}); err != nil {
-		logger.Error(err.Error())
-	}
+	handler.renderPage(writer, request, "torrents.gohtml", "Torrents", func(base basePageData) any {
+		return torrentsEndpointData{basePageData: base}
+	})
 }
 
 func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
-	if !utils.IsHTMXRequest(request) {
-		http.Error(writer, "404 Not Found", http.StatusNotFound)
-		return
-	}
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
 	pageRaw := request.URL.Query().Get("page")
 	page, _ := strconv.Atoi(pageRaw)
@@ -68,9 +37,8 @@ func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter,
 		nextPage = page + 1
 	}
 	if err = handler.ExecuteSubTemplate(writer, "torrents.gohtml", "torrent_entries", torrentsEndpointData{
-		Rows:     rows,
-		NextPage: nextPage,
-		SortInfo: sortInfo,
+		basePageData: basePageData{SortInfo: sortInfo, NextPage: nextPage},
+		Rows:         rows,
 	}); err != nil {
 		logger.Error(err.Error())
 	}
@@ -78,10 +46,6 @@ func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter,
 
 func (handler *handler) handleTorrentDeletionEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
-	if !utils.IsHTMXRequest(request) {
-		http.Error(writer, "404 Not Found", http.StatusNotFound)
-		return
-	}
 	id := request.PathValue("id")
 	logger = logger.With("id", id)
 	logger.Debug("Deleting orphaned torrent...")

@@ -58,15 +58,15 @@ func SetupWebserver(config *koanf.Koanf, version string, inventoryService Invent
 	router.HandleFunc("POST /logout", handler.handleLogout)
 
 	authorizedRouter := http.NewServeMux()
-	authorizedRouter.HandleFunc("GET /quotas/disk", handler.handleDiskQuotaEndpoint)
+	authorizedRouter.HandleFunc("GET /quotas/disk", htmxOnly(handler.handleDiskQuotaEndpoint))
 	authorizedRouter.HandleFunc("GET /media", handler.handleMediaEndpoint)
-	authorizedRouter.HandleFunc("PUT /media", handler.handleRefreshEndpoint)
-	authorizedRouter.HandleFunc("GET /media/entries", handler.handleMediaEntriesEndpoint)
-	authorizedRouter.HandleFunc("GET /media/entries/{id}", handler.handleMediaSeriesEndpoint)
-	authorizedRouter.HandleFunc("DELETE /media/entries/{id}", handler.handleMediaDeletionEndpoint)
+	authorizedRouter.HandleFunc("PUT /media", htmxOnly(handler.handleRefreshEndpoint))
+	authorizedRouter.HandleFunc("GET /media/entries", htmxOnly(handler.handleMediaEntriesEndpoint))
+	authorizedRouter.HandleFunc("GET /media/entries/{id}", htmxOnly(handler.handleMediaSeriesEndpoint))
+	authorizedRouter.HandleFunc("DELETE /media/entries/{id}", htmxOnly(handler.handleMediaDeletionEndpoint))
 	authorizedRouter.HandleFunc("GET /torrents", handler.handleTorrentsEndpoint)
-	authorizedRouter.HandleFunc("GET /torrents/entries", handler.handleTorrentEntriesEndpoint)
-	authorizedRouter.HandleFunc("DELETE /torrents/entries/{id}", handler.handleTorrentDeletionEndpoint)
+	authorizedRouter.HandleFunc("GET /torrents/entries", htmxOnly(handler.handleTorrentEntriesEndpoint))
+	authorizedRouter.HandleFunc("DELETE /torrents/entries/{id}", htmxOnly(handler.handleTorrentDeletionEndpoint))
 	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/" {
 			http.NotFound(writer, request)
