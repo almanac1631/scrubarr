@@ -35,7 +35,8 @@
                     {{ if .AllowDeletion }}
                         <button class="cursor-pointer hover:bg-stone-200 p-1 rounded disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-200"
                                 hx-delete="torrents/entries/{{ .Id }}" hx-target="#{{ .Id }}" hx-swap="outerHTML"
-                                hx-confirm="Do you really want to delete the torrent '{{ .Name }}'?" hx-disabled-elt="this">
+                                hx-confirm="Do you really want to delete the torrent '{{ .Name }}'?"
+                                hx-disabled-elt="this">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
                                 <use href="#icon-delete-t"></use>
                             </svg>
@@ -62,28 +63,64 @@
 {{ define "torrents_loading_skeleton" }}
     <tbody id="torrents-loading-skeleton" class="htmx-indicator">
     <tr class="border-t border-t-gray-200">
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
     </tr>
     <tr class="border-t border-t-gray-200">
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
     </tr>
     <tr class="border-t border-t-gray-200">
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
-        <td class="py-3 px-1"><div class="animate-shimmer w-full h-6 rounded"></div></td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
+        <td class="py-3 px-1">
+            <div class="animate-shimmer w-full h-6 rounded"></div>
+        </td>
     </tr>
     </tbody>
 {{ end }}

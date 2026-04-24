@@ -9,9 +9,14 @@
                             hx-get="torrents?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                         Name
                         <span class="text-slate-300">
-                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                <path {{ if checkCurrentSort "name" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
-                                <path {{ if checkCurrentSort "name" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "name" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                      d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "name" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                      d="m8 15 4 4 4-4"></path>
                             </svg>
                         </span>
                     </button>
@@ -23,9 +28,14 @@
                             hx-get="torrents?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                         Size
                         <span class="text-slate-300">
-                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                <path {{ if checkCurrentSort "size" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
-                                <path {{ if checkCurrentSort "size" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "size" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                      d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "size" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                      d="m8 15 4 4 4-4"></path>
                             </svg>
                         </span>
                     </button>
@@ -36,9 +46,14 @@
                             hx-get="torrents?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                         Added
                         <span class="text-slate-300">
-                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                <path {{ if checkCurrentSort "added" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
-                                <path {{ if checkCurrentSort "added" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                            <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path {{ if checkCurrentSort "added" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                      d="m16 9-4-4-4 4"></path>
+                                <path {{ if checkCurrentSort "added" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                      d="m8 15 4 4 4-4"></path>
                             </svg>
                         </span>
                     </button>
@@ -50,9 +65,14 @@
                                 hx-get="torrents?sortKey=status&sortOrder={{ if checkCurrentSort "status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
                             Status
                             <span class="text-slate-300">
-                                <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                    <path {{ if checkCurrentSort "status" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m16 9-4-4-4 4"></path>
-                                    <path {{ if checkCurrentSort "status" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m8 15 4 4 4-4"></path>
+                                <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                     width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path {{ if checkCurrentSort "status" "asc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                          stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                          d="m16 9-4-4-4 4"></path>
+                                    <path {{ if checkCurrentSort "status" "desc" .SortInfo }}class="text-gray-900"{{ end }} stroke="currentColor"
+                                          stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                          d="m8 15 4 4 4-4"></path>
                                 </svg>
                             </span>
                         </button>
