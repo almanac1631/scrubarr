@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -73,4 +74,27 @@ func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter,
 	}); err != nil {
 		logger.Error(err.Error())
 	}
+}
+
+func (handler *handler) handleTorrentDeletionEndpoint(writer http.ResponseWriter, request *http.Request) {
+	logger := getRequestLogger(request)
+	if !utils.IsHTMXRequest(request) {
+		http.Error(writer, "404 Not Found", http.StatusNotFound)
+		return
+	}
+	id := request.PathValue("id")
+	logger = logger.With("id", id)
+	logger.Debug("Deleting orphaned torrent...")
+	if err := handler.inventoryService.DeleteOrphanedTorrent(id); errors.Is(err, ErrMediaNotFound) {
+		writer.Header().Set("Hx-Trigger", "diskQuotaUpdate")
+		writer.WriteHeader(http.StatusOK)
+		return
+	} else if err != nil {
+		logger.Error("Could not delete orphaned torrent.", "error", err)
+		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	logger.Info("Successfully deleted orphaned torrent.")
+	writer.Header().Set("Hx-Trigger", "diskQuotaUpdate")
+	writer.WriteHeader(http.StatusOK)
 }

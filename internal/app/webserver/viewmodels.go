@@ -45,12 +45,14 @@ const (
 )
 
 type OrphanedTorrentRow struct {
-	Name     string
-	Client   string
-	Ratio    float64
-	Added    time.Time
-	Age      time.Duration
-	Size     int64
-	Decision domain.Decision
-	Tracker  domain.Tracker
+	Id            string
+	Name          string
+	Client        string
+	Ratio         float64
+	Added         time.Time
+	Age           time.Duration
+	Size          int64
+	Decision      domain.Decision
+	Tracker       domain.Tracker
+	AllowDeletion bool
 }

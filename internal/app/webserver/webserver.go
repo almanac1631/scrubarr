@@ -66,6 +66,7 @@ func SetupWebserver(config *koanf.Koanf, version string, inventoryService Invent
 	authorizedRouter.HandleFunc("DELETE /media/entries/{id}", handler.handleMediaDeletionEndpoint)
 	authorizedRouter.HandleFunc("GET /torrents", handler.handleTorrentsEndpoint)
 	authorizedRouter.HandleFunc("GET /torrents/entries", handler.handleTorrentEntriesEndpoint)
+	authorizedRouter.HandleFunc("DELETE /torrents/entries/{id}", handler.handleTorrentDeletionEndpoint)
 	authorizedRouter.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/" {
 			http.NotFound(writer, request)
