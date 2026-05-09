@@ -62,10 +62,11 @@ func (provider JellyfinProvider) CheckCredentials(username string, password []by
 		return false, nil
 	}
 
-	if !result.User.Policy.IsAdministrator {
-		return false, nil
+	if result.User.Policy.IsAdministrator || result.User.Policy.EnableCollectionManagement {
+		return true, nil
 	}
-	return true, nil
+	
+	return false, nil
 }
 
 type JellyfinResponse struct {
@@ -73,6 +74,7 @@ type JellyfinResponse struct {
 		Name   string `json:"Name"`
 		Policy struct {
 			IsAdministrator bool `json:"IsAdministrator"`
+			EnableCollectionManagement bool `json:"EnableCollectionManagement"`
 		} `json:"Policy"`
 	} `json:"User"`
 	AccessToken string `json:"AccessToken"`
