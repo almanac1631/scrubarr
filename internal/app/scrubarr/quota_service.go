@@ -14,6 +14,8 @@ func getQuotaService(k *koanf.Koanf) (webserver.QuotaService, error) {
 		endpoint := k.MustString("quota.ultraapi.endpoint")
 		apiKey := k.MustBytes("quota.ultraapi.api_key")
 		return quota.NewUltraApiQuotaService(endpoint, apiKey), nil
+	} else if provider == "fsquota" {
+		return quota.NewFsQuotaService(), nil
 	}
 	return nil, fmt.Errorf("unknown quota provider: %q", provider)
 }
