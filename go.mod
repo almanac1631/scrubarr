@@ -15,7 +15,7 @@ require (
 	github.com/parkervcp/fsquota v0.0.0-20260601132657-d13427a22f09
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/crypto v0.56.0
+	golang.org/x/crypto v0.57.0
 	golang.org/x/term v0.46.0
 	golift.io/starr v1.4.0
 )
