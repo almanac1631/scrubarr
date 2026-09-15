@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.57.0
 	golang.org/x/term v0.46.0
-	golift.io/starr v1.4.0
+	golift.io/starr v1.4.1
 )
 
 require (
