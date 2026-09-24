@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/knadh/koanf/parsers/toml/v2 v2.2.2
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.3.6
+	github.com/knadh/koanf/v2 v2.3.7
 	github.com/parkervcp/fsquota v0.0.0-20260601132657-d13427a22f09
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
