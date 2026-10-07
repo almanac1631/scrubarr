@@ -32,8 +32,8 @@ func (provider JellyfinProvider) CheckCredentials(username string, password []by
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 
 	req.Header.Set("Content-Type", "application/json")
-	embyAuthorization := fmt.Sprintf("MediaBrowser Client=\"Scrubarr\", Device=\"Scrubarr\", DeviceId=%q, Version=%q", deviceId, version)
-	req.Header.Set("X-Emby-Authorization", embyAuthorization)
+	authorization := fmt.Sprintf("MediaBrowser Client=\"Scrubarr\", Device=\"Scrubarr\", DeviceId=%q, Version=%q", deviceId, version)
+	req.Header.Set("Authorization", authorization)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -65,7 +65,7 @@ func (provider JellyfinProvider) CheckCredentials(username string, password []by
 	if result.User.Policy.IsAdministrator || result.User.Policy.EnableCollectionManagement {
 		return true, nil
 	}
-	
+
 	return false, nil
 }
 
@@ -73,7 +73,7 @@ type JellyfinResponse struct {
 	User struct {
 		Name   string `json:"Name"`
 		Policy struct {
-			IsAdministrator bool `json:"IsAdministrator"`
+			IsAdministrator            bool `json:"IsAdministrator"`
 			EnableCollectionManagement bool `json:"EnableCollectionManagement"`
 		} `json:"Policy"`
 	} `json:"User"`
