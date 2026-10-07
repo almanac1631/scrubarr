@@ -1,5 +1,7 @@
 github.com/almanac1631/go-rtorrent v1.16.0 h1:ZsHANgQ4No7V2eKCDl39L9dkF36ZG3B++4ou/OdbT1M=
 github.com/almanac1631/go-rtorrent v1.16.0/go.mod h1:nkNlG9Z4581qRtkoOQVnRyW1GSLwI0aRYNYYZg5+rHM=
+github.com/autobrr/go-rtorrent v1.13.0 h1:fFd5OhBHkghBsEZKBQO8q00Kt1iZB0WbCgcvSmmChrk=
+github.com/autobrr/go-rtorrent v1.13.0/go.mod h1:VqGDyEmHHYj/jiUbxl9ic63HNol3L++bJ9lofCzJU0I=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -7,6 +9,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/felixge/httpsnoop v1.0.3 h1:s/nj+GCswXYzN5v2DpNMuMQYe+0DDwt5WVCU6CWBdXk=
 github.com/felixge/httpsnoop v1.0.3/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
+github.com/felixge/httpsnoop v1.1.0 h1:3YtUj32ZZkqZtt3sZZsClsymw/QDuVfpNhoA31zeORc=
+github.com/felixge/httpsnoop v1.1.0/go.mod h1:Zqxgdd+1Rkcz8euOqdr7lqgCRJztwr5hp9vDSi5UZCE=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/gdm85/go-libdeluge v0.6.0 h1:TCqzmABxup3l1yeWWW6ZIGoxgJZrrKB5aBF6z6BbVPg=

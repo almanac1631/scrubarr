@@ -5,7 +5,7 @@ go 1.26.0
 toolchain go1.27.1
 
 require (
-	github.com/autobrr/go-rtorrent v1.12.0
+	github.com/autobrr/go-rtorrent v1.13.0
 	github.com/gdm85/go-libdeluge v0.6.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/handlers v1.5.2
@@ -22,7 +22,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/felixge/httpsnoop v1.0.3 // indirect
+	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gdm85/go-rencode v0.1.8 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
