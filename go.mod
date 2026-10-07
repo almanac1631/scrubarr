@@ -21,7 +21,6 @@ require (
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gdm85/go-rencode v0.1.8 // indirect
@@ -34,12 +33,10 @@ require (
 	github.com/moby/sys/mountinfo v0.7.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/autobrr/go-rtorrent v1.12.0 => github.com/almanac1631/go-rtorrent v1.16.0
+replace github.com/autobrr/go-rtorrent v1.13.0 => github.com/almanac1631/go-rtorrent v1.16.0
