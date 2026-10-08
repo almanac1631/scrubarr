@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/almanac1631/scrubarr/internal/app/webserver"
@@ -95,7 +96,7 @@ func serve(cmd *cobra.Command, args []string) {
 
 	go func() {
 		exitChan := make(chan os.Signal, 1)
-		signal.Notify(exitChan, os.Interrupt)
+		signal.Notify(exitChan, os.Interrupt, syscall.SIGTERM)
 		<-exitChan
 		slog.Info("Received exit signal. Shutting down...")
 		cancelFunc()
