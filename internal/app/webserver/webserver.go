@@ -20,12 +20,34 @@ import (
 func SetupListener(config *koanf.Koanf) (net.Listener, error) {
 	network := config.MustString("general.listen_network")
 	addr := config.MustString("general.listen_addr")
+	if network == "unix" {
+		if err := removeStaleSocket(addr); err != nil {
+			return nil, err
+		}
+	}
 	listener, err := net.Listen(network, addr)
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on %s/%s: %w", network, addr, err)
 	}
 	slog.Info("Listening on webserver interface", "addr", addr)
 	return listener, nil
+}
+
+// removeStaleSocket deletes a leftover socket file from a crashed run.
+// It refuses if another instance still accepts connections on it.
+func removeStaleSocket(path string) error {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if conn, err := net.Dial("unix", path); err == nil {
+		_ = conn.Close()
+		return fmt.Errorf("socket %s is in use by another instance", path)
+	}
+	slog.Warn("Removing stale unix socket.", "path", path)
+	if err := os.Remove(path); err != nil {
+		return fmt.Errorf("could not remove stale socket %s: %w", path, err)
+	}
+	return nil
 }
 
 func SetupWebserver(config *koanf.Koanf, version string, inventoryService InventoryService, quotaService QuotaService) http.Handler {
