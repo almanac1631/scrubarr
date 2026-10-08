@@ -32,12 +32,17 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 }
 
 func (retriever *DelugeRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, error) {
-	torrentList, err := retriever.client.TorrentsStatus(delugeclient.StateSeeding, []string{})
+	torrentList, err := retriever.client.TorrentsStatus(delugeclient.StateUnspecified, []string{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get torrent list from deluge rpc api: %w", err)
 	}
 	torrentEntries := make([]*domain.TorrentEntry, 0, len(torrentList))
 	for hash, torrent := range torrentList {
+		// only seeding torrents or finished ones that are paused
+		if torrent.State != string(delugeclient.StateSeeding) &&
+			(torrent.State != string(delugeclient.StatePaused) || torrent.Progress < 100) {
+			continue
+		}
 		torrentEntry := &domain.TorrentEntry{
 			Client:   retriever.Name(),
 			Id:       hash,
