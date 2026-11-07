@@ -6,10 +6,6 @@
   "rangeStrategy": "pin",
   "packageRules": [
     {
-      "matchManagers": [
-        "gomod",
-        "npm"
-      ],
       "matchUpdateTypes": [
         "minor",
         "patch"
