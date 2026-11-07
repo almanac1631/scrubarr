@@ -40,13 +40,13 @@ func TestService_Evaluate(t *testing.T) {
 			Id:     13371,
 			Season: -1,
 		},
-		TorrentEntry: &domain.TorrentEntry{
+		TorrentEntries: []*domain.TorrentEntry{{
 			Ratio: 0,
 			Added: util.MustParseDate("2025-12-16 13:14:15"),
-		},
+		}},
 	}
 	linkedMediaFileNoTorrent := linkedMediaFile
-	linkedMediaFileNoTorrent.TorrentEntry = nil
+	linkedMediaFileNoTorrent.TorrentEntries = nil
 
 	// season 1 is safe to delete (1) and pending (2)
 	linkedMediaFileSeason1E1 := inventory.LinkedMediaFile{
@@ -54,22 +54,22 @@ func TestService_Evaluate(t *testing.T) {
 			Id:     1337_1_1,
 			Season: 1,
 		},
-		TorrentEntry: &domain.TorrentEntry{
+		TorrentEntries: []*domain.TorrentEntry{{
 			Ratio: 0,
 			// use old Added to satisfy high age tracker
 			Added: util.MustParseDate("2023-12-16 13:14:15"),
-		},
+		}},
 	}
 	linkedMediaFileSeason1E2 := inventory.LinkedMediaFile{
 		MediaFile: domain.MediaFile{
 			Id:     1337_1_2,
 			Season: 1,
 		},
-		TorrentEntry: &domain.TorrentEntry{
+		TorrentEntries: []*domain.TorrentEntry{{
 			Ratio: 0,
 			// use recent date to not satisfy high age tracker
 			Added: util.MustParseDate("2025-12-16 13:14:15"),
-		},
+		}},
 	}
 	// season 2 is safe to delete
 	linkedMediaFileSeason2E1 := inventory.LinkedMediaFile{
@@ -77,11 +77,11 @@ func TestService_Evaluate(t *testing.T) {
 			Id:     1337_2_1,
 			Season: 2,
 		},
-		TorrentEntry: &domain.TorrentEntry{
+		TorrentEntries: []*domain.TorrentEntry{{
 			Ratio: 0,
 			// use old Added to satisfy high age tracker
 			Added: util.MustParseDate("2023-12-16 13:14:15"),
-		},
+		}},
 	}
 	// season 3 is pending
 	linkedMediaFileSeason3E1 := inventory.LinkedMediaFile{
@@ -89,10 +89,10 @@ func TestService_Evaluate(t *testing.T) {
 			Id:     1337_3_1,
 			Season: 3,
 		},
-		TorrentEntry: &domain.TorrentEntry{
+		TorrentEntries: []*domain.TorrentEntry{{
 			Ratio: 0,
 			Added: util.MustParseDate("2025-12-16 13:14:15"),
-		},
+		}},
 	}
 	// file without series
 	linkedMediaFileSeasonNoSeason := inventory.LinkedMediaFile{
@@ -100,11 +100,11 @@ func TestService_Evaluate(t *testing.T) {
 			Id:     1337_1,
 			Season: -1,
 		},
-		TorrentEntry: &domain.TorrentEntry{
+		TorrentEntries: []*domain.TorrentEntry{{
 			Ratio: 0,
 			// use old Added to satisfy high age tracker
 			Added: util.MustParseDate("2023-12-16 13:14:15"),
-		},
+		}},
 	}
 
 	trackerHighRatio := tracker
@@ -321,6 +321,69 @@ func TestService_Evaluate(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+type mockMultiTrackerResolver map[string]*domain.Tracker
+
+func (m mockMultiTrackerResolver) Resolve(trackers []string) (*domain.Tracker, error) {
+	for _, tracker := range trackers {
+		if resolved, ok := m[tracker]; ok {
+			return resolved, nil
+		}
+	}
+	return nil, ErrTrackerNotFound
+}
+
+func TestService_Evaluate_CrossSeed(t *testing.T) {
+	now = func() time.Time {
+		return util.MustParseDate("2026-02-01 13:17:09")
+	}
+	trackerA := &domain.Tracker{Name: "tracker-a", MinRatio: 1, MinAge: 0}
+	trackerB := &domain.Tracker{Name: "tracker-b", MinRatio: 0, MinAge: time.Hour * 24 * 30}
+	resolver := mockMultiTrackerResolver{"a": trackerA, "b": trackerB}
+
+	// original torrent, satisfies tracker a rules
+	torrentA := &domain.TorrentEntry{Id: "a", Trackers: []string{"a"}, Ratio: 2, Added: util.MustParseDate("2025-12-01 00:00:00")}
+	// original torrent, does not satisfy tracker a min ratio
+	torrentALowRatio := &domain.TorrentEntry{Id: "a-low", Trackers: []string{"a"}, Ratio: 0.5, Added: util.MustParseDate("2025-12-01 00:00:00")}
+	// cross-seed added later, does not satisfy tracker b min age
+	torrentBRecent := &domain.TorrentEntry{Id: "b-recent", Trackers: []string{"b"}, Ratio: 0, Added: util.MustParseDate("2026-01-25 00:00:00")}
+	// cross-seed added later, satisfies tracker b rules
+	torrentBOld := &domain.TorrentEntry{Id: "b-old", Trackers: []string{"b"}, Ratio: 0, Added: util.MustParseDate("2025-12-24 00:00:00")}
+	// cross-seed added later with unknown tracker
+	torrentUnknown := &domain.TorrentEntry{Id: "unknown", Trackers: []string{"unknown"}, Ratio: 10, Added: util.MustParseDate("2026-01-01 00:00:00")}
+
+	mediaWithTorrents := func(torrents ...*domain.TorrentEntry) inventory.LinkedMedia {
+		return inventory.LinkedMedia{
+			MediaMetadata: domain.MediaMetadata{Id: 1, Type: domain.MediaTypeMovie},
+			Files: []inventory.LinkedMediaFile{{
+				MediaFile:      domain.MediaFile{Id: 11, Season: -1},
+				TorrentEntries: torrents,
+			}},
+		}
+	}
+
+	// only the original (first added) torrent is subject to tracker rules, cross-seeds are ignored
+	tests := []struct {
+		name         string
+		media        inventory.LinkedMedia
+		wantDecision domain.Decision
+		wantTracker  *domain.Tracker
+	}{
+		{"pending cross-seed is ignored", mediaWithTorrents(torrentA, torrentBRecent), domain.DecisionSafeToDelete, trackerA},
+		{"original is determined by added date", mediaWithTorrents(torrentBRecent, torrentA), domain.DecisionSafeToDelete, trackerA},
+		{"cross-seed with unknown tracker is ignored", mediaWithTorrents(torrentUnknown, torrentA), domain.DecisionSafeToDelete, trackerA},
+		{"pending original with satisfied cross-seed", mediaWithTorrents(torrentBOld, torrentALowRatio), domain.DecisionPending, trackerA},
+		{"cross-seed only", mediaWithTorrents(torrentBOld), domain.DecisionSafeToDelete, trackerB},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Service{trackerResolver: resolver}.Evaluate(tt.media)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantDecision, got.Result.Decision)
+			assert.Equal(t, inventory.EvaluationReportPart{Decision: tt.wantDecision, Tracker: tt.wantTracker}, got.Files[11])
 		})
 	}
 }
