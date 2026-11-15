@@ -153,20 +153,39 @@ func (r *SonarrRetriever) deleteEpisodeFiles(fileIds []int64) error {
 }
 
 func (r *SonarrRetriever) stopMonitoringSeasons(seriesId int64, seasonNumbers []int) error {
-	seasons := make([]*sonarr.Season, len(seasonNumbers))
-	for _, season := range seasonNumbers {
-		seasons = append(seasons, &sonarr.Season{
-			Monitored:    false,
-			SeasonNumber: season,
-		})
-	}
 	if r.dryRun {
 		slog.Info("[DRY RUN] Skipping sonarr stop monitoring season.", "seriesId", seriesId, "seasons", seasonNumbers)
 		return nil
 	}
-	_, err := r.client.UpdateSeries(&sonarr.AddSeriesInput{
-		ID:      seriesId,
-		Seasons: seasons,
+	series, err := r.client.GetSeriesByID(seriesId)
+	if err != nil {
+		return fmt.Errorf("could not get sonarr series %d: %w", seriesId, err)
+	}
+	for _, season := range series.Seasons {
+		if slices.Contains(seasonNumbers, season.SeasonNumber) {
+			season.Monitored = false
+		}
+	}
+	// UpdateSeries only accepts AddSeriesInput, so copy every field that type has from the fetched series.
+	_, err = r.client.UpdateSeries(&sonarr.AddSeriesInput{
+		Monitored:         series.Monitored,
+		SeasonFolder:      series.SeasonFolder,
+		UseSceneNumbering: series.UseSceneNumbering,
+		ID:                series.ID,
+		LanguageProfileID: series.LanguageProfileID,
+		QualityProfileID:  series.QualityProfileID,
+		TvdbID:            series.TvdbID,
+		TvMazeID:          series.TvMazeID,
+		TvRageID:          series.TvRageID,
+		ImdbID:            series.ImdbID,
+		Path:              series.Path,
+		SeriesType:        series.SeriesType,
+		Title:             series.Title,
+		TitleSlug:         series.TitleSlug,
+		RootFolderPath:    series.RootFolderPath,
+		Tags:              series.Tags,
+		Seasons:           series.Seasons,
+		Images:            series.Images,
 	}, false)
 	if err != nil {
 		return fmt.Errorf("could not update monitoring status of series %d: %w", seriesId, err)

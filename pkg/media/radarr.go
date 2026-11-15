@@ -114,11 +114,15 @@ func (r *RadarrRetriever) stopMovieMonitoring(movieId int64) error {
 		slog.Info("[DRY RUN] Skipping radarr stop movie monitoring call.", "movieId", movieId)
 		return nil
 	}
-	_, err := r.client.UpdateMovie(movieId, &radarr.Movie{
-		ID:        movieId,
-		Monitored: false,
-	}, false)
-	return err
+	movie, err := r.client.GetMovieByID(movieId)
+	if err != nil {
+		return fmt.Errorf("could not get radarr movie %d: %w", movieId, err)
+	}
+	movie.Monitored = false
+	if _, err = r.client.UpdateMovie(movieId, movie, false); err != nil {
+		return fmt.Errorf("could not update monitoring status of radarr movie %d: %w", movieId, err)
+	}
+	return nil
 }
 
 func (r *RadarrRetriever) SupportedMediaType() domain.MediaType {
