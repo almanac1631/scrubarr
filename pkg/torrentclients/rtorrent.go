@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -63,12 +64,21 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*domain.TorrentEntry,
 			return nil, fmt.Errorf("could not get trackerresolver from rtorrent: %w", err)
 		}
 		for _, tracker := range torrentTrackers {
-			if !slices.Contains(torrentEntry.Trackers, tracker) {
-				torrentEntry.Trackers = append(torrentEntry.Trackers, tracker)
+			host := extractHost(tracker)
+			if !slices.Contains(torrentEntry.Trackers, host) {
+				torrentEntry.Trackers = append(torrentEntry.Trackers, host)
 			}
 		}
 	}
 	return torrentEntries, nil
+}
+
+func extractHost(tracker string) string {
+	parsed, err := url.Parse(tracker)
+	if err != nil || parsed.Hostname() == "" {
+		return tracker
+	}
+	return parsed.Hostname()
 }
 
 func (retriever *RtorrentRetriever) DeleteTorrent(id string) error {
