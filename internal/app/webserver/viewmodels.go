@@ -56,6 +56,7 @@ type OrphanedTorrentRow struct {
 	Id            string
 	Name          string
 	Client        string
+	IsCrossSeed   bool
 	Ratio         float64
 	Added         time.Time
 	Age           time.Duration

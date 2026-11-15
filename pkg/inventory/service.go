@@ -349,6 +349,9 @@ func matchesOrphanedTorrentFilter(torrent enrichedOrphanedTorrent, filter webser
 	if filter.OkOnly && torrent.decision != domain.DecisionSafeToDelete {
 		return false
 	}
+	if filter.ExcludeCrossSeed && torrent.torrentEntry.IsCrossSeed() {
+		return false
+	}
 	return filter.Client == "" || torrent.torrentEntry.Client == filter.Client
 }
 
@@ -405,6 +408,7 @@ func (s *Service) GetOrphanedTorrents(page int, sortInfo webserver.SortInfo, fil
 			Id:            url.PathEscape(t.Client + "-" + t.Id),
 			Name:          t.Name,
 			Client:        t.Client,
+			IsCrossSeed:   t.IsCrossSeed(),
 			Ratio:         t.Ratio,
 			Added:         t.Added,
 			Age:           currentTime.Sub(t.Added),

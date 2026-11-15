@@ -37,10 +37,11 @@ type MediaFilterInfo struct {
 }
 
 type OrphanedTorrentFilterInfo struct {
-	Name    NameFilter
-	MinSize SizeGB
-	Client  string
-	OkOnly  bool
+	Name             NameFilter
+	MinSize          SizeGB
+	Client           string
+	OkOnly           bool
+	ExcludeCrossSeed bool
 }
 
 // SizeGB is a size in gigabytes.

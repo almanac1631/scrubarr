@@ -51,10 +51,11 @@ func getMediaFilterInfoFromUrlQuery(values url.Values) MediaFilterInfo {
 
 func getOrphanedTorrentFilterInfoFromUrlQuery(values url.Values) OrphanedTorrentFilterInfo {
 	return OrphanedTorrentFilterInfo{
-		Name:    getNameFilterFromUrlQuery(values),
-		MinSize: getMinSizeFromUrlQuery(values),
-		Client:  values.Get("client"),
-		OkOnly:  values.Get("okOnly") == "true",
+		Name:             getNameFilterFromUrlQuery(values),
+		MinSize:          getMinSizeFromUrlQuery(values),
+		Client:           values.Get("client"),
+		OkOnly:           values.Get("okOnly") == "true",
+		ExcludeCrossSeed: values.Get("excludeCrossSeed") == "true",
 	}
 }
 

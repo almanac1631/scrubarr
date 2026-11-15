@@ -3,7 +3,7 @@
           class="mb-6 flex flex-wrap items-end gap-x-8 gap-y-4"
           hx-get="orphaned-torrents" hx-target="#torrents-table" hx-swap="outerHTML" hx-select="#torrents-table"
           hx-push-url="true" hx-sync="this:replace"
-          hx-trigger="submit, input delay:300ms from:input[name=name], input delay:300ms from:input[name=minSize], change from:select[name=client], change from:input[name=okOnly]">
+          hx-trigger="submit, input delay:300ms from:input[name=name], input delay:300ms from:input[name=minSize], change from:select[name=client], change from:input[name=okOnly], change from:input[name=excludeCrossSeed]">
         <input type="hidden" name="sortKey" value="{{ .SortInfo.Key }}">
         <input type="hidden" name="sortOrder" value="{{ .SortInfo.Order }}">
         {{ template "filter_name_input" .Filter.Name }}
@@ -18,7 +18,8 @@
             </select>
         </label>
         {{ template "filter_ok_input" .Filter.OkOnly }}
+        {{ template "filter_exclude_cross_seed_input" .Filter.ExcludeCrossSeed }}
     </form>
 {{ end }}
 
-{{ define "torrent_filter_query" }}name={{ .Name }}&minSize={{ .MinSize }}&client={{ .Client }}&okOnly={{ .OkOnly }}{{ end }}
+{{ define "torrent_filter_query" }}name={{ .Name }}&minSize={{ .MinSize }}&client={{ .Client }}&okOnly={{ .OkOnly }}&excludeCrossSeed={{ .ExcludeCrossSeed }}{{ end }}

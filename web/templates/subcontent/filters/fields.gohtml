@@ -23,3 +23,11 @@
         Status okay
     </label>
 {{ end }}
+
+{{ define "filter_exclude_cross_seed_input" }}
+    <label class="flex items-center gap-3 pb-2 text-base font-medium text-gray-700">
+        <input type="checkbox" name="excludeCrossSeed" value="true" {{ if . }}checked{{ end }}
+               class="h-5 w-5 rounded border-gray-300">
+        Exclude cross-seed
+    </label>
+{{ end }}

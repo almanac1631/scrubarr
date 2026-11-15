@@ -36,6 +36,10 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, e
 	if err != nil {
 		return nil, fmt.Errorf("could not get torrent list from deluge rpc api: %w", err)
 	}
+	labels, err := retriever.getLabels()
+	if err != nil {
+		return nil, err
+	}
 	torrentEntries := make([]*domain.TorrentEntry, 0, len(torrentList))
 	for hash, torrent := range torrentList {
 		// only seeding torrents or finished ones that are paused
@@ -47,6 +51,7 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, e
 			Client:   retriever.Name(),
 			Id:       hash,
 			Name:     torrent.Name,
+			Label:    labels[hash],
 			Added:    time.Unix(torrent.CompletedTime, 0).In(time.UTC),
 			Files:    []*domain.TorrentFile{},
 			Trackers: []string{torrent.TrackerHost},
@@ -61,6 +66,23 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, e
 		torrentEntries = append(torrentEntries, torrentEntry)
 	}
 	return torrentEntries, nil
+}
+
+// getLabels returns a map of torrent hash to label. If the Label plugin is not enabled on the deluge server, an empty
+// map is returned and no labels are set.
+func (retriever *DelugeRetriever) getLabels() (map[string]string, error) {
+	labelPlugin, err := retriever.client.LabelPlugin()
+	if err != nil {
+		return nil, fmt.Errorf("could not check enabled plugins on deluge rpc api: %w", err)
+	}
+	if labelPlugin == nil {
+		return map[string]string{}, nil
+	}
+	labels, err := labelPlugin.GetTorrentsLabels(delugeclient.StateUnspecified, []string{})
+	if err != nil {
+		return nil, fmt.Errorf("could not get torrent labels from deluge rpc api: %w", err)
+	}
+	return labels, nil
 }
 
 func (retriever *DelugeRetriever) DeleteTorrent(id string) error {
