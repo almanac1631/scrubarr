@@ -12,7 +12,7 @@ type torrentsEndpointData struct {
 }
 
 func (handler *handler) handleTorrentsEndpoint(writer http.ResponseWriter, request *http.Request) {
-	handler.renderPage(writer, request, "torrents.gohtml", "Torrents", func(base basePageData) any {
+	handler.renderPage(writer, request, "torrents.gohtml", "Orphaned Torrents", func(base basePageData) any {
 		return torrentsEndpointData{basePageData: base}
 	})
 }

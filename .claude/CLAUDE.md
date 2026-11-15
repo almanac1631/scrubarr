@@ -158,7 +158,7 @@ go test -v -race ./...
 #### 8. **internal/app/webserver/** - HTTP Server
    - `webserver.go` - Routes setup, auth middleware, listener
    - `handler_media.go` - GET /media, DELETE /media/{id}, GET /media/refresh
-   - `handler_torrents.go` - GET /torrents, GET /torrents/entries (orphaned torrents page)
+   - `handler_torrents.go` - GET /orphaned-torrents, GET /orphaned-torrents/entries (orphaned torrents page)
    - `handler_utils.go` - Shared handler helpers (e.g., `getSortInfoFromUrlQuery`)
    - `handler_auth.go` - POST /login, POST /logout, JWT validation
    - `inventory.go` - `InventoryService` interface (dependency inversion for the handler)
