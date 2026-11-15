@@ -108,10 +108,10 @@ func (s *Service) ensureCacheLoaded() error {
 }
 
 func matchesMediaFilter(media enrichedLinkedMedia, filter webserver.MediaFilterInfo) bool {
-	if !filter.FuzzyNameMatch(media.linkedMedia.Title) {
+	if !filter.Name.FuzzyNameMatch(media.linkedMedia.Title) {
 		return false
 	}
-	if media.size < filter.MinSizeBytes() {
+	if media.size < filter.MinSize.Bytes() {
 		return false
 	}
 	if filter.OkOnly && media.evaluationReport.Result.Decision != domain.DecisionSafeToDelete {
@@ -339,13 +339,35 @@ func applyEvaluationReport(media enrichedLinkedMedia, row webserver.MediaRow) we
 	return row
 }
 
-func (s *Service) GetOrphanedTorrents(page int, sortInfo webserver.SortInfo) (rows []webserver.OrphanedTorrentRow, hasNext bool, err error) {
+func matchesOrphanedTorrentFilter(torrent enrichedOrphanedTorrent, filter webserver.OrphanedTorrentFilterInfo) bool {
+	if !filter.Name.FuzzyNameMatch(torrent.torrentEntry.Name) {
+		return false
+	}
+	if torrent.size < filter.MinSize.Bytes() {
+		return false
+	}
+	if filter.OkOnly && torrent.decision != domain.DecisionSafeToDelete {
+		return false
+	}
+	return filter.Client == "" || torrent.torrentEntry.Client == filter.Client
+}
+
+func (s *Service) GetTorrentClientNames() []string {
+	return s.torrentSourceManager.ClientNames()
+}
+
+func (s *Service) GetOrphanedTorrents(page int, sortInfo webserver.SortInfo, filter webserver.OrphanedTorrentFilterInfo) (rows []webserver.OrphanedTorrentRow, hasNext bool, err error) {
 	if err := s.ensureCacheLoaded(); err != nil {
 		return nil, false, err
 	}
 	s.RLock()
 	defer s.RUnlock()
-	all := slices.Clone(s.orphanedTorrentsCache)
+	all := make([]enrichedOrphanedTorrent, 0, len(s.orphanedTorrentsCache))
+	for _, torrent := range s.orphanedTorrentsCache {
+		if matchesOrphanedTorrentFilter(torrent, filter) {
+			all = append(all, torrent)
+		}
+	}
 	slices.SortFunc(all, func(a, b enrichedOrphanedTorrent) int {
 		var result int
 		switch sortInfo.Key {

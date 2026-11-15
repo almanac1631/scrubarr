@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"slices"
 	"sync"
 
@@ -45,6 +46,11 @@ func (manager *DefaultTorrentManager) GetTorrents() ([]*domain.TorrentEntry, err
 		}
 	}
 	return torrentList, nil
+}
+
+// ClientNames returns the sorted names of all configured torrent clients.
+func (manager *DefaultTorrentManager) ClientNames() []string {
+	return slices.Sorted(maps.Keys(manager.retrievers))
 }
 
 func (manager *DefaultTorrentManager) DeleteTorrent(client, id string) error {

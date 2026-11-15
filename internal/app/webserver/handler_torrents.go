@@ -8,25 +8,32 @@ import (
 
 type torrentsEndpointData struct {
 	basePageData
-	Rows []OrphanedTorrentRow
+	Filter  OrphanedTorrentFilterInfo
+	Clients []string
+	Rows    []OrphanedTorrentRow
 }
 
 func (handler *handler) handleTorrentsEndpoint(writer http.ResponseWriter, request *http.Request) {
 	handler.renderPage(writer, request, "torrents.gohtml", "Orphaned Torrents", func(base basePageData) any {
-		return torrentsEndpointData{basePageData: base}
+		return torrentsEndpointData{
+			basePageData: base,
+			Filter:       getOrphanedTorrentFilterInfoFromUrlQuery(request.URL.Query()),
+			Clients:      handler.inventoryService.GetTorrentClientNames(),
+		}
 	})
 }
 
 func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
+	filter := getOrphanedTorrentFilterInfoFromUrlQuery(request.URL.Query())
 	pageRaw := request.URL.Query().Get("page")
 	page, _ := strconv.Atoi(pageRaw)
 	if page < 1 {
 		page = 1
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	rows, hasNext, err := handler.inventoryService.GetOrphanedTorrents(page, sortInfo)
+	rows, hasNext, err := handler.inventoryService.GetOrphanedTorrents(page, sortInfo, filter)
 	if err != nil {
 		logger.Error("Failed to get orphaned torrents.", "error", err)
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
@@ -38,6 +45,7 @@ func (handler *handler) handleTorrentEntriesEndpoint(writer http.ResponseWriter,
 	}
 	if err = handler.ExecuteSubTemplate(writer, "torrents.gohtml", "torrent_entries", torrentsEndpointData{
 		basePageData: basePageData{SortInfo: sortInfo, NextPage: nextPage},
+		Filter:       filter,
 		Rows:         rows,
 	}); err != nil {
 		logger.Error(err.Error())

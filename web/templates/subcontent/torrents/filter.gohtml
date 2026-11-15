@@ -1,0 +1,24 @@
+{{ define "torrents_filter" }}
+    <form id="torrents-filters"
+          class="mb-6 flex flex-wrap items-end gap-x-8 gap-y-4"
+          hx-get="orphaned-torrents" hx-target="#torrents-table" hx-swap="outerHTML" hx-select="#torrents-table"
+          hx-push-url="true" hx-sync="this:replace"
+          hx-trigger="submit, input delay:300ms from:input[name=name], input delay:300ms from:input[name=minSize], change from:select[name=client], change from:input[name=okOnly]">
+        <input type="hidden" name="sortKey" value="{{ .SortInfo.Key }}">
+        <input type="hidden" name="sortOrder" value="{{ .SortInfo.Order }}">
+        {{ template "filter_name_input" .Filter.Name }}
+        {{ template "filter_size_input" .Filter.MinSize }}
+        <label class="flex flex-col text-sm font-medium text-gray-700">
+            Client
+            <select name="client" class="mt-2 w-56 rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
+                <option value="" {{ if eq .Filter.Client "" }}selected{{ end }}>All clients</option>
+                {{ range .Clients }}
+                    <option value="{{ . }}" {{ if eq . $.Filter.Client }}selected{{ end }}>{{ . }}</option>
+                {{ end }}
+            </select>
+        </label>
+        {{ template "filter_ok_input" .Filter.OkOnly }}
+    </form>
+{{ end }}
+
+{{ define "torrent_filter_query" }}name={{ .Name }}&minSize={{ .MinSize }}&client={{ .Client }}&okOnly={{ .OkOnly }}{{ end }}

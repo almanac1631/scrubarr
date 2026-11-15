@@ -47,7 +47,7 @@
             </tbody>
         {{ end }}
         {{ if ne .NextPage -1 }}
-            <tbody hx-get="orphaned-torrents/entries?page={{ .NextPage }}&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
+            <tbody hx-get="orphaned-torrents/entries?page={{ .NextPage }}&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}&{{ template "torrent_filter_query" .Filter }}"
                    hx-trigger="revealed" hx-swap="outerHTML" hx-indicator="#torrents-loading-skeleton">
             </tbody>
         {{ end }}

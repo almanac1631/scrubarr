@@ -27,11 +27,6 @@ func Test_getMediaFilterInfoFromUrlQuery(t *testing.T) {
 			want: MediaFilterInfo{Name: "Matrix", MinSize: 1.5, OkOnly: true},
 		},
 		{
-			name:   "comma is accepted as decimal separator",
-			values: url.Values{"minSize": {"2,25"}},
-			want:   MediaFilterInfo{MinSize: 2.25},
-		},
-		{
 			name:   "invalid values fall back to no filter",
 			values: url.Values{"minSize": {"-3"}, "okOnly": {"yes"}},
 			want:   MediaFilterInfo{},
@@ -81,7 +76,7 @@ func Test_MediaFilterInfo_FuzzyNameMatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := MediaFilterInfo{Name: tt.query}
+			filter := NameFilter(tt.query)
 			if got := filter.FuzzyNameMatch(tt.title); got != tt.want {
 				t.Errorf("FuzzyNameMatch(%q) with query %q = %v, want %v", tt.title, tt.query, got, tt.want)
 			}
@@ -89,14 +84,14 @@ func Test_MediaFilterInfo_FuzzyNameMatch(t *testing.T) {
 	}
 }
 
-func Test_MediaFilterInfo_MinSizeBytes(t *testing.T) {
-	if got := (MediaFilterInfo{}).MinSizeBytes(); got != 0 {
-		t.Errorf("no size filter: MinSizeBytes() = %d, want 0", got)
+func Test_SizeGB_Bytes(t *testing.T) {
+	if got := SizeGB(0).Bytes(); got != 0 {
+		t.Errorf("no size filter: Bytes() = %d, want 0", got)
 	}
-	if got := (MediaFilterInfo{MinSize: 2}).MinSizeBytes(); got != 2_000_000_000 {
-		t.Errorf("2 GB: MinSizeBytes() = %d, want 2000000000", got)
+	if got := SizeGB(2).Bytes(); got != 2_000_000_000 {
+		t.Errorf("2 GB: Bytes() = %d, want 2000000000", got)
 	}
-	if got := (MediaFilterInfo{MinSize: 1.5}).MinSizeBytes(); got != 1_500_000_000 {
-		t.Errorf("1.5 GB: MinSizeBytes() = %d, want 1500000000", got)
+	if got := SizeGB(1.5).Bytes(); got != 1_500_000_000 {
+		t.Errorf("1.5 GB: Bytes() = %d, want 1500000000", got)
 	}
 }

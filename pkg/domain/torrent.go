@@ -31,6 +31,7 @@ type TorrentSourceManager interface {
 	CachedManager
 	GetTorrents() ([]*TorrentEntry, error)
 	DeleteTorrent(client string, id string) error
+	ClientNames() []string
 }
 
 type TorrentSource interface {

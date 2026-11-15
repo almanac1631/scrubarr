@@ -31,10 +31,29 @@ type SortInfo struct {
 }
 
 type MediaFilterInfo struct {
-	Name    string
-	MinSize float64 // in GB
+	Name    NameFilter
+	MinSize SizeGB
 	OkOnly  bool
 }
+
+type OrphanedTorrentFilterInfo struct {
+	Name    NameFilter
+	MinSize SizeGB
+	Client  string
+	OkOnly  bool
+}
+
+// SizeGB is a size in gigabytes.
+type SizeGB float64
+
+func (s SizeGB) Bytes() int64 {
+	if s <= 0 {
+		return 0
+	}
+	return int64(float64(s) * 1000 * 1000 * 1000)
+}
+
+type NameFilter string
 
 var (
 	fuzzySpaceChars     = regexp.MustCompile(`[._\-‐‑‒–—―−]`)
@@ -42,10 +61,8 @@ var (
 	fuzzyRepeatedSpaces = regexp.MustCompile(`\s+`)
 )
 
-// Both sides are normalized, so e.g. "2.Test", "2_Test" and "2 Test" match each other.
-func (f MediaFilterInfo) FuzzyNameMatch(title string) bool {
-	query := normalizeForFuzzyMatch(f.Name)
-	return strings.Contains(normalizeForFuzzyMatch(title), query)
+func (f NameFilter) FuzzyNameMatch(title string) bool {
+	return strings.Contains(normalizeForFuzzyMatch(title), normalizeForFuzzyMatch(string(f)))
 }
 
 func normalizeForFuzzyMatch(s string) string {
@@ -54,13 +71,6 @@ func normalizeForFuzzyMatch(s string) string {
 	s = fuzzyRemovedChars.ReplaceAllString(s, "")
 	s = fuzzyRepeatedSpaces.ReplaceAllString(s, " ")
 	return strings.TrimSpace(s)
-}
-
-func (f MediaFilterInfo) MinSizeBytes() int64 {
-	if f.MinSize <= 0 {
-		return 0
-	}
-	return int64(f.MinSize * 1000 * 1000 * 1000)
 }
 
 type InventoryService interface {
@@ -72,7 +82,9 @@ type InventoryService interface {
 
 	RefreshCache() error
 
-	GetOrphanedTorrents(page int, sortInfo SortInfo) (rows []OrphanedTorrentRow, hasNext bool, err error)
+	GetOrphanedTorrents(page int, sortInfo SortInfo, filter OrphanedTorrentFilterInfo) (rows []OrphanedTorrentRow, hasNext bool, err error)
+
+	GetTorrentClientNames() []string
 
 	DeleteOrphanedTorrent(id string) error
 }

@@ -1008,6 +1008,10 @@ type mockTorrentSourceManager struct {
 func (m *mockTorrentSourceManager) RefreshCache() error             { return nil }
 func (m *mockTorrentSourceManager) SaveCache(_ io.Writer) error     { return nil }
 func (m *mockTorrentSourceManager) LoadCache(_ io.ReadSeeker) error { return nil }
+func (m *mockTorrentSourceManager) ClientNames() []string {
+	return nil
+}
+
 func (m *mockTorrentSourceManager) GetTorrents() ([]*domain.TorrentEntry, error) {
 	return m.torrents, nil
 }

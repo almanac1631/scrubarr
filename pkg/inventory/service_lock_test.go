@@ -26,6 +26,8 @@ func (stubMediaSourceManager) DeleteMediaFiles(domain.MediaType, []int64, bool) 
 type stubTorrentSourceManager struct{ stubCachedManager }
 
 func (stubTorrentSourceManager) GetTorrents() ([]*domain.TorrentEntry, error) { return nil, nil }
+
+func (stubTorrentSourceManager) ClientNames() []string { return nil }
 func (stubTorrentSourceManager) DeleteTorrent(string, string) error           { return nil }
 
 type stubLinker struct{}
@@ -84,7 +86,7 @@ func TestService_GetOrphanedTorrents_LoadsEmptyCacheWithoutDeadlock(t *testing.T
 	var hasNext bool
 	var err error
 	requireReturnsWithin(t, 2*time.Second, func() {
-		rows, hasNext, err = service.GetOrphanedTorrents(1, sortInfo)
+		rows, hasNext, err = service.GetOrphanedTorrents(1, sortInfo, webserver.OrphanedTorrentFilterInfo{})
 	})
 	require.NoError(t, err)
 	require.False(t, hasNext)

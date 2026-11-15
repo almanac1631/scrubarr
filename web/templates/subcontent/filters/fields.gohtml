@@ -1,0 +1,25 @@
+{{ define "filter_name_input" }}
+    <label class="flex flex-col text-sm font-medium text-gray-700">
+        Name
+        <input type="search" name="name" value="{{ . }}" placeholder="Filter by name"
+               class="mt-2 w-96 rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
+    </label>
+{{ end }}
+
+{{ define "filter_size_input" }}
+    <label class="flex flex-col text-sm font-medium text-gray-700">
+        Minimum size (GB)
+        <input type="text" inputmode="decimal" name="minSize"
+               {{ if . }}value="{{ . }}"{{ end }}
+               placeholder="e.g. 1.5"
+               class="mt-2 w-48 rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
+    </label>
+{{ end }}
+
+{{ define "filter_ok_input" }}
+    <label class="flex items-center gap-3 pb-2 text-base font-medium text-gray-700">
+        <input type="checkbox" name="okOnly" value="true" {{ if . }}checked{{ end }}
+               class="h-5 w-5 rounded border-gray-300">
+        Status okay
+    </label>
+{{ end }}

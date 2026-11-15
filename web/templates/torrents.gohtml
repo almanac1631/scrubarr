@@ -1,12 +1,15 @@
 {{ define "content" }}
-    <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow" id="torrents-table">
+    <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow">
+    {{ template "torrents_filter" . }}
+    <div id="torrents-table">
         <table class="table-fixed w-full">
             <thead class="border-gray-300 border-b-2 text-left">
             <tr>
                 <th class="py-3 px-1">
                     <button class="flex items-center"
                             hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="orphaned-torrents?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-select="#torrents-table"
+                            hx-get="orphaned-torrents?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "torrent_filter_query" .Filter }}">
                         Name
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -25,7 +28,8 @@
                 <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="orphaned-torrents?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-select="#torrents-table"
+                            hx-get="orphaned-torrents?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "torrent_filter_query" .Filter }}">
                         Size
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -43,7 +47,8 @@
                 <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="orphaned-torrents?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-select="#torrents-table"
+                            hx-get="orphaned-torrents?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "torrent_filter_query" .Filter }}">
                         Added
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +67,8 @@
                     <div class="flex justify-center">
                         <button class="flex items-center"
                                 hx-target="#torrents-table" hx-swap="outerHTML" hx-push-url="true"
-                                hx-get="orphaned-torrents?sortKey=status&sortOrder={{ if checkCurrentSort "status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                                hx-select="#torrents-table"
+                                    hx-get="orphaned-torrents?sortKey=status&sortOrder={{ if checkCurrentSort "status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "torrent_filter_query" .Filter }}">
                             Status
                             <span class="text-slate-300">
                                 <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -82,7 +88,7 @@
             </tr>
             </thead>
             <tbody class="font-medium"
-                   hx-get="orphaned-torrents/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
+                   hx-get="orphaned-torrents/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}&{{ template "torrent_filter_query" .Filter }}"
                    hx-swap="outerHTML" hx-trigger="load" hx-indicator="#torrents-loading-skeleton">
             </tbody>
             {{ template "torrents_loading_skeleton" }}
@@ -114,5 +120,6 @@
                 <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
             </symbol>
         </svg>
+    </div>
     </div>
 {{ end }}

@@ -6,23 +6,9 @@
           hx-trigger="submit, input delay:300ms from:input[name=name], input delay:300ms from:input[name=minSize], change from:input[name=okOnly]">
         <input type="hidden" name="sortKey" value="{{ .SortInfo.Key }}">
         <input type="hidden" name="sortOrder" value="{{ .SortInfo.Order }}">
-        <label class="flex flex-col text-sm font-medium text-gray-700">
-            Name
-            <input type="search" name="name" value="{{ .MediaFilter.Name }}" placeholder="Filter by name"
-                   class="mt-2 w-96 rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
-        </label>
-        <label class="flex flex-col text-sm font-medium text-gray-700">
-            Minimum size (GB)
-            <input type="text" inputmode="decimal" name="minSize"
-                   {{ if .MediaFilter.MinSize }}value="{{ .MediaFilter.MinSize }}"{{ end }}
-                   placeholder="e.g. 1.5"
-                   class="mt-2 w-48 rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
-        </label>
-        <label class="flex items-center gap-3 pb-2 text-base font-medium text-gray-700">
-            <input type="checkbox" name="okOnly" value="true" {{ if .MediaFilter.OkOnly }}checked{{ end }}
-                   class="h-5 w-5 rounded border-gray-300">
-            Status okay
-        </label>
+        {{ template "filter_name_input" .MediaFilter.Name }}
+        {{ template "filter_size_input" .MediaFilter.MinSize }}
+        {{ template "filter_ok_input" .MediaFilter.OkOnly }}
     </form>
 {{ end }}
 

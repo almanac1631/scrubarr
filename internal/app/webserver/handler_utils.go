@@ -42,13 +42,31 @@ func getSortInfoFromUrlQuery(values url.Values) SortInfo {
 }
 
 func getMediaFilterInfoFromUrlQuery(values url.Values) MediaFilterInfo {
-	filter := MediaFilterInfo{
-		Name:   strings.TrimSpace(values.Get("name")),
-		OkOnly: values.Get("okOnly") == "true",
+	return MediaFilterInfo{
+		Name:    getNameFilterFromUrlQuery(values),
+		MinSize: getMinSizeFromUrlQuery(values),
+		OkOnly:  values.Get("okOnly") == "true",
 	}
-	minSizeRaw := strings.TrimSpace(values.Get("minSize"))
-	if minSize, err := strconv.ParseFloat(minSizeRaw, 64); err == nil && minSize > 0 && !math.IsInf(minSize, 0) {
-		filter.MinSize = minSize
+}
+
+func getOrphanedTorrentFilterInfoFromUrlQuery(values url.Values) OrphanedTorrentFilterInfo {
+	return OrphanedTorrentFilterInfo{
+		Name:    getNameFilterFromUrlQuery(values),
+		MinSize: getMinSizeFromUrlQuery(values),
+		Client:  values.Get("client"),
+		OkOnly:  values.Get("okOnly") == "true",
 	}
-	return filter
+}
+
+func getNameFilterFromUrlQuery(values url.Values) NameFilter {
+	return NameFilter(strings.TrimSpace(values.Get("name")))
+}
+
+// getMinSizeFromUrlQuery parses minSize in GB. Invalid values return 0.
+func getMinSizeFromUrlQuery(values url.Values) SizeGB {
+	minSize, err := strconv.ParseFloat(strings.TrimSpace(values.Get("minSize")), 64)
+	if err != nil || minSize <= 0 || math.IsInf(minSize, 0) {
+		return 0
+	}
+	return SizeGB(minSize)
 }
