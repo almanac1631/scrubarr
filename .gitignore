@@ -9,3 +9,6 @@ cache
 
 # npm dependencies
 node_modules
+
+/*.pem
+/config.toml

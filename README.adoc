@@ -7,6 +7,53 @@
 .. *Password hash*: In order to generate the password hash and salt, use the `scrubarr  generate-password-hash` command and use the resulting values in the config file.
 . *Run scrubarr*: Use `scrubarr serve` to run the scrubarr server.
 
+== Development setup
+
+. *Install Go*: Go 1.26 or newer. The pinned toolchain is downloaded automatically.
+. *Install dependencies*:
++
+[source,bash]
+----
+go mod download
+----
+. *Create your config*: Copy the template and fill in your values.
++
+[source,bash]
+----
+cp configs/scrubarr.toml config.toml
+----
+. *Generate the password hash*: Run the interactive tool and paste the salt and hash into `config.toml`.
++
+[source,bash]
+----
+go run ./cmd/scrubarr generate-password-hash
+----
+. *Create the JWT keys*: Set `general.auth.jwt.private_key_path` and `public_key_path` in `config.toml` to these files.
++
+[source,bash]
+----
+openssl ecparam -name prime256v1 -genkey -noout -out jwt_private.pem
+openssl ec -in jwt_private.pem -pubout -out jwt_public.pem
+----
+. *Start the server*: Use `--dry-run` while testing so nothing is deleted.
++
+[source,bash]
+----
+go run ./cmd/scrubarr serve --config ./config.toml --dry-run
+----
+
+== Production build
+
+Build a Linux binary with https://goreleaser.com[GoReleaser]. Install it first, see the GoReleaser docs.
+
+[source,bash]
+----
+GOOS=linux GOARCH=amd64 goreleaser build --snapshot --clean --single-target
+----
+
+The binary is written to `dist/`.
+This does not publish a release.
+
 == Disclaimer
 
 I do not own the rights of any logos of 3rd party software used in this software.
