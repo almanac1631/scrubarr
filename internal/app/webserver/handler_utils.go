@@ -1,8 +1,11 @@
 package webserver
 
 import (
+	"math"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/almanac1631/scrubarr/internal/utils"
 )
@@ -36,4 +39,16 @@ func getSortInfoFromUrlQuery(values url.Values) SortInfo {
 		sortInfo.Order = SortOrderAsc
 	}
 	return sortInfo
+}
+
+func getMediaFilterInfoFromUrlQuery(values url.Values) MediaFilterInfo {
+	filter := MediaFilterInfo{
+		Name:   strings.TrimSpace(values.Get("name")),
+		OkOnly: values.Get("okOnly") == "true",
+	}
+	minSizeRaw := strings.TrimSpace(values.Get("minSize"))
+	if minSize, err := strconv.ParseFloat(minSizeRaw, 64); err == nil && minSize > 0 && !math.IsInf(minSize, 0) {
+		filter.MinSize = minSize
+	}
+	return filter
 }

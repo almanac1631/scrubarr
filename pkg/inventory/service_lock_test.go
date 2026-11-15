@@ -69,7 +69,7 @@ func TestService_GetMediaInventory_LoadsEmptyCacheWithoutDeadlock(t *testing.T) 
 	var hasNext bool
 	var err error
 	requireReturnsWithin(t, 2*time.Second, func() {
-		rows, hasNext, err = service.GetMediaInventory(1, sortInfo)
+		rows, hasNext, err = service.GetMediaInventory(1, sortInfo, webserver.MediaFilterInfo{})
 	})
 	require.NoError(t, err)
 	require.False(t, hasNext)

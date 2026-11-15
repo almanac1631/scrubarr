@@ -8,25 +8,27 @@ import (
 
 type mediaEndpointData struct {
 	basePageData
-	Rows []MediaRow
+	MediaFilter MediaFilterInfo
+	Rows        []MediaRow
 }
 
 func (handler *handler) handleMediaEndpoint(writer http.ResponseWriter, request *http.Request) {
 	handler.renderPage(writer, request, "media.gohtml", "Media", func(base basePageData) any {
-		return mediaEndpointData{basePageData: base}
+		return mediaEndpointData{basePageData: base, MediaFilter: getMediaFilterInfoFromUrlQuery(request.URL.Query())}
 	})
 }
 
 func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, request *http.Request) {
 	logger := getRequestLogger(request)
 	sortInfo := getSortInfoFromUrlQuery(request.URL.Query())
+	filter := getMediaFilterInfoFromUrlQuery(request.URL.Query())
 	pageRaw := request.URL.Query().Get("page")
 	page, _ := strconv.Atoi(pageRaw)
 	if page < 1 {
 		page = 1
 	}
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	mediaRows, hasNext, err := handler.inventoryService.GetMediaInventory(page, sortInfo)
+	mediaRows, hasNext, err := handler.inventoryService.GetMediaInventory(page, sortInfo, filter)
 	if err != nil {
 		logger.Error("Failed to get media mapping.", "error", err)
 		http.Error(writer, "500 Internal Server Error", http.StatusInternalServerError)
@@ -38,6 +40,7 @@ func (handler *handler) handleMediaEntriesEndpoint(writer http.ResponseWriter, r
 	}
 	if err = handler.ExecuteSubTemplate(writer, "media.gohtml", "media_entries", mediaEndpointData{
 		basePageData: basePageData{SortInfo: sortInfo, NextPage: nextPage},
+		MediaFilter:  filter,
 		Rows:         mediaRows,
 	}); err != nil {
 		logger.Error(err.Error())

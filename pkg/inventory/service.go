@@ -107,13 +107,31 @@ func (s *Service) ensureCacheLoaded() error {
 	return s.RefreshCache()
 }
 
-func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (mediaRows []webserver.MediaRow, hasNext bool, err error) {
+func matchesMediaFilter(media enrichedLinkedMedia, filter webserver.MediaFilterInfo) bool {
+	if !filter.FuzzyNameMatch(media.linkedMedia.Title) {
+		return false
+	}
+	if media.size < filter.MinSizeBytes() {
+		return false
+	}
+	if filter.OkOnly && media.evaluationReport.Result.Decision != domain.DecisionSafeToDelete {
+		return false
+	}
+	return true
+}
+
+func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo, filter webserver.MediaFilterInfo) (mediaRows []webserver.MediaRow, hasNext bool, err error) {
 	if err := s.ensureCacheLoaded(); err != nil {
 		return nil, false, err
 	}
 	s.RLock()
 	defer s.RUnlock()
-	enrichedLinkedMediaList := slices.Clone(s.enrichedLinkedMediaCache)
+	enrichedLinkedMediaList := make([]enrichedLinkedMedia, 0, len(s.enrichedLinkedMediaCache))
+	for _, media := range s.enrichedLinkedMediaCache {
+		if matchesMediaFilter(media, filter) {
+			enrichedLinkedMediaList = append(enrichedLinkedMediaList, media)
+		}
+	}
 	slices.SortFunc(enrichedLinkedMediaList, func(a, b enrichedLinkedMedia) int {
 		var result int
 		switch sortInfo.Key {
@@ -138,12 +156,11 @@ func (s *Service) GetMediaInventory(page int, sortInfo webserver.SortInfo) (medi
 		}
 		return result
 	})
-	if pageSize*page < len(enrichedLinkedMediaList) {
-		hasNext = true
-		enrichedLinkedMediaList = enrichedLinkedMediaList[pageSize*(page-1) : pageSize*page]
-	} else {
-		enrichedLinkedMediaList = enrichedLinkedMediaList[pageSize*(page-1):]
-	}
+	// clamp so a page past the end yields an empty result
+	hasNext = pageSize*page < len(enrichedLinkedMediaList)
+	start := min(pageSize*(page-1), len(enrichedLinkedMediaList))
+	end := min(pageSize*page, len(enrichedLinkedMediaList))
+	enrichedLinkedMediaList = enrichedLinkedMediaList[start:end]
 
 	mediaRows = make([]webserver.MediaRow, len(enrichedLinkedMediaList))
 	for i, media := range enrichedLinkedMediaList {

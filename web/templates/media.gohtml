@@ -1,5 +1,7 @@
 {{ define "content" }}
-    <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow" id="media-table">
+    <div class="container mx-auto rounded-md bg-white px-8 py-6 shadow">
+    {{ template "media_filter" . }}
+    <div id="media-table">
         <table class="table-fixed w-full">
             <thead class="border-gray-300 border-b-2 text-left">
             <tr>
@@ -7,8 +9,8 @@
                     <div class="flex justify-center items-center">
                         <button class="cursor-pointer hover:bg-stone-200 p-1 rounded disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-200"
                                 title="Refresh entries"
-                                hx-put="media?sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
-                                hx-target="#media-table" hx-indicator="#media-table" hx-swap="outerHTML"
+                                hx-put="media?sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}&{{ template "media_filter_query" .MediaFilter }}"
+                                hx-target="#media-table" hx-select="#media-table" hx-indicator="#media-table" hx-swap="outerHTML"
                                 hx-disabled-elt="this">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" #
@@ -23,7 +25,8 @@
                 <th class="py-3 px-1">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="media?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-select="#media-table"
+                            hx-get="media?sortKey=name&sortOrder={{ if checkCurrentSort "name" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "media_filter_query" .MediaFilter }}">
                         Name
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -41,7 +44,8 @@
                 <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-select="#media-table"
+                            hx-get="media?sortKey=size&sortOrder={{ if checkCurrentSort "size" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "media_filter_query" .MediaFilter }}">
                         Size
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -59,7 +63,8 @@
                 <th class="py-3 px-1 w-32">
                     <button class="flex items-center"
                             hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                            hx-get="media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                            hx-select="#media-table"
+                            hx-get="media?sortKey=added&sortOrder={{ if checkCurrentSort "added" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "media_filter_query" .MediaFilter }}">
                         Added
                         <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +83,8 @@
                     <div class="flex justify-center">
                         <button class="flex items-center"
                                 hx-target="#media-table" hx-swap="outerHTML" hx-push-url="true"
-                                hx-get="media?sortKey=status&sortOrder={{ if checkCurrentSort "status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}">
+                                hx-select="#media-table"
+                                hx-get="media?sortKey=status&sortOrder={{ if checkCurrentSort "status" "asc" .SortInfo }}desc{{ else }}asc{{ end }}&{{ template "media_filter_query" .MediaFilter }}">
                             Status
                             <span class="text-slate-300">
                             <svg class="w-4 h-4 ms-1 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -99,7 +105,7 @@
             </tr>
             </thead>
             <tbody class="font-medium"
-                   hx-get="media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
+                   hx-get="media/entries?page=1&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}&{{ template "media_filter_query" .MediaFilter }}"
                    hx-swap="outerHTML" hx-trigger="load" hx-indicator="#loading-skeleton">
             </tbody>
             {{ template "media_loading_skeleton" }}
@@ -177,5 +183,6 @@
                 </symbol>
             </svg>
         </table>
+    </div>
     </div>
 {{ end }}

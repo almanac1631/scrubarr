@@ -3,7 +3,7 @@
         {{ template "media_entry" . }}
     {{ end }}
     {{ if ne .NextPage -1 }}
-        <tbody hx-get="media/entries?page={{ .NextPage }}&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}"
+        <tbody hx-get="media/entries?page={{ .NextPage }}&sortKey={{ .SortInfo.Key }}&sortOrder={{ .SortInfo.Order }}&{{ template "media_filter_query" .MediaFilter }}"
                hx-trigger="revealed" hx-swap="outerHTML" hx-indicator="#loading-skeleton">
         </tbody>
     {{ end }}
