@@ -53,20 +53,20 @@ func TestService_LinkMedia(t *testing.T) {
 
 	torrentEntryOnlyFileMatch := torrentEntryNoMatch
 	torrentEntryOnlyFileMatch.Files = []*domain.TorrentFile{{
-		"Some Movie.mp4",
-		913829,
+		Path: "Some Movie.mp4",
+		Size: 913829,
 	}}
 
 	torrentEntryOnlyFileMatchWithFullPath := torrentEntryNoMatch
 	torrentEntryOnlyFileMatchWithFullPath.Files = []*domain.TorrentFile{{
-		"movies/nice-ones/Some Movie/Some Movie.mp4",
-		913829,
+		Path: "movies/nice-ones/Some Movie/Some Movie.mp4",
+		Size: 913829,
 	}}
 
 	torrentEntryNoMatchWrongFileSize := torrentEntryOnlyFileMatch
 	torrentEntryNoMatchWrongFileSize.Files = []*domain.TorrentFile{{
-		torrentEntryOnlyFileMatch.Files[0].Path,
-		10,
+		Path: torrentEntryOnlyFileMatch.Files[0].Path,
+		Size: 10,
 	}}
 
 	torrentEntryCrossSeed := torrentEntry
