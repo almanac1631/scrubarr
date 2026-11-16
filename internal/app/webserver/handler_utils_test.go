@@ -37,7 +37,7 @@ func Test_getSortInfoFromUrlQuery(t *testing.T) {
 				},
 			},
 			want: SortInfo{
-				Key:   SortKeyName,
+				Key:   SortKeyAdded,
 				Order: SortOrderAsc,
 			},
 		},

@@ -29,7 +29,7 @@ func getSortInfoFromUrlQuery(values url.Values) SortInfo {
 	case SortKeyName, SortKeySize, SortKeyAdded, SortKeyStatus:
 		sortInfo.Key = SortKey(sortKeyRaw)
 	default:
-		sortInfo.Key = SortKeyName
+		sortInfo.Key = SortKeyAdded
 	}
 	sortOrderRaw := values.Get("sortOrder")
 	switch SortOrder(sortOrderRaw) {
