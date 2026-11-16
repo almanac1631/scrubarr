@@ -42,6 +42,7 @@ type OrphanedTorrentFilterInfo struct {
 	Client           string
 	OkOnly           bool
 	ExcludeCrossSeed bool
+	ExcludeRetain    bool
 }
 
 // SizeGB is a size in gigabytes.

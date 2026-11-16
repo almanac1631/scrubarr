@@ -2,7 +2,7 @@
     <label class="flex flex-col text-sm font-medium text-gray-700">
         Name
         <input type="search" name="name" value="{{ . }}" placeholder="Filter by name"
-               class="mt-2 w-96 rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
+               class="mt-2 w-[16.8rem] rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
     </label>
 {{ end }}
 
@@ -12,7 +12,7 @@
         <input type="text" inputmode="decimal" name="minSize"
                {{ if . }}value="{{ . }}"{{ end }}
                placeholder="e.g. 1.5"
-               class="mt-2 w-48 rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
+               class="mt-2 w-[9.6rem] rounded-md border border-gray-300 px-4 py-2.5 text-base font-normal">
     </label>
 {{ end }}
 
@@ -29,5 +29,13 @@
         <input type="checkbox" name="excludeCrossSeed" value="true" {{ if . }}checked{{ end }}
                class="h-5 w-5 rounded border-gray-300">
         Exclude cross-seed
+    </label>
+{{ end }}
+
+{{ define "filter_exclude_retain_input" }}
+    <label class="flex items-center gap-3 pb-2 text-base font-medium text-gray-700">
+        <input type="checkbox" name="excludeRetain" value="true" {{ if . }}checked{{ end }}
+               class="h-5 w-5 rounded border-gray-300">
+        Exclude retained
     </label>
 {{ end }}

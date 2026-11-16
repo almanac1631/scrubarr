@@ -352,6 +352,9 @@ func matchesOrphanedTorrentFilter(torrent enrichedOrphanedTorrent, filter webser
 	if filter.ExcludeCrossSeed && torrent.torrentEntry.IsCrossSeed() {
 		return false
 	}
+	if filter.ExcludeRetain && torrent.torrentEntry.IsRetain() {
+		return false
+	}
 	return filter.Client == "" || torrent.torrentEntry.Client == filter.Client
 }
 
@@ -409,6 +412,8 @@ func (s *Service) GetOrphanedTorrents(page int, sortInfo webserver.SortInfo, fil
 			Name:          t.Name,
 			Client:        t.Client,
 			IsCrossSeed:   t.IsCrossSeed(),
+			IsRetain:      t.IsRetain(),
+			Label:         t.Label,
 			Ratio:         t.Ratio,
 			Added:         t.Added,
 			Age:           currentTime.Sub(t.Added),

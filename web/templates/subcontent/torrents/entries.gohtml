@@ -9,6 +9,9 @@
                         {{ if .IsCrossSeed }}
                             <span class="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">cross-seed</span>
                         {{ end }}
+                        {{ if .IsRetain }}
+                            <span class="shrink-0 max-w-40 truncate rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700" title="{{ .Label }}">{{ .Label }}</span>
+                        {{ end }}
                     </div>
                 </td>
                 <td class="py-3 px-1 text-sm text-gray-600">{{ .Client }}</td>

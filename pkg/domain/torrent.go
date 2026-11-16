@@ -30,10 +30,13 @@ func (t TorrentEntry) String() string {
 	return fmt.Sprintf("{Client:%s Id:%s Name:%s Trackers: %+v}", t.Client, t.Id, t.Name, t.Trackers)
 }
 
-// IsCrossSeed reports whether the torrent's label contains "cross-seed" (with or without the dash), case-insensitively.
 func (t TorrentEntry) IsCrossSeed() bool {
 	label := strings.ToLower(t.Label)
 	return strings.Contains(label, "cross-seed") || strings.Contains(label, "crossseed")
+}
+
+func (t TorrentEntry) IsRetain() bool {
+	return strings.HasPrefix(strings.ToLower(t.Label), "retain-")
 }
 
 type TorrentSourceManager interface {

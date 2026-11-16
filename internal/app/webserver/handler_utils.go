@@ -56,6 +56,7 @@ func getOrphanedTorrentFilterInfoFromUrlQuery(values url.Values) OrphanedTorrent
 		Client:           values.Get("client"),
 		OkOnly:           values.Get("okOnly") == "true",
 		ExcludeCrossSeed: values.Get("excludeCrossSeed") == "true",
+		ExcludeRetain:    values.Get("excludeRetain") == "true",
 	}
 }
 
