@@ -469,6 +469,7 @@ func (s *Service) DeleteMedia(rawId string) error {
 			if _, ok := deletedTorrentEntries[torrentEntry]; ok {
 				continue
 			}
+			slog.Info("deleting in torrent client", "id", torrentEntry.Id)
 			err = s.torrentSourceManager.DeleteTorrent(torrentEntry.Client, torrentEntry.Id)
 			if errors.Is(err, domain.ErrTorrentNotFound) {
 				slog.Warn("could not find torrent entry for deletion", "linkedMediaTitle", entry.linkedMedia.Title, "file", affectedFile, "torrentEntry", torrentEntry)
@@ -481,6 +482,7 @@ func (s *Service) DeleteMedia(rawId string) error {
 	}
 
 	// delete media files
+	slog.Info("deleting in media manager", "id", id.Id)
 	err = s.mediaSourceManager.DeleteMediaFiles(entry.linkedMedia.Type, fileIdsToDelete, true)
 	if err != nil {
 		return fmt.Errorf("could not delete media files: %w", err)
