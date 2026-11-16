@@ -9,6 +9,7 @@ import (
 	"maps"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/domain"
 )
@@ -79,7 +80,9 @@ func (manager *DefaultTorrentManager) RefreshCache() error {
 	for name, retriever := range manager.retrievers {
 		go func() {
 			slog.Debug("Refreshing torrent cache...", "client", name)
+			start := time.Now()
 			retrieverEntries, err := retriever.GetTorrentEntries()
+			duration := fmt.Sprintf("%.1fs", time.Since(start).Seconds())
 			if err == nil {
 				entryLock.Lock()
 				defer entryLock.Unlock()
@@ -89,7 +92,7 @@ func (manager *DefaultTorrentManager) RefreshCache() error {
 				err = fmt.Errorf("could not get torrent entries for client %q: %w", name, err)
 			}
 			errChan <- err
-			slog.Debug("Refreshed torrent cache", "client", name)
+			slog.Debug("Refreshed torrent cache", "client", name, "duration", duration)
 		}()
 	}
 	var err error

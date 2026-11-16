@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/almanac1631/scrubarr/pkg/domain"
 )
@@ -63,7 +64,9 @@ func (manager *DefaultMediaManager) RefreshCache() error {
 	for mediaType, retriever := range manager.retrievers {
 		go func() {
 			slog.Debug("Refreshing media cache", "type", mediaType)
+			start := time.Now()
 			mediaEntries, err := retriever.GetMedia()
+			duration := fmt.Sprintf("%.1fs", time.Since(start).Seconds())
 			if err == nil {
 				entryLock.Lock()
 				defer entryLock.Unlock()
@@ -73,7 +76,7 @@ func (manager *DefaultMediaManager) RefreshCache() error {
 				err = fmt.Errorf("could not get media entries media cache for type %q: %w", mediaType, err)
 			}
 			errChan <- err
-			slog.Debug("Refreshed media cache", "type", mediaType)
+			slog.Debug("Refreshed media cache", "type", mediaType, "duration", duration)
 		}()
 	}
 	var err error
