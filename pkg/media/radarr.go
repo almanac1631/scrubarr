@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"path"
+	"net/url"
 	"path/filepath"
 
 	"github.com/almanac1631/scrubarr/pkg/domain"
@@ -59,12 +59,16 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 		if r.singleSystem {
 			file.AbsolutePath = movie.MovieFile.Path
 		}
+		movieUrl, err := url.JoinPath(r.appUrl, "movie", fmt.Sprint(movie.TmdbID))
+		if err != nil {
+			return nil, fmt.Errorf("could not build radarr url for movie %d: %w", movie.ID, err)
+		}
 		mappedMovies = append(mappedMovies, domain.MediaEntry{
 			MediaMetadata: domain.MediaMetadata{
 				Id:    movie.ID,
 				Type:  domain.MediaTypeMovie,
 				Title: movie.Title,
-				Url:   path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
+				Url:   movieUrl,
 				Added: movie.Added,
 			},
 			Files: []domain.MediaFile{file},

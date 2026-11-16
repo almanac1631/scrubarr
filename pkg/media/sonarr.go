@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"path"
 	"path/filepath"
 	"slices"
 
@@ -68,12 +67,16 @@ func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 			}
 			parts = append(parts, file)
 		}
+		seriesUrl, err := url.JoinPath(r.appUrl, "series", series.TitleSlug)
+		if err != nil {
+			return nil, fmt.Errorf("could not build sonarr url for series %d: %w", series.ID, err)
+		}
 		media := domain.MediaEntry{
 			MediaMetadata: domain.MediaMetadata{
 				Id:    series.ID,
 				Type:  domain.MediaTypeSeries,
 				Title: series.Title,
-				Url:   path.Join(r.appUrl, fmt.Sprintf("series/%s", series.TitleSlug)),
+				Url:   seriesUrl,
 				Added: series.Added,
 			},
 			Files: parts,
