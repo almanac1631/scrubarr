@@ -13,11 +13,12 @@ import (
 var _ domain.TorrentSource = (*DelugeRetriever)(nil)
 
 type DelugeRetriever struct {
-	client *delugeclient.ClientV2
-	dryRun bool
+	client       *delugeclient.ClientV2
+	dryRun       bool
+	singleSystem bool
 }
 
-func NewDelugeRetriever(hostname string, port uint, username string, password string, dryRun bool) (*DelugeRetriever, error) {
+func NewDelugeRetriever(hostname string, port uint, username string, password string, dryRun bool, singleSystem bool) (*DelugeRetriever, error) {
 	client := delugeclient.NewV2(delugeclient.Settings{
 		Hostname: hostname,
 		Port:     port,
@@ -28,7 +29,7 @@ func NewDelugeRetriever(hostname string, port uint, username string, password st
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to remote deluge rpc api: %w", err)
 	}
-	return &DelugeRetriever{client, dryRun}, nil
+	return &DelugeRetriever{client, dryRun, singleSystem}, nil
 }
 
 func (retriever *DelugeRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, error) {
@@ -58,11 +59,14 @@ func (retriever *DelugeRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, e
 			Ratio:    float64(torrent.Ratio),
 		}
 		for _, file := range torrent.Files {
-			torrentEntry.Files = append(torrentEntry.Files, &domain.TorrentFile{
-				Path:         file.Path,
-				AbsolutePath: joinRemotePath(torrent.SavePath, file.Path),
-				Size:         file.Size,
-			})
+			torrentFile := &domain.TorrentFile{
+				Path: file.Path,
+				Size: file.Size,
+			}
+			if retriever.singleSystem {
+				torrentFile.AbsolutePath = joinRemotePath(torrent.SavePath, file.Path)
+			}
+			torrentEntry.Files = append(torrentEntry.Files, torrentFile)
 		}
 		torrentEntries = append(torrentEntries, torrentEntry)
 	}

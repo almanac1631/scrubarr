@@ -20,9 +20,10 @@ import (
 var _ domain.MediaSource = (*SonarrRetriever)(nil)
 
 type SonarrRetriever struct {
-	client *sonarr.Sonarr
-	appUrl string
-	dryRun bool
+	client       *sonarr.Sonarr
+	appUrl       string
+	dryRun       bool
+	singleSystem bool
 }
 
 const (
@@ -30,14 +31,14 @@ const (
 	sonarrEpisodeFileBulkDeleteEndpoint = sonarrEpisodeFileEndpoint + "/bulk"
 )
 
-func NewSonarrRetriever(appUrl string, apiKey string, dryRun bool) (*SonarrRetriever, error) {
+func NewSonarrRetriever(appUrl string, apiKey string, dryRun bool, singleSystem bool) (*SonarrRetriever, error) {
 	config := starr.New(apiKey, appUrl, 0)
 	client := sonarr.New(config)
 	_, err := client.GetSystemStatus()
 	if err != nil {
 		return nil, fmt.Errorf("could not get sonarr system status: %w", err)
 	}
-	return &SonarrRetriever{client, appUrl, dryRun}, nil
+	return &SonarrRetriever{client, appUrl, dryRun, singleSystem}, nil
 }
 
 func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
@@ -56,13 +57,16 @@ func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 		}
 		parts := make([]domain.MediaFile, 0, len(seriesEpisodeFiles))
 		for _, seriesEpisodeFile := range seriesEpisodeFiles {
-			parts = append(parts, domain.MediaFile{
+			file := domain.MediaFile{
 				Id:               seriesEpisodeFile.ID,
 				Season:           seriesEpisodeFile.SeasonNumber,
 				OriginalFilePath: filepath.Base(seriesEpisodeFile.RelativePath),
-				AbsolutePath:     seriesEpisodeFile.Path,
 				Size:             seriesEpisodeFile.Size,
-			})
+			}
+			if r.singleSystem {
+				file.AbsolutePath = seriesEpisodeFile.Path
+			}
+			parts = append(parts, file)
 		}
 		media := domain.MediaEntry{
 			MediaMetadata: domain.MediaMetadata{

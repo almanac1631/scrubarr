@@ -4,6 +4,8 @@ listen_addr = ":8888"
 path_prefix = "/scrubarr"
 real_ip_header_name = "X-Forwarded-For"
 refresh_interval = "1h"
+# true if all services (sonarr, radarr, deluge, rtorrent) run on the same system and see the same file paths
+single_system = false
 
 [general.auth]
 # can be set either for "passwordhash" or "jellyfin"

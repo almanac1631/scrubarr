@@ -15,19 +15,20 @@ import (
 var _ domain.MediaSource = (*RadarrRetriever)(nil)
 
 type RadarrRetriever struct {
-	client *radarr.Radarr
-	appUrl string
-	dryRun bool
+	client       *radarr.Radarr
+	appUrl       string
+	dryRun       bool
+	singleSystem bool
 }
 
-func NewRadarrRetriever(appUrl string, apiKey string, dryRun bool) (*RadarrRetriever, error) {
+func NewRadarrRetriever(appUrl string, apiKey string, dryRun bool, singleSystem bool) (*RadarrRetriever, error) {
 	starrConfig := starr.New(apiKey, appUrl, 0)
 	client := radarr.New(starrConfig)
 	_, err := client.GetSystemStatus()
 	if err != nil {
 		return nil, fmt.Errorf("could not get radarr system status: %w", err)
 	}
-	return &RadarrRetriever{client, appUrl, dryRun}, nil
+	return &RadarrRetriever{client, appUrl, dryRun, singleSystem}, nil
 }
 
 func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
@@ -50,6 +51,14 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 			originalFilePath = movie.MovieFile.Path
 		}
 		originalFilePath = filepath.Base(originalFilePath)
+		file := domain.MediaFile{
+			Id:               movie.MovieFile.ID,
+			OriginalFilePath: originalFilePath,
+			Size:             movie.SizeOnDisk,
+		}
+		if r.singleSystem {
+			file.AbsolutePath = movie.MovieFile.Path
+		}
 		mappedMovies = append(mappedMovies, domain.MediaEntry{
 			MediaMetadata: domain.MediaMetadata{
 				Id:    movie.ID,
@@ -58,14 +67,7 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 				Url:   path.Join(r.appUrl, fmt.Sprintf("/movie/%d", movie.TmdbID)),
 				Added: movie.Added,
 			},
-			Files: []domain.MediaFile{
-				{
-					Id:               movie.MovieFile.ID,
-					OriginalFilePath: originalFilePath,
-					AbsolutePath:     movie.MovieFile.Path,
-					Size:             movie.SizeOnDisk,
-				},
-			},
+			Files: []domain.MediaFile{file},
 		})
 	}
 	return mappedMovies, nil

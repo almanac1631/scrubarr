@@ -85,6 +85,7 @@ func serve(cmd *cobra.Command, args []string) {
 	if dryRun {
 		slog.Info("Running in dry run mode. No files nor torrents will be deleted.")
 	}
+	singleSystem := k.Bool("general.single_system")
 
 	listener, err := webserver.SetupListener(k)
 	if err != nil {
@@ -110,6 +111,7 @@ func serve(cmd *cobra.Command, args []string) {
 		k.MustString("connections.radarr.hostname"),
 		k.MustString("connections.radarr.api_key"),
 		dryRun,
+		singleSystem,
 	)
 	if err != nil {
 		slog.Error("Could not setup radarr retriever", "error", err)
@@ -120,6 +122,7 @@ func serve(cmd *cobra.Command, args []string) {
 		k.MustString("connections.sonarr.hostname"),
 		k.MustString("connections.sonarr.api_key"),
 		dryRun,
+		singleSystem,
 	)
 	if err != nil {
 		slog.Error("Could not setup sonarr retriever", "error", err)
@@ -134,6 +137,7 @@ func serve(cmd *cobra.Command, args []string) {
 		k.MustString("connections.deluge.username"),
 		k.MustString("connections.deluge.password"),
 		dryRun,
+		singleSystem,
 	)
 	if err != nil {
 		slog.Error("Could not setup deluge retriever", "error", err)
@@ -145,6 +149,7 @@ func serve(cmd *cobra.Command, args []string) {
 		k.MustString("connections.rtorrent.username"),
 		k.MustString("connections.rtorrent.password"),
 		dryRun,
+		singleSystem,
 	)
 	if err != nil {
 		slog.Error("Could not setup rtorrent retriever", "error", err)

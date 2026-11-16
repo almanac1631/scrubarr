@@ -19,9 +19,10 @@ type RtorrentRetriever struct {
 	client       *rtorrent.Client
 	xmlrpcClient *xmlrpc.Client
 	dryRun       bool
+	singleSystem bool
 }
 
-func NewRtorrentRetriever(hostname string, username string, password string, dryRun bool) (*RtorrentRetriever, error) {
+func NewRtorrentRetriever(hostname string, username string, password string, dryRun bool, singleSystem bool) (*RtorrentRetriever, error) {
 	client := rtorrent.NewClient(rtorrent.Config{
 		Addr:      hostname,
 		BasicUser: username,
@@ -36,7 +37,7 @@ func NewRtorrentRetriever(hostname string, username string, password string, dry
 		BasicUser: username,
 		BasicPass: password,
 	})
-	return &RtorrentRetriever{client: client, xmlrpcClient: xmlrpcClient, dryRun: dryRun}, nil
+	return &RtorrentRetriever{client: client, xmlrpcClient: xmlrpcClient, dryRun: dryRun, singleSystem: singleSystem}, nil
 }
 
 func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*domain.TorrentEntry, error) {
@@ -56,14 +57,17 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*domain.TorrentEntry,
 			Trackers: []string{},
 			Ratio:    torrent.Ratio,
 		}
-		basePath, err := retriever.getBasePath(torrent.Hash)
-		if err != nil {
-			return nil, err
-		}
-		if basePath == "" {
-			basePath, err = retriever.getFallbackBasePath(torrent)
+		var basePath string
+		if retriever.singleSystem {
+			basePath, err = retriever.getBasePath(torrent.Hash)
 			if err != nil {
 				return nil, err
+			}
+			if basePath == "" {
+				basePath, err = retriever.getFallbackBasePath(torrent)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 		torrentFiles, err := retriever.client.GetFiles(context.Background(), torrent)
@@ -71,11 +75,14 @@ func (retriever *RtorrentRetriever) GetTorrentEntries() ([]*domain.TorrentEntry,
 			return nil, fmt.Errorf("could not get torrent files from rtorrent: %w", err)
 		}
 		for _, torrentFile := range torrentFiles {
-			torrentEntry.Files = append(torrentEntry.Files, &domain.TorrentFile{
-				Path:         torrentFile.Path,
-				AbsolutePath: rtorrentFileAbsolutePath(basePath, torrentFile.Path),
-				Size:         int64(torrentFile.Size),
-			})
+			file := &domain.TorrentFile{
+				Path: torrentFile.Path,
+				Size: int64(torrentFile.Size),
+			}
+			if retriever.singleSystem {
+				file.AbsolutePath = rtorrentFileAbsolutePath(basePath, torrentFile.Path)
+			}
+			torrentEntry.Files = append(torrentEntry.Files, file)
 		}
 		torrentEntries = append(torrentEntries, torrentEntry)
 		torrentTrackers, err := retriever.client.GetTrackers(context.Background(), torrent)
