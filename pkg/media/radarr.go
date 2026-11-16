@@ -62,6 +62,7 @@ func (r *RadarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 				{
 					Id:               movie.MovieFile.ID,
 					OriginalFilePath: originalFilePath,
+					AbsolutePath:     movie.MovieFile.Path,
 					Size:             movie.SizeOnDisk,
 				},
 			},

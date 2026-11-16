@@ -21,6 +21,7 @@ type MediaFile struct {
 	Id               int64
 	Season           int
 	OriginalFilePath string
+	AbsolutePath     string
 	Size             int64
 }
 

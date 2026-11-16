@@ -10,8 +10,9 @@ import (
 var ErrTorrentNotFound = errors.New("torrent not found")
 
 type TorrentFile struct {
-	Path string
-	Size int64
+	Path         string
+	AbsolutePath string
+	Size         int64
 }
 
 type TorrentEntry struct {

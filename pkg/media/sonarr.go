@@ -60,6 +60,7 @@ func (r *SonarrRetriever) GetMedia() ([]domain.MediaEntry, error) {
 				Id:               seriesEpisodeFile.ID,
 				Season:           seriesEpisodeFile.SeasonNumber,
 				OriginalFilePath: filepath.Base(seriesEpisodeFile.RelativePath),
+				AbsolutePath:     seriesEpisodeFile.Path,
 				Size:             seriesEpisodeFile.Size,
 			})
 		}
